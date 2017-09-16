@@ -1,0 +1,6 @@
+*/.tmp/*
+*/views/*
+*/assets/*
+views/*
+.tmp/*
+.git/*
