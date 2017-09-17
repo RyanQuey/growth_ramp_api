@@ -32,9 +32,10 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  //'/': {
-  //  view: 'homepage'
-  //}
+  '/test': function (req, res, next) {
+    console.log("successfully got contacted");
+    res.send("successfully contacted the API")
+  }
 
   /***************************************************************************
   *                                                                          *
