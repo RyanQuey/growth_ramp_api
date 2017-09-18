@@ -22,6 +22,7 @@ module.exports = {
     //associations
     user: { model: 'user', required: true },
     //these are the different channels that the user has for this account, in the metadata for those channels
+    //
     channels: { type: 'json', defaultsTo: {} },
 
     //the data below you will just be helpful later on, for analytics/filtering etc.
@@ -30,25 +31,58 @@ module.exports = {
       via: 'providers'
     },
     //these are the configurations associated with a given plan
-    channelConfigurations: { //note:
-      collection: 'channelConfiguration',
-      through: 'plans',
-      via: 'providers'
-    },
     posts: {
       collection: 'post',
-      through: 'clans',
-      via: 'provider'
+      via: 'providers'
     },
     messages: {
       collection: 'message',
       via: 'provider'
     },
+  },
 
-  }
   //all possible providers that can be in the provider column
   PROVIDERS: {
-    //keep this in sync with the frontend constant
+    FACEBOOK: {
+      name: 'Facebook',
+      providerId: 'facebook.com',
+      channels: [
+        "PERSONAL_POST",
+        //"PRIVATE_MESSAGE",
+        "GROUP_POST",
+        "PAGE_POST",//mostly for businesses
+        //"DARK_POST",
+        //"BUSINESS_MESSAGE",
+      ],
+    },
+    //GITHUB: 'github',
+    GOOGLE: {
+      name: 'Google',
+      providerId: 'google.com',
+      channels: []
+    },
+    LINKEDIN: {
+      name: 'LinkedIn',
+      providerId: 'linkedin.com',
+      channels: [
+        "PERSONAL_POST",
+        //"PRIVATE_MESSAGE",
+        "GROUP_POST",
+        "PAGE_POST", //mostly for businesses
+      ]
+    },
+    TWITTER: {
+      name: 'Twitter',
+      providerId: 'twitter.com',
+      channels: [
+        "PERSONAL_POST", //tweet. distinct from business post?
+        "PRIVATE_MESSAGE",
+      ]
+    },
+      //keep this in sync with the frontend constants
+    TYPES: {
+      USER_POST: "USER_POST"
+    }
   },
 
 };

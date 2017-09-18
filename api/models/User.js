@@ -24,10 +24,6 @@ module.exports = {
       collection: 'plan',
       via: 'user'
     },
-    channelConfigurations: {
-      collection: 'channelConfiguration',
-      via: 'user',
-    },
     posts: {
       collection: 'post',
       via: 'user'

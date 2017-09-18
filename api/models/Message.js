@@ -28,10 +28,10 @@ module.exports = {
     //Association
     user: { model: 'user', required: true },
     post: { model: 'post', required: true },
-    channelConfiguration: { model: 'channelConfiguration', required: true },
+    //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
     provider: { model: 'provider', required: true },
     plan: { model: 'plan', required: true }
-  }
+  },
   // don't need these because it's part of post already
   autoCreatedAt: false,
   autoUpdatedAt: false
