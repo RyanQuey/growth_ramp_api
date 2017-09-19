@@ -4,6 +4,10 @@ module.exports = {
     "ACTIVE",
     "ARCHIVED"
   ],
+  PROVIDER_STATUSES: [
+    "ACTIVE",
+    "ARCHIVED"
+  ],
   POST_STATUSES: [
     "DRAFT",
     "PUBLISHED",

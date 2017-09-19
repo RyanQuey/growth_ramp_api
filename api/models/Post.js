@@ -26,6 +26,7 @@ module.exports = {
       via: 'posts',
       dominant: true
     },
+    timeSent: { type: 'datetime' },
   },
 
   autoCreatedAt: true,
