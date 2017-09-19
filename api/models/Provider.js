@@ -8,11 +8,16 @@
  * note that many of the columns may be slightly different than the user information, but is what the user information is from the provider, when the user is using the provider (e.g., their account information in the social network)
  *
  */
+var PROVIDERS = require('../constants').PROVIDERS
 
 module.exports = {
 
   attributes: {
-    providerName: { type: 'string', required: true }, //"e.g., FACEBOOK"
+    providerName: {
+      type: 'string',
+      required: true,
+      enum: Object.keys(PROVIDERS)
+    }, //"e.g., FACEBOOK"
     //token??: { type: 'string', required: true },
     email: { type: 'string' },
     displayName: { type: 'string' },
@@ -41,49 +46,6 @@ module.exports = {
     },
   },
 
-  //all possible providers that can be in the provider column
-  PROVIDERS: {
-    FACEBOOK: {
-      name: 'Facebook',
-      providerId: 'facebook.com',
-      channels: [
-        "PERSONAL_POST",
-        //"PRIVATE_MESSAGE",
-        "GROUP_POST",
-        "PAGE_POST",//mostly for businesses
-        //"DARK_POST",
-        //"BUSINESS_MESSAGE",
-      ],
-    },
-    //GITHUB: 'github',
-    GOOGLE: {
-      name: 'Google',
-      providerId: 'google.com',
-      channels: []
-    },
-    LINKEDIN: {
-      name: 'LinkedIn',
-      providerId: 'linkedin.com',
-      channels: [
-        "PERSONAL_POST",
-        //"PRIVATE_MESSAGE",
-        "GROUP_POST",
-        "PAGE_POST", //mostly for businesses
-      ]
-    },
-    TWITTER: {
-      name: 'Twitter',
-      providerId: 'twitter.com',
-      channels: [
-        "PERSONAL_POST", //tweet. distinct from business post?
-        "PRIVATE_MESSAGE",
-      ]
-    },
-      //keep this in sync with the frontend constants
-    TYPES: {
-      USER_POST: "USER_POST"
-    }
-  },
 
 };
 

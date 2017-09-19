@@ -6,10 +6,12 @@
  */
 
     //!!!!!!!note that a given channel configuration, provider, or plan may change, but that won't actually change the message itself, once the message has been sent!!!!!!!!
+var POST_STATUSES = require('../constants').POST_STATUSES
+
 module.exports = {
 
   attributes: {
-    status: { type: 'string', required: true }, //("PUBLISHED", "DRAFT", "ARCHIVED")
+    status: { type: 'string', required: true, enum: POST_STATUSES },
     //Associations
     user: { model: 'user', required: true },
     messages: {
@@ -29,10 +31,5 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  STATUSES: [
-    "PUBLISHED",
-    "DRAFT",
-    "ARCHIVED"
-  ]
 };
 

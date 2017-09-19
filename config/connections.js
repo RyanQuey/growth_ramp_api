@@ -41,9 +41,9 @@ if (HDBURL) {
 module.exports.connections = {
 
   //this is the key that will get connected into by the model config
-  postgresProduction: {
-    adapter: "sails-postgresql-extended",
-    database: HEROKU_DB.dbname   || ENV['CUSTOM_DB_NAME'] ||  'growth_ramp_api',
+  production: {
+    adapter: "sails-postgresql",
+    database: HEROKU_DB.dbname   || ENV['CUSTOM_DB_NAME'] || 'growth_ramp_api',
     host:     HEROKU_DB.host     || ENV['CUSTOM_HOSTNAME'] || 'localhost',
     user:     HEROKU_DB.user     || ENV['CUSTOM_USERNAME'] || 'postgres',
     password: HEROKU_DB.password || ENV['CUSTOM_PASSWORD'] || 'password',
@@ -52,7 +52,7 @@ module.exports.connections = {
     ssl: true
   },
 
-  postgresDevelopment: {
+  development: {
     adapter: "sails-postgresql",
     database: HEROKU_DB.dbname   || ENV['CUSTOM_DB_NAME']  || 'growth_ramp_api',
     host:     HEROKU_DB.host     || ENV['CUSTOM_HOSTNAME'] || 'localhost',
@@ -63,7 +63,7 @@ module.exports.connections = {
     ssl: false
   },
 
-  postgresTest: {
+  test: {
     adapter: "sails-postgresql",
     database: 'growth_ramp_test',
     host: 'localhost',
@@ -79,7 +79,7 @@ module.exports.connections = {
      host: 'YOUR_POSTGRES_SERVER_HOSTNAME_OR_IP_ADDRESS',
      user: 'YOUR_POSTGRES_USER', // optional
      password: 'YOUR_POSTGRES_PASSWORD', // optional
-     database: 'postgresDevelopment' //optional
+     database: 'development' //optional
    }
   */
 };

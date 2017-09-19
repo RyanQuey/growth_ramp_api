@@ -1,28 +1,10 @@
 {
   "presets": [
     ["env", {
-      "modules": false
-    }],
-    "react"
-  ],
-  "plugins": [
-    ["transform-regenerator"]
-  ],
-  "env": {
-    "development": {
-      "plugins": [
-        "transform-es2015-modules-commonjs"
-      ]
-    },
-    "test": {
-      "plugins": [
-        "transform-es2015-modules-commonjs"
-      ]
-    },
-    "production": {
-      "plugins": [
-      ]
-    }
-  }
+      "targets": {
+        "node": "current"
+      }
+    }]
+  ]
 }
 
