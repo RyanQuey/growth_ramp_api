@@ -34,6 +34,7 @@
     "rc": "1.0.1",
     "sails": "~0.12.13",
     "sails-disk": "~0.10.9",
+    "sails-hook-babel": "^6.0.3",
     "sails-postgresql": "^0.12.2",
     "serve-favicon": "~2.4.2",
     "uuid": "^3.1.0"

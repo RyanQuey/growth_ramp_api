@@ -4,12 +4,13 @@
  * @description :: TODO: You might write a short summary of how this model works and what it represents here.
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
+import { PLAN_STATUSES } from "../constants"
 
 module.exports = {
 
   attributes: {
     name: { type: 'string', required: true }, //"e.g., my favorite plan"
-    status: { type: 'string', required: true }, //("PUBLISHED", "DRAFT", "ARCHIVED")
+    status: { type: 'string', required: true, enum: PLAN_STATUSES },
     //Association
     user: { model: 'user', required: true },
 
