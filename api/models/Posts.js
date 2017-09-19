@@ -12,21 +12,21 @@ module.exports = {
 
   attributes: {
     status: { type: 'string', required: true, enum: POST_STATUSES },
+    timeSent: { type: 'datetime' },
     //Associations
-    user: { model: 'user', required: true },
+    user: { model: 'users', required: true },
     messages: {
-      collection: 'message',
+      collection: 'messages',
       via: 'post',
       dominant: true
     },
 
-    plan: { model: 'plan', required: true },
+    plan: { model: 'plans', required: true },
     providers: {
-      collection: 'provider',
+      collection: 'providers',
       via: 'posts',
       dominant: true
     },
-    timeSent: { type: 'datetime' },
   },
 
   autoCreatedAt: true,
