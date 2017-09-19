@@ -8,27 +8,28 @@
  * note that many of the columns may be slightly different than the user information, but is what the user information is from the provider, when the user is using the provider (e.g., their account information in the social network)
  *
  */
-var PROVIDERS = require('../constants').PROVIDERS
+import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 
 module.exports = {
 
   attributes: {
-    providerName: {
+    name: {
       type: 'string',
       required: true,
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
-    //token??: { type: 'string', required: true },
+    //should make a hash of these, to dehash before sending
+    accessToken: { type: 'string' },
+    refreshToken: { type: 'string' },
     email: { type: 'string' },
-    displayName: { type: 'string' },
-    profilePictureUrl: { type: 'string' },
-
-    active: { type: 'boolean', defaultsTo: true },
-    //associations
-    user: { model: 'user', required: true },
     //these are the different channels that the user has for this account, in the metadata for those channels
-    //
     channels: { type: 'json', defaultsTo: {} },
+    userName: { type: 'string' },
+    profilePictureUrl: { type: 'string' },
+    status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
+
+    //**associations**
+    user: { model: 'user', required: true },
 
     //the data below you will just be helpful later on, for analytics/filtering etc.
     plans: {
