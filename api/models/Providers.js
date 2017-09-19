@@ -29,20 +29,20 @@ module.exports = {
     status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
 
     //**associations**
-    user: { model: 'user', required: true },
+    user: { model: 'users', required: true },
 
     //the data below you will just be helpful later on, for analytics/filtering etc.
     plans: {
-      collection: 'plan',
+      collection: 'plans',
       via: 'providers'
     },
     //these are the configurations associated with a given plan
     posts: {
-      collection: 'post',
+      collection: 'posts',
       via: 'providers'
     },
     messages: {
-      collection: 'message',
+      collection: 'messages',
       via: 'provider'
     },
   },

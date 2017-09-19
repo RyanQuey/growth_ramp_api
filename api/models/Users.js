@@ -15,21 +15,21 @@ module.exports = {
 
     //associations
     providers: {
-      collection: 'provider',
+      collection: 'providers',
       via: 'user',
       dominant: true
     },
 
     plans: {
-      collection: 'plan',
+      collection: 'plans',
       via: 'user'
     },
     posts: {
-      collection: 'post',
+      collection: 'posts',
       via: 'user'
     },
     messages: {
-      collection: 'message',
+      collection: 'messages',
       via: 'user'
     },
 

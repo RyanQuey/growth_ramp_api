@@ -11,20 +11,6 @@ module.exports = {
   attributes: {
     name: { type: 'string', required: true }, //"e.g., my favorite plan"
     status: { type: 'string', required: true, enum: PLAN_STATUSES },
-
-    //Association
-    user: {
-      model: 'user',
-      required: true,
-      table: 'user_id' //TODO add this table entry for other foreign keys
-    }, //will be the userid, until it is populated (.populate('user'))
-
-    providers: {//(necessary to toggle entire providers without messing up channel configurations)
-      collection: 'provider',
-      via: 'plans',
-      dominant: true
-    },
-
     channelConfigurations: { type: 'json', defaultsTo: {} },
       /*
         type: { type: 'string', required: true },//"PERSONAL_POST",
@@ -35,14 +21,28 @@ module.exports = {
         defaultCustomUtm: { type: 'string' },
         active: { type: 'boolean', defaultsTo: true },
       */
+
+    //Association
+    user: {
+      model: 'users',
+      required: true,
+      table: 'user_id' //TODO add this table entry for other foreign keys
+    }, //will be the userid, until it is populated (.populate('user'))
+
+    providers: {//(necessary to toggle entire providers without messing up channel configurations)
+      collection: 'providers',
+      via: 'plans',
+      dominant: true
+    },
+
     posts: {
-      collection: 'post',
+      collection: 'posts',
       via: 'plan'
     },
     messages: {
-      collection: 'message',
+      collection: 'messages',
       via: 'plans',
-      through: 'post'
+      through: 'posts'
     },
   },
   autoCreatedAt: true,

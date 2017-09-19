@@ -21,6 +21,7 @@
  */
 
 module.exports.routes = {
+  //NOTE: all sails auto routing has the namespace with the '/api' prefix in the blueprints configuration
 
   /***************************************************************************
   *                                                                          *
