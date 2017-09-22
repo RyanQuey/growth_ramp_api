@@ -20,7 +20,8 @@ exports.up = function(knex, Promise) {
       t.string('name');
       t.string('status');
       t.json('channelConfigurations');
-      t.timestamps();//createdAt, updatedAt
+      t.timestamp('createdAt').defaultTo(knex.fn.now());
+      t.timestamp('updatedAt').defaultTo(knex.fn.now());
       //associations
       t.integer('userId').references('id').inTable('users');
     }),
@@ -43,7 +44,8 @@ exports.up = function(knex, Promise) {
       t.dateTime('accessTokenExpires')
       t.string('refreshToken');
       t.dateTime('refreshTokenExpires')
-      t.timestamps();//createdAt, updatedAt
+      t.timestamp('createdAt').defaultTo(knex.fn.now());
+      t.timestamp('updatedAt').defaultTo(knex.fn.now());
       //associations
       t.integer('userId').references('id').inTable('users');
     }),
@@ -56,8 +58,9 @@ exports.up = function(knex, Promise) {
       t.string('apiToken');
       t.string('password');
       t.boolean('welcomeEmailSent');
-      t.dateTime('apiTokenExpires')
-      t.timestamps();//createdAt, updatedAt
+      t.dateTime('apiTokenExpires');
+      t.timestamp('createdAt').defaultTo(knex.fn.now());
+      t.timestamp('updatedAt').defaultTo(knex.fn.now());
       //associations
     }),
 
