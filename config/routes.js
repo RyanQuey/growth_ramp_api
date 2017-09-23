@@ -23,20 +23,16 @@
 module.exports.routes = {
   //NOTE: all sails auto routing has the namespace with the '/api' prefix in the blueprints configuration
 
-  /***************************************************************************
-  *                                                                          *
-  * Make the view located at `views/homepage.ejs` (or `views/homepage.jade`, *
-  * etc. depending on your default view engine) your home page.              *
-  *                                                                          *
-  * (Alternatively, remove this and add an `index.html` file in your         *
-  * `assets` directory)                                                      *
-  *                                                                          *
-  ***************************************************************************/
-
+  //I think you can call next to pass the request along to the next route that matches
   '/test': function (req, res, next) {
     console.log("successfully got contacted");
     res.send("successfully contacted the API")
-  }
+  },
+
+  'post /users/login_with_provider/': {
+    controller: 'UsersController',
+    action: 'loginWithProvider'
+  },
 
   /***************************************************************************
   *                                                                          *
