@@ -11,6 +11,12 @@
 
 module.exports.bootstrap = function(cb) {
 
+  //do these belong here? I don't know, but it works
+
+  global.moment = require('moment');
+  global.axios = require('axios')
+  global.FB = require('fb')
+  global.helpers = require('../api/services/helpers')
   // It's very important to trigger this callback method when you are finished
   // with the bootstrap!  (otherwise your server will never lift, since it's waiting on the bootstrap)
   cb();
