@@ -68,9 +68,12 @@ module.exports = {
 
     //0)
 console.log(req.query, req.params);
+    console.log("request body",req.body);
+    const refreshToken = req.body.tokenInfo.refreshToken
+    const profile = req.body.profile
 const providerName = req.query.providerName.toUpperCase()
-    const refreshToken = req.query.code //Facebook calls refresh token a code
-    const returnedState = req.query.state
+    //const refreshToken = req.query.code //Facebook calls refresh token a code
+    //const returnedState = req.query.state
     //make sure that this request came from Facebook, not an attacker
     if (!returnedState !== secretString) {
       console.log("cors attack");
@@ -79,11 +82,13 @@ const providerName = req.query.providerName.toUpperCase()
 
     let accessToken
     const getToken = (() => {
-      if (req.body.accessToken) {
-        accessToken = req.body.accessToken
+      if (req.body.tokenInfo.accessToken) {
+        accessToken = req.body.TokenInfo.accessToken
+        if (!accessToken) {throw "no access token found...even though there should be one right there)"}
         return accessToken
       } else {
         //retrieve access to using the refresh token
+        if (!accessToken) {throw "no access token found"}
         return Providers.getAccessTokenFromProvider(req.body.providerName, refreshToken)
       }
     })
@@ -94,6 +99,7 @@ const providerName = req.query.providerName.toUpperCase()
       FB.setAccessToken(accessToken)
     })
     .then((profile) => {
+      if (!profile) {throw "no profile found"}
       return Users.findOrCreate({email: req.body.email}, req.body.profile)
     })
     .catch((err) => {

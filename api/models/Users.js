@@ -12,6 +12,7 @@ module.exports = {
     phone: { type: 'string', regex: /\+1\d{3}\d{3}\d{4}/ },
     firstName: { type: 'string' },
     lastName: { type: 'string' },
+    password: { type: 'string' },//store as a hash
 
     //associations
     providers: {
@@ -31,6 +32,13 @@ module.exports = {
     messages: {
       collection: 'messages',
       via: 'user'
+    },
+
+    // Override the default toJSON method
+    toJSON: function() {
+      let obj = this.toObject();
+      delete obj.password;
+      return obj;
     },
 
   },
