@@ -22,8 +22,11 @@ module.exports = {
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
     //should make a hash of these, to dehash before sending
+    providerUserId: { type: 'string' },
     accessToken: { type: 'string' },
+    accessTokenExpires: { type: 'datetime' },
     refreshToken: { type: 'string' },
+    refreshTokenExpires: { type: 'datetime' },
     email: { type: 'string' },
     //these are the different channels that the user has for this account, in the metadata for those channels
     channels: { type: 'json', defaultsTo: {} },
@@ -61,46 +64,35 @@ module.exports = {
 
     //0) confirm / extract user information from provider
     //1) find or create user
-    //2.1) create or update provider information
-    //2.2) update the provider tokens, basically part of 2
+    //2) create or update provider information including the provider tokens
     //.1) return user info, along with plans and posts and API token, to the client server
-    //buildout user record
 
-    //0)
-console.log(req.query, req.params);
-    console.log("request body",req.body);
-    const refreshToken = req.body.tokenInfo.refreshToken
-    const profile = req.body.profile
-const providerName = req.query.providerName.toUpperCase()
-    //const refreshToken = req.query.code //Facebook calls refresh token a code
-    //const returnedState = req.query.state
-    //make sure that this request came from Facebook, not an attacker
-    if (!returnedState !== secretString) {
-      console.log("cors attack");
-      //we have a cors situation on our hands
-    }
-
-    let accessToken
-    const getToken = (() => {
-      if (req.body.tokenInfo.accessToken) {
-        accessToken = req.body.TokenInfo.accessToken
-        if (!accessToken) {throw "no access token found...even though there should be one right there)"}
-        return accessToken
+    const getUser = (() => {
+      //1)
+      if (req.user) {
+        return req.user
       } else {
-        //retrieve access to using the refresh token
-        if (!accessToken) {throw "no access token found"}
-        return Providers.getAccessTokenFromProvider(req.body.providerName, refreshToken)
+        return Users.create() //could set the profile in here, but I want to force the new user to give an e-mail that will actually work
       }
     })
 
-    getToken()
-    .then((accessToken) => {
-      //ask for profile
-      FB.setAccessToken(accessToken)
+    new Promise((resolve, reject) => {
+      //0)
+      let providerData = req.body
+      if (!providerData.name) {return reject("no provider defined")}
+
+      const toReturn = {providerData}
+      return getUser()
     })
-    .then((profile) => {
-      if (!profile) {throw "no profile found"}
-      return Users.findOrCreate({email: req.body.email}, req.body.profile)
+    .then((user) => {
+      //2)
+      toReturn.user = u
+      providerData.user = user.id
+
+      Providers.updateOrCreate({user: user.id, name: providerData.name}, providerData)
+    })
+    .then((provider) => {
+      return resolve(toReturn)
     })
     .catch((err) => {
       console.log("error when logging in with provider:")
@@ -109,7 +101,7 @@ const providerName = req.query.providerName.toUpperCase()
     })
   },
 
-  refreshRefreshToken: function() {
+  HandleNewRefreshToken: function(refreshToken) {
 
   },
 
@@ -118,7 +110,6 @@ const providerName = req.query.providerName.toUpperCase()
 
   //},
 
-  //might eventually combined with the userRefreshToken
   userToken: function(providerName, userId, tokenType) {
     new Promise((resolve, reject) => {
       Providers.find({

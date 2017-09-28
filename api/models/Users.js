@@ -8,7 +8,7 @@
 module.exports = {
 
   attributes: {
-    email: { type: 'string', required: true, regex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/},
+    email: { type: 'string', regex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/},
     phone: { type: 'string', regex: /\+1\d{3}\d{3}\d{4}/ },
     firstName: { type: 'string' },
     lastName: { type: 'string' },
@@ -34,7 +34,7 @@ module.exports = {
       via: 'user'
     },
 
-    // Override the default toJSON method
+    // Override the default toJSON method, which is called before returning data back to the client
     toJSON: function() {
       let obj = this.toObject();
       delete obj.password;
@@ -42,7 +42,8 @@ module.exports = {
     },
 
   },
-  autoCreatedAt: true
-  //autoUpdatedAt: true,
+  autoCreatedAt: true,
+  autoUpdatedAt: true,
+
 };
 

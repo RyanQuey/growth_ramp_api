@@ -36,6 +36,7 @@ exports.up = function(knex, Promise) {
       t.increments('id').primary() //auto incrementing IDs
       t.string('name');
       t.string('userName');
+      t.string('providerUserId')
       t.string('email');
       t.string('profilePictureUrl');
       t.string('status');

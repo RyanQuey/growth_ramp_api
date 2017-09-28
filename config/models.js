@@ -28,5 +28,23 @@ module.exports.models = {
   *                                                                          *
   ***************************************************************************/
   migrate: 'safe',
+  updateOrCreate: function(criteria, values, cb) {
+    //is no values are specified, use criteria
+    if (!values) {values = criteria.where ? criteria.where : criteria};
+
+    this.findOne(criteria, (err, result) => {
+      if (err) return cb(err, false);
+
+      if (result) {
+        this.update(criteria, values, cb);
+      } else {
+        this.create(values, cb);
+      }
+    });
+  },
+
+  attributes: {
+    id: { type: 'integer', autoIncrement: true, primaryKey: true },
+  }
 
 };
