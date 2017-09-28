@@ -4,7 +4,7 @@ const daysOfTheWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "
 export default {
 
   handleError: ((message, err) => {
-
+//maybe put this, or even better, call this from the responses config
   }),
 
   sanitizeSQL: function (str) {

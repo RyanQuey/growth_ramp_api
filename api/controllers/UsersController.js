@@ -11,6 +11,7 @@ module.exports = {
   //TODO: if the asynchronous stuff gets too complicated, try async lib, which is placed as a global in sails by default
 
 	loginWithProvider: ((req, res) => {
+    console.log("beginning to login with provider");
     Providers.loginWithProvider(req)
     .then((user) => {
 console.log(user);
@@ -31,13 +32,14 @@ console.log(user);
   //3) update the provider tokens, basically part of 2
   //4) return user info, along with plans and posts and API token, to the client server
 
-    Users.findByApiToken(req.body.APIToken)
-    .then((user) => {
-      console.log(user);
-    })
+    //
+    //.then((user) => {
+    //req.user should already be set by the API token policy
+      console.log(req.user);
+    /*})
     .catch((err) => {
       console.log(err);
-    })
+    })*/
 
   }),
 };

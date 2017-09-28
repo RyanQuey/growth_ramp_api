@@ -29,7 +29,7 @@ module.exports.routes = {
     res.send("successfully contacted the API")
   },
 
-  'post /users/login_with_provider/': {
+  'post /users/login_with_provider': {
     controller: 'UsersController',
     action: 'loginWithProvider'
   },
