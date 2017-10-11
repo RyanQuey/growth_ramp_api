@@ -14,14 +14,14 @@ module.exports = {
     status: { type: 'string', required: true, enum: POST_STATUSES },
     timeSent: { type: 'datetime' },
     //Associations
-    user: { model: 'users', required: true },
+    userId: { model: 'users', required: true },
     messages: {
       collection: 'messages',
-      via: 'post',
+      via: 'postId',
       dominant: true
     },
 
-    plan: { model: 'plans', required: true },
+    planId: { model: 'plans', required: true },
     providers: {
       collection: 'providers',
       via: 'posts',

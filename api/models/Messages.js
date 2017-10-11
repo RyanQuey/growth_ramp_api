@@ -15,11 +15,11 @@ module.exports = {
     termUtm: { type: 'string' },
     customUtm: { type: 'string' },
     //Association
-    user: { model: 'users', required: true },
-    post: { model: 'posts', required: true },
+    userId: { model: 'users', required: true },
+    postId: { model: 'posts', required: true },
     //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
-    provider: { model: 'providers', required: true },
-    plan: { model: 'plans', required: true }
+    providerId: { model: 'providers', required: true },
+    planId: { model: 'plans', required: true }
   },
   // don't need these because it's part of post already
   autoCreatedAt: false,

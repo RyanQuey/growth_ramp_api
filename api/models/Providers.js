@@ -35,7 +35,7 @@ module.exports = {
     status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
 
     //**associations**
-    user: { model: 'users', required: true },
+    userId: { model: 'users', required: true },
 
     //the data below you will just be helpful later on, for analytics/filtering etc.
     plans: {
@@ -49,7 +49,7 @@ module.exports = {
     },
     messages: {
       collection: 'messages',
-      via: 'provider'
+      via: 'providerId'
     },
     // Override the default toJSON method
     toJSON: function() {
@@ -67,37 +67,37 @@ module.exports = {
     //2) create or update provider information including the provider tokens
     //.1) return user info, along with plans and posts and API token, to the client server
 
-    const getUser = (() => {
+    const getUser = ((user) => {
       //1)
       if (req.user) {
         return req.user
       } else {
-        return Users.create() //could set the profile in here, but I want to force the new user to give an e-mail that will actually work
+        //maybe findOrCreate? if user hassn't logged in yet for this session?
+        return Users.create({}) //could set the profile in here, but I want to force the new user to give an e-mail that will actually work
       }
     })
 
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       //0)
       let providerData = req.body
       if (!providerData.name) {return reject("no provider defined")}
 
       const toReturn = {providerData}
-      return getUser()
-    })
-    .then((user) => {
-      //2)
-      toReturn.user = u
-      providerData.user = user.id
+      getUser()
+      .then((user) => {
+        //2)
+        toReturn.user = user
+        providerData.userId = user.id
 
-      Providers.updateOrCreate({user: user.id, name: providerData.name}, providerData)
-    })
-    .then((provider) => {
-      return resolve(toReturn)
-    })
-    .catch((err) => {
-      console.log("error when logging in with provider:")
-      console.log(err);
-      return err
+        return Providers.updateOrCreate({userId: user.id, name: providerData.name}, providerData)
+      })
+      .then((provider) => {
+        return resolve(toReturn)
+      })
+      .catch((err) => {
+        console.log("error when logging in with provider:")
+        return reject(err)
+      })
     })
   },
 

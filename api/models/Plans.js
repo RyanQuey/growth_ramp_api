@@ -23,10 +23,9 @@ module.exports = {
       */
 
     //Association
-    user: {
+    userId: {
       model: 'users',
       required: true,
-      table: 'user_id' //TODO add this table entry for other foreign keys
     }, //will be the userid, until it is populated (.populate('user'))
 
     providers: {//(necessary to toggle entire providers without messing up channel configurations)
@@ -37,7 +36,7 @@ module.exports = {
 
     posts: {
       collection: 'posts',
-      via: 'plan'
+      via: 'planId'
     },
     messages: {
       collection: 'messages',
