@@ -33,10 +33,17 @@ module.exports.models = {
     if (!values) {values = criteria.where ? criteria.where : criteria};
 
     this.findOne(criteria, (err, result) => {
-      if (err) return cb(err, false);
+      if (err) {
+        if (typeof cb === "function") {
+          return cb(err, false)
+        } else {
+          console.log(err);
+          return
+        }
 
-      if (result) {
+      } else if (result) {
         this.update(criteria, values, cb);
+
       } else {
         this.create(values, cb);
       }
