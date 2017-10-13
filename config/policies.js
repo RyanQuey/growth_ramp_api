@@ -28,35 +28,35 @@ module.exports.policies = {
 
   //by default, nothing is allowed once this is uncommented (recommended best practice)
   '*': false,
-  '*': ['userTokenAuth'],
+  '*': ['userTokenAuth', ],
 
   UsersController: {
-    create: ['canWrite'],
-    update: ['canWrite'],
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
-    find: ['canRead'],
-    findOne: ['canRead'],
-    loginWithProvider: ['checkProviderData'],
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    loginWithProvider: ['userTokenAuth', 'checkProviderData'],
     //eventually will set controller actions for this for the resources
-    //changePermissions: ['canChangePermissions'],
+    //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
   PostsController: {
-    create: ['canWrite'],
-    update: ['canWrite'],
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
-    find: ['canRead'],
-    findOne: ['canRead'],
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
   },
   PlansController: {
-    create: ['canWrite'],
-    update: ['canWrite'],
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
-    find: ['canRead'],
-    findOne: ['canRead'],
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
-    //changePermissions: ['canChangePermissions'],
+    //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
 
   /***************************************************************************

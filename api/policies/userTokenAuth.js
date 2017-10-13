@@ -1,9 +1,8 @@
 module.exports = function userTokenAuth (req, res, next) {
 
-  let fail = (token) => {
+  let fail = (message) => {
     // still going onto next, but with no user set
-    token ? console.log("ERROR: No user found for this token") : console.log("No api token provided. No user returned");
-
+    console.log("ERROR", message)
     next();
   };
 
@@ -15,16 +14,26 @@ module.exports = function userTokenAuth (req, res, next) {
     console.log("now checking token");
     let token = req.get('x-user-token');
 
+    let id = req.get('x-id')
+    if (id.length > 5) {//removes "user-" from the front
+      id = parseInt(id.slice(5))
+    }
+
     Users.findOne({apiToken: token})
     .then((user) => {
+      console.log(user);
       if (!user) {
-        fail(token);
-      } else if (req.get('x-id') === user.id) {
+        fail(`No user found for this token, ${token}`);
+      } else if (id === user.id /* && user.apiTokenExpires...*/) {
+console.log(req.get('x-id') );
         req.user = user;
         pass();
-      } else {fail(token, user)}
+      } else {
+        fail(`the should match but don't: ${user.id} and user ${id}`)
+      }
     }).catch((e) => {
-      fail(token);
+      console.log(e);
+      fail(`error trying to retrieve with this token: ${token}`);
     });
   } else {
     fail();

@@ -18,6 +18,8 @@ module.exports = {
     firstName: { type: 'string' },
     lastName: { type: 'string' },
     password: { type: 'string' },//store as a hash
+    apiToken: { type: 'string' },
+    apiTokenExpires: { type: 'string' },
 
     //associations
     providers: {
@@ -128,12 +130,13 @@ module.exports = {
 
   login: function (userData) {
     return new Promise((resolve, reject) => {
-      let stuff = Users.getNewToken();
+      let stuff = Users.createApiToken();
       let token = stuff.token;
       let expiration = stuff.expires;
 
       Users.update({ id: userData.id }, { apiToken: token, apiTokenExpires: expiration })
       .then((result) => {
+console.log(result);
         const user = result[0]
         resolve(user);
       })
