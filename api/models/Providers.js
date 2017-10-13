@@ -157,6 +157,7 @@ console.log(user, provider);
         return Providers.create(providerData)
       })
       .then((provider) => {
+
         return resolve([user, provider])
       })
       .catch((err) => {

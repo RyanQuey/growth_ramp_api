@@ -40,6 +40,8 @@ module.exports = {
     .then((userAndProvider) => {
       //TODO don't send refresh and access tokens
       //eventually need to build up the provider information with this
+console.log("ab");
+console.log(userAndProvider);
       return res.ok(userAndProvider)
     })
     .catch((err) => {
