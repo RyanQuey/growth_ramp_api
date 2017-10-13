@@ -9,6 +9,7 @@
  */
 module.exports = function(req, res, next) {
 //NOT USING THIS
+//using token authentication instead
 //not applying this in the config file, so don't need to change it
 
   // User is allowed, proceed to the next policy,

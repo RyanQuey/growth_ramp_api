@@ -27,7 +27,7 @@ module.exports = {
     accessTokenExpires: { type: 'datetime' },
     refreshToken: { type: 'string' },
     refreshTokenExpires: { type: 'datetime' },
-    email: { type: 'string' },
+    email: { type: 'string', required: false },
     //these are the different channels that the user has for this account, in the metadata for those channels
     channels: { type: 'json', defaultsTo: {} },
     userName: { type: 'string' },
@@ -63,40 +63,105 @@ module.exports = {
   loginWithProvider(req) {
 
     //0) confirm / extract user information from provider
-    //1) find or create user
-    //2) create or update provider information including the provider tokens
+    //1) find user and provider
+    //2) determine what to do with both user and provider information
+    //create or update provider information including the provider tokens
     //.1) return user info, along with plans and posts and API token, to the client server
 
-    const getUser = ((user) => {
+    const getUser = (() => {
       //1)
+      //if provider data is sent with apiToken, will update this users provider
       if (req.user) {
         return req.user
+
+      //} else if (){
       } else {
-        //maybe findOrCreate? if user hassn't logged in yet for this session?
-        return Users.create({}) //could set the profile in here, but I want to force the new user to give an e-mail that will actually work
+        //if no API token provided, check if this provider information matches another user
+        //if there is a match, ...not validating the provider data for now, but maybe should?
+        //return Users.findOrCreate({providers: }, {})
+        return false //
       }
     })
+
+
+    const getProvider = (providerData) => {
+      Providers.findOne({name: providerData.name, providerUserId: providerData.providerUserId})
+      //cannot just updateOrCreate, because you have to check if something is amiss (see `else if (provider && user)` conditional below)
+      //return Providers.updateOrCreate({userId: user.id, name: providerData.name}, providerData)
+      //might create security hole ...? too tired to think about right now
+    }
 
     return new Promise((resolve, reject) => {
       //0)
       let providerData = req.body
       if (!providerData.name) {return reject("no provider defined")}
 
-      const toReturn = {providerData}
-      getUser()
-      .then((user) => {
-        //2)
-        toReturn.user = user
-        providerData.userId = user.id
+      //1)
+      Promise.all([getUser(), getProvider(providerData)])
+      .then((results) => {
+        //handling the different situations here
+        const [user, provider] = results
+console.log("already existing accounts?");
+console.log(user, provider);
+        let promises
+        if (provider && !user) {
+          //logging in with a provider
+          //TODO only update the relevant part of the provider data, eg not the user ID, etc.
+          promises = [Users.login({id: provider.userId}, {}), Providers.update(providerData)]
+          return Promise.all(promises)
 
-        return Providers.updateOrCreate({userId: user.id, name: providerData.name}, providerData)
+        } else if (!provider && !user) {
+          //creating an account with social login
+          console.log("creating an account with provider");
+          return Providers.createUserWithProvider(providerData)
+
+        } else if (provider && user) {
+          //is updating the provider information (particularly the tokens)
+          //however, don't allow it if the records don't match (some user has logged into the provider account of some other user)
+          if (provider.userId !== user.id) {
+            throw {message: "this provider account has already been linked with a different user"}
+          }
+
+          promises = [user, Providers.update(providerData)]
+          return Promise.all(promises)
+
+        } else if (!provider && user) {
+          //is linking a new account to an already existing user account
+          providerData.userId = user.id
+          promises = [user, Providers.create(providerData)]
+          return Promise.all(promises)
+
+        }
       })
-      .then((provider) => {
-        return resolve(toReturn)
+      .then((results) => {
+        //should be in array [user, provider]
+        const ret = {user: results[0], provider: results[1]}
+        return resolve(ret)
       })
       .catch((err) => {
         console.log("error when logging in with provider:")
         return reject(err)
+      })
+    })
+  },
+
+
+  createUserWithProvider: function (providerData) {
+    return new Promise((resolve, reject) => {
+      let user
+      Users.create()
+      .then((u) => {
+        user = u
+        providerData.userId = user.id
+
+        return Providers.create(providerData)
+      })
+      .then((provider) => {
+        return resolve([user, provider])
+      })
+      .catch((err) => {
+        console.log("error creating user with provider");
+        reject(err);
       })
     })
   },

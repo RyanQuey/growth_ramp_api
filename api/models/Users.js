@@ -9,7 +9,11 @@ import crypto from 'crypto'
 module.exports = {
 
   attributes: {
-    email: { type: 'string', regex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/},
+    email: {
+      type: 'string',
+      regex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      required: false,
+    },
     phone: { type: 'string', regex: /\+1\d{3}\d{3}\d{4}/ },
     firstName: { type: 'string' },
     lastName: { type: 'string' },
@@ -38,7 +42,8 @@ module.exports = {
     // Override the default toJSON method, which is called before returning data back to the client
     toJSON: function() {
       let obj = this.toObject();
-      delete obj.password;
+      //convert to Boolean, so I can find out if they need to set their password
+      obj.password = obj.password ? true : false
       return obj;
     },
 
@@ -83,10 +88,16 @@ module.exports = {
       getUser()
       .then((user) => {
         if (user.authenticate(password)) {
-          resolve(user);
+          return user
         } else {
-          reject({ error: 'invalid password' });
+          return reject({ error: 'invalid password' });
         }
+      })
+      .then((user) => {
+        return Users.login(user)
+      })
+      .then((userWithToken) => {
+         return resolve(userWithToken);
       })
       .catch((err) => {
         reject(err)
@@ -105,9 +116,31 @@ module.exports = {
 
   //send them an email with their password, which they can reset
   afterCreate: function (newUser, callback) {
-    Users.sendLoginToken(newUser)
-    .then(() => { callback(); })
-    .catch((err) => { sails.log.error(err); callback(); })
+    //some users will create an account using a provider, and only later create an email
+    if (newUser.email) {
+      Users.sendLoginToken(newUser)
+      .then(() => { callback(); })
+      .catch((err) => { sails.log.error(err); callback(); })
+    } else {
+      callback()
+    }
+  },
+
+  login: function (userData) {
+    return new Promise((resolve, reject) => {
+      let stuff = Users.getNewToken();
+      let token = stuff.token;
+      let expiration = stuff.expires;
+
+      Users.update({ id: userData.id }, { apiToken: token, apiTokenExpires: expiration })
+      .then((result) => {
+        const user = result[0]
+        resolve(user);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+    });
   },
 
 
@@ -121,7 +154,7 @@ module.exports = {
 	sendLoginToken: function (user) {
     return new Promise((resolve, reject) => {
   		if (!user.email) {
-  			return reject({ error: 'E-mail is required.' });
+  			return reject({ error: 'E-mail is required to receive login token.' });
   		}
 
   		Users.findByEmail(email)
@@ -141,7 +174,9 @@ module.exports = {
 
   //check permissions via API token
   //optionally pass in criteria to find the specific permission eg, {planId: "...", role: "ADMIN"}
-  getPermissions: (token, criteria) => {
+  //NOTE: currently handling this from the policies for the CRUD actions
+  //might need this in other cases though?
+  /*getPermissions: (token, criteria) => {
     return new Promise((resolve, reject) => {
       if (!token) {
         return reject();
@@ -155,8 +190,9 @@ module.exports = {
         return reject();
       });
     });
-  },
+  },*/
 
+  //might use  eventually, but for now just using policies
   canModify: function (req, userId) {
     let user = req.user;
 

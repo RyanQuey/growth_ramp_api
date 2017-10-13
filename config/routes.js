@@ -21,11 +21,8 @@
  */
 
 module.exports.routes = {
-  //NOTE: all sails auto routing has the namespace with the '/api' prefix in the blueprints configuration
-
   //I think you can call next to pass the request along to the next route that matches
   '/test': function (req, res, next) {
-    console.log("successfully got contacted");
     res.send("successfully contacted the API")
   },
 

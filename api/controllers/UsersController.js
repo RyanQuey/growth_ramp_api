@@ -62,13 +62,14 @@ module.exports = {
 		});
 	},
 
-	checkSession: function (req, res) {
+//not currently using
+	/*checkSession: function (req, res) {
 		if (!req.user) {
 			return res.forbidden();
 		}
 
 		return res.ok(req.user);
-	},
+	},*/
 
 	resetPassword: function (req, res)  {
 		let email = req.param('email') || req.body.email;
