@@ -3,12 +3,12 @@ exports.up = function(knex, Promise) {
   return Promise.all([
     knex.schema.createTable('messages', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.string('thumbnailUrl');
-      t.string('mediumUtm');
-      t.string('sourceUtm');
-      t.string('contentUtm');
-      t.string('termUtm');
-      t.string('customUtm');
+      t.text('thumbnailUrl');
+      t.text('mediumUtm');
+      t.text('sourceUtm');
+      t.text('contentUtm');
+      t.text('termUtm');
+      t.text('customUtm');
       //associations
       t.integer('userId').references('id').inTable('users');
       t.integer('postId').references('id').inTable('posts');
@@ -17,8 +17,8 @@ exports.up = function(knex, Promise) {
     }),
     knex.schema.createTable('plans', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.string('name');
-      t.string('status');
+      t.text('name');
+      t.text('status');
       t.json('channelConfigurations');
       t.timestamp('createdAt').defaultTo(knex.fn.now());
       t.timestamp('updatedAt').defaultTo(knex.fn.now());
@@ -27,23 +27,23 @@ exports.up = function(knex, Promise) {
     }),
     knex.schema.createTable('posts', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.string('status');
+      t.text('status');
       //associations
       t.integer('userId').references('id').inTable('users');
       t.integer('planId').references('id').inTable('plans');
     }),
     knex.schema.createTable('providers', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.string('name');
-      t.string('userName');
-      t.string('providerUserId')
-      t.string('email');
-      t.string('profilePictureUrl');
-      t.string('status');
+      t.text('name');
+      t.text('userName');
+      t.text('providerUserId')
+      t.text('email');
+      t.text('profilePictureUrl');
+      t.text('status');
       t.json('channels');
-      t.string('accessToken');
+      t.text('accessToken');
       t.dateTime('accessTokenExpires')
-      t.string('refreshToken');
+      t.text('refreshToken');
       t.dateTime('refreshTokenExpires')
       t.timestamp('createdAt').defaultTo(knex.fn.now());
       t.timestamp('updatedAt').defaultTo(knex.fn.now());
@@ -52,12 +52,12 @@ exports.up = function(knex, Promise) {
     }),
     knex.schema.createTable('users', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.string('email');
-      t.string('phone');
-      t.string('firstName');
-      t.string('lastName');
-      t.string('apiToken');
-      t.string('password');
+      t.text('email');
+      t.text('phone');
+      t.text('firstName');
+      t.text('lastName');
+      t.text('apiToken');
+      t.text('password');
       t.boolean('welcomeEmailSent');
       t.dateTime('apiTokenExpires');
       t.timestamp('createdAt').defaultTo(knex.fn.now());
