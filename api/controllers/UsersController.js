@@ -38,13 +38,13 @@ module.exports = {
   },
 
 	loginWithProvider: ((req, res) => {
-    Providers.loginWithProvider(req)
-    .then((userAndProvider) => {
+    ProviderAccounts.loginWithProvider(req)
+    .then((userAndAccount) => {
       //TODO don't send refresh and access tokens
       //eventually need to build up the provider information with this
 console.log("ab");
-console.log(userAndProvider);
-      return res.ok(userAndProvider)
+console.log(userAndAccount);
+      return res.ok(userAndAccount)
     })
     .catch((err) => {
       console.log(err);
@@ -112,7 +112,7 @@ console.log(userAndProvider);
 				subject: template.email.subject,
 				body: template.email.body,
 				addresses: [ user.email ],
-				from: "Next In Line <no-reply@nextinline.io>"
+				from: ""
 			};
 
 			sails.log.debug(emailNotification);

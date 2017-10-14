@@ -18,7 +18,7 @@ module.exports = {
     userId: { model: 'users', required: true },
     postId: { model: 'posts', required: true },
     //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
-    providerId: { model: 'providers', required: true },
+    providerAccountId: { model: 'providerAccounts', required: true },
     planId: { model: 'plans', required: true }
   },
   // don't need these because it's part of post already

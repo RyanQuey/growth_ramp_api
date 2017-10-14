@@ -28,8 +28,8 @@ module.exports = {
       required: true,
     }, //will be the userid, until it is populated (.populate('user'))
 
-    providers: {//(necessary to toggle entire providers without messing up channel configurations)
-      collection: 'providers',
+    providerAccounts: {//(necessary to toggle entire providerAccounts without messing up channel configurations)
+      collection: 'providerAccounts',
       via: 'plans',
       dominant: true
     },

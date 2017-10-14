@@ -22,8 +22,8 @@ module.exports = {
     },
 
     planId: { model: 'plans', required: true },
-    providers: {
-      collection: 'providers',
+    providerAccounts: {
+      collection: 'providerAccounts',
       via: 'posts',
       dominant: true
     },

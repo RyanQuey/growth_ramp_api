@@ -12,7 +12,7 @@ exports.up = function(knex, Promise) {
       //associations
       t.integer('userId').references('id').inTable('users');
       t.integer('postId').references('id').inTable('posts');
-      t.integer('providerId').references('id').inTable('providers');
+      t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('planId').references('id').inTable('plans');
     }),
     knex.schema.createTable('plans', function (t) {
@@ -32,9 +32,9 @@ exports.up = function(knex, Promise) {
       t.integer('userId').references('id').inTable('users');
       t.integer('planId').references('id').inTable('plans');
     }),
-    knex.schema.createTable('providers', function (t) {
+    knex.schema.createTable('providerAccounts', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.text('name');
+      t.text('provider');
       t.text('userName');
       t.text('providerUserId')
       t.text('email');
@@ -66,16 +66,16 @@ exports.up = function(knex, Promise) {
     }),
 
     //joins tables
-    knex.schema.createTable('providers_plans', function (t) {
-      t.integer('providerId').references('id').inTable('providers');
+    knex.schema.createTable('provider_accounts_plans', function (t) {
+      t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('planId').references('id').inTable('plans');
     }),
-    knex.schema.createTable('providers_messages', function (t) {
-      t.integer('providerId').references('id').inTable('providers');
+    knex.schema.createTable('provider_accounts_messages', function (t) {
+      t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('messageId').references('id').inTable('messages');
     }),
-    knex.schema.createTable('providers_posts', function (t) {
-      t.integer('providerId').references('id').inTable('providers');
+    knex.schema.createTable('provider_accounts_posts', function (t) {
+      t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('postId').references('id').inTable('posts');
     }),
   ])
@@ -86,11 +86,11 @@ exports.down = function(knex, Promise) {
     knex.raw('DROP TABLE if exists messages cascade'),
     knex.raw('DROP TABLE if exists plans cascade'),
     knex.raw('DROP TABLE if exists posts cascade'),
-    knex.raw('DROP TABLE if exists providers cascade'),
+    knex.raw('DROP TABLE if exists providerAccounts cascade'),
     knex.raw('DROP TABLE if exists users cascade'),
-    knex.raw('DROP TABLE if exists providers_plans cascade'),
-    knex.raw('DROP TABLE if exists providers_messages cascade'),
-    knex.raw('DROP TABLE if exists providers_posts cascade'),
+    knex.raw('DROP TABLE if exists provider_accounts_plans cascade'),
+    knex.raw('DROP TABLE if exists provider_accounts_messages cascade'),
+    knex.raw('DROP TABLE if exists provider_accounts_posts cascade'),
   ])
 
 };

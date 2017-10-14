@@ -23,7 +23,7 @@ module.exports = {
   PROVIDERS: {
     FACEBOOK: {
       name: 'Facebook',
-      providerId: 'facebook.com',
+      providerId: 'FACEBOOK',
       channels: [
         "PERSONAL_POST",
         //"PRIVATE_MESSAGE",
@@ -50,12 +50,12 @@ module.exports = {
     //GITHUB: 'github',
     GOOGLE: {
       name: 'Google',
-      providerId: 'google.com',
+      providerId: 'GOOGLE',
       channels: []
     },
     LINKEDIN: {
       name: 'LinkedIn',
-      providerId: 'linkedin.com',
+      providerId: 'LINKEDIN',
       channels: [
         "PERSONAL_POST",
         //"PRIVATE_MESSAGE",
@@ -65,16 +65,13 @@ module.exports = {
     },
     TWITTER: {
       name: 'Twitter',
-      providerId: 'twitter.com',
+      providerId: 'TWITTER',
       channels: [
         "PERSONAL_POST", //tweet. distinct from business post?
         "PRIVATE_MESSAGE",
       ]
     },
-      //keep this in sync with the frontend constants
-    TYPES: {
-      USER_POST: "USER_POST"
-    }
   },
 }
+      //keep this in sync with the frontend constants
 
