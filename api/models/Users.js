@@ -22,8 +22,8 @@ module.exports = {
     apiTokenExpires: { type: 'string' },
 
     //associations
-    providers: {
-      collection: 'providers',
+    providerAccounts: {
+      collection: 'providerAccounts',
       via: 'userId',
       dominant: true
     },
@@ -149,37 +149,39 @@ console.log(result);
   initialUserData: (userData) => {
     return new Promise((resolve, reject) => {
       //could combine these two, but saves having to look up the user in a database again
-console.log(userData);
       if (typeof userData === "object") {
         const promises = [
           Plans.find({userId: userData.id}),
-          Providers.find({userId: userData.id}),
+          providerAccounts.find({userId: userData.id}),
         ]
 
         return Promise.all(promises)
         .then((results) => {
-          const [plans, providerAccounts] = results
+          const [plans, accounts] = results
+          const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
           resolve({
             userData,
             plans,
-            providers: providerAccounts
+            providerAccounts: sortedAccounts
           });
         })
 
       //this should be the userid
       } else if (["number", "string"].includes(typeof userData)) {
-        Users.findOne(userData).populate('plans').populate('providers')
+        Users.findOne(userData).populate('plans').populate('providerAccounts')
         .then((result) => {
         //req.user should already be set by the API token policy
           const plans = result.plans
           delete result.plans
-          const providerAccounts = result.providers
-          delete result.providers
+          const accounts = result.providerAccounts
+          const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
+console.log(sortedAccounts);
+          delete result.providerAccounts
 
           resolve({
             user: result,
             plans,
-            providers: providerAccounts,
+            providerAccounts: sortedAccounts,
           })
         })
         .catch((err) => {

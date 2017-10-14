@@ -1,5 +1,5 @@
 /**
- * Provider.js
+ * ProviderAccounts.js
  *
  * @description ::
  *
@@ -17,9 +17,8 @@ const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
 const callbackUrl = domain + callbackPath
 
 module.exports = {
-
   attributes: {
-    name: {
+    provider: {
       type: 'string',
       required: true,
       enum: Object.keys(PROVIDERS)
@@ -43,16 +42,16 @@ module.exports = {
     //the data below you will just be helpful later on, for analytics/filtering etc.
     plans: {
       collection: 'plans',
-      via: 'providers'
+      via: 'providerAccounts'
     },
     //these are the configurations associated with a given plan
     posts: {
       collection: 'posts',
-      via: 'providers'
+      via: 'providerAccounts'
     },
     messages: {
       collection: 'messages',
-      via: 'providerId'
+      via: 'providerAccountId'
     },
     // Override the default toJSON method
     toJSON: function() {
@@ -63,17 +62,19 @@ module.exports = {
     },
   },
 
+  tableName: "providerAccounts",
+
   loginWithProvider(req) {
 
     //0) confirm / extract user information from provider
-    //1) find user and provider
-    //2) determine what to do with both user and provider information
-    //create or update provider information including the provider tokens
+    //1) find user and account
+    //2) determine what to do with both user and account information
+    //create or update account information including the account tokens
     //.1) return user info, along with plans and posts and API token, to the client server
 
     const getUser = (() => {
       //1)
-      //if provider data is sent with apiToken, will update this users provider
+      //if account data is sent with apiToken, will update this users provider account
       if (req.user) {
         return req.user
 
@@ -81,57 +82,57 @@ module.exports = {
       } else {
         //if no API token provided, check if this provider information matches another user
         //if there is a match, ...not validating the provider data for now, but maybe should?
-        //return Users.findOrCreate({providers: }, {})
+        //return Users.findOrCreate({accounts: }, {})
         return false //
       }
     })
 
 
-    const getProvider = (providerData) => {
-      Providers.findOne({name: providerData.name, providerUserId: providerData.providerUserId})
+    const getProviderAccount = (accountData) => {
+      ProviderAccounts.findOne({provider: accountData.provider, providerUserId: accountData.providerUserId})
       //cannot just updateOrCreate, because you have to check if something is amiss (see `else if (provider && user)` conditional below)
-      //return Providers.updateOrCreate({userId: user.id, name: providerData.name}, providerData)
+      //return ProviderAccounts.updateOrCreate({userId: user.id, name: providerAccountData.name}, providerAccountData)
       //might create security hole ...? too tired to think about right now
     }
 
     return new Promise((resolve, reject) => {
       //0)
-      let providerData = req.body
-      if (!providerData.name) {return reject("no provider defined")}
+      let providerAccountData = req.body
+      if (!providerAccountData.provider) {return reject("no provider defined")}
 
       //1)
-      Promise.all([getUser(), getProvider(providerData)])
+      Promise.all([getProviderAccount(providerAccountData), getUser()])
       .then((results) => {
         //handling the different situations here
-        const [loggedIn, provider] = results
+        const [loggedIn, account] = results
 console.log("already existing accounts?");
-console.log(loggedIn, provider);
+console.log(loggedIn, account);
         let promises
-        if (provider && !loggedIn) {
+        if (account && !loggedIn) {
           //logging in with a provider
           //TODO only update the relevant part of the provider data, eg not the user ID, etc.
-          promises = [Users.login({id: provider.userId}), Providers.update(providerData)]
+          promises = [Users.login({id: account.userId}), ProviderAccounts.update(providerAccountData)]
           return Promise.all(promises)
 
-        } else if (!provider && !loggedIn) {
+        } else if (!account && !loggedIn) {
           //creating an account with social login
           console.log("creating an account with provider");
-          return Providers.createUserWithProvider(providerData)
+          return ProviderAccounts.createUserWithProvider(providerAccountData)
 
-        } else if (provider && loggedIn) {
+        } else if (account && loggedIn) {
           //is updating the provider information (particularly the tokens)
           //however, don't allow it if the records don't match (some user has logged into the provider account of some other user)
-          if (provider.userId !== user.id) {
+          if (account.userId !== user.id) {
             throw {message: "this provider account has already been linked with a different user"}
           }
 
-          promises = [loggedIn, Providers.update(providerData)]
+          promises = [loggedIn, ProviderAccounts.update(providerAccountData)]
           return Promise.all(promises)
 
-        } else if (!provider && loggedIn) {
+        } else if (!account && loggedIn) {
           //is linking a new account to an already existing user account
-          providerData.userId = user.id
-          promises = [loggedIn, Providers.create(providerData)]
+          providerAccountData.userId = user.id
+          promises = [loggedIn, ProviderAccounts.create(providerAccountData)]
           return Promise.all(promises)
 
         }
@@ -151,15 +152,15 @@ console.log(loggedIn, provider);
   },
 
 
-  createUserWithProvider: function (providerData) {
+  createUserWithProvider: function (providerAccountData) {
     return new Promise((resolve, reject) => {
       let user
       Users.create()
       .then((u) => {
         user = u
-        providerData.userId = user.id
-
-        return Providers.create(providerData)
+        providerAccountData.userId = user.id
+console.log(providerAccountData);
+        return ProviderAccounts.create(providerAccountData)
       })
       .then((provider) => {
 
@@ -172,21 +173,35 @@ console.log(loggedIn, provider);
     })
   },
 
+  //sorts accounts, group  according to provider
+  sortAccounts: (accounts) => {
+    const providerNames = Object.keys(PROVIDERS)
+    const sorted = accounts.reduce((acc, account) => {
+      const providerName = account.provider
+      if (!acc[providerName]) {
+        acc[providerName] = [account]
+      } else {
+        acc[providerName].push(account)
+
+      }
+
+      return acc
+    }, {})
+
+    return sorted
+  },
+
   HandleNewRefreshToken: function(refreshToken) {
 
   },
 
-  //setRefreshToken: function(refreshToken) {
-  //don't need this unless I'm providing hooks that will happen every time the refresh token is set
-
-  //},
-
   userToken: function(providerName, userId, tokenType) {
     new Promise((resolve, reject) => {
-      Providers.find({
+      ProviderAccounts.find({
         user: userId,
         name: providerName
       })
+//TODO: need to edit, user might have more than one provider account linked up to theirs
       .then((provider) => {
         if (moment(provider[`${tokenType}TokenExpires`]).isAfter(moment())) {
           return provider[`${tokenType}Token`]
@@ -205,7 +220,7 @@ console.log(loggedIn, provider);
       if (refreshToken) {
         return
       } else if (!refreshToken && userId) {
-        return Providers.userToken(providerName, userId, "access")
+        return ProviderAccounts.userToken(providerName, userId, "access")
       } else {
         return reject("need either a refresh token or userid")
       }
