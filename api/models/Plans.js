@@ -10,7 +10,7 @@ module.exports = {
 
   attributes: {
     name: { type: 'string', required: true }, //"e.g., my favorite plan"
-    status: { type: 'string', required: true, enum: PLAN_STATUSES },
+    status: { type: 'string', required: true, enum: PLAN_STATUSES, defaultsTo: PLAN_STATUSES[0]  },
     channelConfigurations: { type: 'json', defaultsTo: {} },
       /*
         type: { type: 'string', required: true },//"PERSONAL_POST",

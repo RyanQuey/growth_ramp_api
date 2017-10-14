@@ -2,7 +2,7 @@ module.exports = function userTokenAuth (req, res, next) {
 
   let fail = (message) => {
     // still going onto next, but with no user set
-    console.log("ERROR", message)
+    console.log(message)
     next();
   };
 
@@ -11,7 +11,6 @@ module.exports = function userTokenAuth (req, res, next) {
   }
 
   if (req.get('x-user-token')) {
-    console.log("now checking token");
     let token = req.get('x-user-token');
 
     let id = req.get('x-id')
@@ -21,11 +20,9 @@ module.exports = function userTokenAuth (req, res, next) {
 
     Users.findOne({apiToken: token})
     .then((user) => {
-      console.log(user);
       if (!user) {
         fail(`No user found for this token, ${token}`);
       } else if (id === user.id /* && user.apiTokenExpires...*/) {
-console.log(req.get('x-id') );
         req.user = user;
         pass();
       } else {
