@@ -37,6 +37,7 @@ module.exports.policies = {
     find: ['userTokenAuth', 'canRead'],
     findOne: ['userTokenAuth', 'canRead'],
     loginWithProvider: ['userTokenAuth', 'checkProviderData'],
+    populatePlans: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },

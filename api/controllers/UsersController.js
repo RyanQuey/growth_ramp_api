@@ -10,7 +10,9 @@ import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 module.exports = {
   //TODO: if the asynchronous stuff gets too complicated, try async lib, which is placed as a global in sails by default
 
+  ////////////////////////////////////////////////////////
   //login / authentication stuff
+  ///////////////////////////////////////////////////////////
   authenticate: function (req, res) {
 		let email = req.body.email;
 		let password = req.body.password;
@@ -124,24 +126,27 @@ console.log(userAndProvider);
 		});
 	},
 
-  //user provider actions
-  addProvider: ((req, res) => {
+  ///////////////////////////////////////////////////////////
+  //user plans actions
+  ///////////////////////////////////////////////////////////
 
-  //1) verify user via token
-  //2) create or update provider information
-  //3) update the provider tokens, basically part of 2
-  //4) return user info, along with plans and posts and API token, to the client server
+  //will be used when initializing a new user session
+  //populates plans and providers that user has access to read
+  initialUserData: ((req, res) => {
 
-    //
-    //.then((user) => {
-    //req.user should already be set by the API token policy
-      console.log(req.user);
-    /*})
+    Users.initialUserData(req.user.id)
+    .then((ret) => {
+      res.ok(ret)
+    })
     .catch((err) => {
       console.log(err);
-    })*/
+      res.negotiate(err)
+    })
 
   }),
+  ///////////////////////////////////////////////////////////
+  //user provider actions
+  ///////////////////////////////////////////////////////////
 
 };
 

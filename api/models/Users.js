@@ -98,8 +98,8 @@ module.exports = {
       .then((user) => {
         return Users.login(user)
       })
-      .then((userWithToken) => {
-         return resolve(userWithToken);
+      .then((userWithTokenAndPlans) => {
+        return resolve(userWithTokenAndPlans);
       })
       .catch((err) => {
         reject(err)
@@ -133,12 +133,12 @@ module.exports = {
       let stuff = Users.createApiToken();
       let token = stuff.token;
       let expiration = stuff.expires;
+      let user
 
       Users.update({ id: userData.id }, { apiToken: token, apiTokenExpires: expiration })
       .then((result) => {
 console.log(result);
-        const user = result[0]
-        resolve(user);
+        user = result[0]
       })
       .catch((err) => {
         reject(err);
@@ -146,6 +146,51 @@ console.log(result);
     });
   },
 
+  initialUserData: (userData) => {
+    return new Promise((resolve, reject) => {
+      //could combine these two, but saves having to look up the user in a database again
+console.log(userData);
+      if (typeof userData === "object") {
+        const promises = [
+          Plans.find({userId: userData.id}),
+          Providers.find({userId: userData.id}),
+        ]
+
+        return Promise.all(promises)
+        .then((results) => {
+          const [plans, providerAccounts] = results
+          resolve({
+            userData,
+            plans,
+            providers: providerAccounts
+          });
+        })
+
+      //this should be the userid
+      } else if (["number", "string"].includes(typeof userData)) {
+        Users.findOne(userData).populate('plans').populate('providers')
+        .then((result) => {
+        //req.user should already be set by the API token policy
+          const plans = result.plans
+          delete result.plans
+          const providerAccounts = result.providers
+          delete result.providers
+
+          resolve({
+            user: result,
+            plans,
+            providers: providerAccounts,
+          })
+        })
+        .catch((err) => {
+          reject(err)
+        })
+      } else {
+        throw {message: "invalid user data when trying to get initial user data"}
+      }
+
+    })
+  },
 
   createApiToken: () => {
     return {
