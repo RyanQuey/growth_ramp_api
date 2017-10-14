@@ -3,7 +3,10 @@
  *
  * @description ::
  *
- * this is provider information for each social network that a user has configured for growth_ramp. Arguably, this be better be called userProviders, but provider is shorter
+ * this is provider information for each social network that a user has configured for growth_ramp. Arguably, this be better be called providerAccounts, but provider is shorter
+ *
+ * a user may have multiple accounts for a single provider. however, each provider only have one user
+ * other users that use this account will have to have a Permission given
  *
  * note that many of the columns may be slightly different than the user information, but is what the user information is from the provider, when the user is using the provider (e.g., their account information in the social network)
  *
@@ -100,42 +103,44 @@ module.exports = {
       Promise.all([getUser(), getProvider(providerData)])
       .then((results) => {
         //handling the different situations here
-        const [user, provider] = results
+        const [loggedIn, provider] = results
 console.log("already existing accounts?");
-console.log(user, provider);
+console.log(loggedIn, provider);
         let promises
-        if (provider && !user) {
+        if (provider && !loggedIn) {
           //logging in with a provider
           //TODO only update the relevant part of the provider data, eg not the user ID, etc.
-          promises = [Users.login({id: provider.userId}, {}), Providers.update(providerData)]
+          promises = [Users.login({id: provider.userId}), Providers.update(providerData)]
           return Promise.all(promises)
 
-        } else if (!provider && !user) {
+        } else if (!provider && !loggedIn) {
           //creating an account with social login
           console.log("creating an account with provider");
           return Providers.createUserWithProvider(providerData)
 
-        } else if (provider && user) {
+        } else if (provider && loggedIn) {
           //is updating the provider information (particularly the tokens)
           //however, don't allow it if the records don't match (some user has logged into the provider account of some other user)
           if (provider.userId !== user.id) {
             throw {message: "this provider account has already been linked with a different user"}
           }
 
-          promises = [user, Providers.update(providerData)]
+          promises = [loggedIn, Providers.update(providerData)]
           return Promise.all(promises)
 
-        } else if (!provider && user) {
+        } else if (!provider && loggedIn) {
           //is linking a new account to an already existing user account
           providerData.userId = user.id
-          promises = [user, Providers.create(providerData)]
+          promises = [loggedIn, Providers.create(providerData)]
           return Promise.all(promises)
 
         }
       })
       .then((results) => {
         //should be in array [user, provider]
-        const ret = {user: results[0], provider: results[1]}
+        //NOTE: if logging in for the first time, `user` is an object with two properties: {user, plans: userPlans}
+        //no use returning the provider; will make another round-trip later anyways to retrieve all the providers and plans
+        const ret = {user: results[0]}
         return resolve(ret)
       })
       .catch((err) => {

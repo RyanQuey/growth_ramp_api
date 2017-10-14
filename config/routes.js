@@ -26,6 +26,13 @@ module.exports.routes = {
     res.send("successfully contacted the API")
   },
 
+  ////////////////////////////////////////////////////////////////
+  //users
+  'get /users/:id/initialUserData': {
+    controller: 'UsersController',
+    action: 'initialUserData'
+  },
+
   'post /users/login_with_provider': {
     controller: 'UsersController',
     action: 'loginWithProvider'
