@@ -33,7 +33,7 @@ module.exports = {
     //these are the different channels that the user has for this account, in the metadata for those channels
     channels: { type: 'json', defaultsTo: {} },
     userName: { type: 'string' },
-    profilePictureUrl: { type: 'string' },
+    profileUrl: { type: 'string' },
     status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
 
     //**associations**

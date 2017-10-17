@@ -38,7 +38,7 @@ exports.up = function(knex, Promise) {
       t.text('userName');
       t.text('providerUserId')
       t.text('email');
-      t.text('profilePictureUrl');
+      t.text('profileUrl');
       t.text('status');
       t.json('channels');
       t.text('accessToken');
@@ -86,7 +86,7 @@ exports.down = function(knex, Promise) {
     knex.raw('DROP TABLE if exists messages cascade'),
     knex.raw('DROP TABLE if exists plans cascade'),
     knex.raw('DROP TABLE if exists posts cascade'),
-    knex.raw('DROP TABLE if exists providerAccounts cascade'),
+    knex.raw('DROP TABLE if exists "providerAccounts" cascade'),
     knex.raw('DROP TABLE if exists users cascade'),
     knex.raw('DROP TABLE if exists provider_accounts_plans cascade'),
     knex.raw('DROP TABLE if exists provider_accounts_messages cascade'),

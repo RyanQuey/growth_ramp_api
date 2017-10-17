@@ -28,15 +28,31 @@ module.exports.routes = {
 
   ////////////////////////////////////////////////////////////////
   //users
+
+  //when logging in or restoring session from the cookie
   'get /users/:id/initialUserData': {
     controller: 'UsersController',
     action: 'initialUserData'
   },
 
+  //fetching user posts
+  'get /users/:id/posts': {
+    controller: 'UsersController',
+    action: 'getPosts'
+  },
+
+  //logging in, or also probably when linking a new provider account
   'post /users/login_with_provider': {
     controller: 'UsersController',
     action: 'loginWithProvider'
   },
+
+  'post /users/signOut': {
+    controller: 'UsersController',
+    action: 'signOut'
+  },
+
+
 
   /***************************************************************************
   *                                                                          *

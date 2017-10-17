@@ -12,7 +12,7 @@ module.exports = {
 
   attributes: {
     status: { type: 'string', required: true, enum: POST_STATUSES },
-    timeSent: { type: 'datetime' },
+    timePublished: { type: 'datetime' },
     //Associations
     userId: { model: 'users', required: true },
     messages: {
