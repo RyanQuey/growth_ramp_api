@@ -38,6 +38,8 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     loginWithProvider: ['userTokenAuth', 'checkProviderData'],
     initialUserData: ['userTokenAuth', 'canRead'],
+    getPosts: ['userTokenAuth', 'canRead'],
+    signOut: ['userTokenAuth'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },

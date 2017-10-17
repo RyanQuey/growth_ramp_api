@@ -53,7 +53,7 @@ console.log(userAndAccount);
   }),
 
 
-	logout: function (req, res) {
+	signOut: function (req, res) {
 		if (!req.user) {
 			return res.forbidden();
 		}
@@ -133,8 +133,23 @@ console.log(userAndAccount);
   //will be used when initializing a new user session
   //populates plans and providers that user has access to read
   initialUserData: ((req, res) => {
-
     Users.initialUserData(req.user.id)
+    .then((ret) => {
+      res.ok(ret)
+    })
+    .catch((err) => {
+      console.log(err);
+      res.negotiate(err)
+    })
+
+  }),
+  ///////////////////////////////////////////////////////////
+  //user posts actions
+  ///////////////////////////////////////////////////////////
+  //default is to get all user posts, but eventually should paginate, filter, etc.
+  getPosts: ((req, res) => {
+    //could also do req.params.id, since it is in the route
+    Posts.find({userId: req.user.id})
     .then((ret) => {
       res.ok(ret)
     })
