@@ -37,6 +37,7 @@ module.exports = function canRead (req, res, next) {
     } else {
       //try to skip a trip to the database by finding and setting the record on the request body
       //as long as we are using this, make sure that no one can change the userId unless admin
+console.log(action, req.param("userId"));
       if (action === "create" || req.param("userId")) {
         if (req.param("userId") == req.user.id) { //one of these is a string
           pass();

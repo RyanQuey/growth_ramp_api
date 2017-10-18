@@ -11,8 +11,9 @@ var POST_STATUSES = require('../constants').POST_STATUSES
 module.exports = {
 
   attributes: {
-    status: { type: 'string', required: true, enum: POST_STATUSES },
-    timePublished: { type: 'datetime' },
+    status: { type: 'string', required: true, defaultsTo: POST_STATUSES[0], enum: POST_STATUSES },
+    publishedAt: { type: 'datetime' },
+
     //Associations
     userId: { model: 'users', required: true },
     messages: {
