@@ -29,9 +29,15 @@ module.exports = {
     accessTokenExpires: { type: 'datetime' },
     refreshToken: { type: 'string' },
     refreshTokenExpires: { type: 'datetime' },
+    //might make this an array, since FB returns multiple emails
     email: { type: 'string', required: false },
-    //these are the different channels that the user has for this account, in the metadata for those channels
+    //these are the different channels that the user has for this account, and the metadata for those channels
+    //but if they do not have the scope set, they will not be able to post to this channel
     channels: { type: 'json', defaultsTo: {} },
+    //the channels can be configured by the front end, but the Scopes should be always in sync with their provider's scopes
+    //use the exact same strings that the provider takes/returns
+    //facebook returns as: {permission: 'the permission', status: 'granted'}
+    scopes: { type: 'array', defaultsTo: [] },
     userName: { type: 'string' },
     profileUrl: { type: 'string' },
     status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
