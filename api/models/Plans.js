@@ -11,15 +11,21 @@ module.exports = {
   attributes: {
     name: { type: 'string', required: true }, //"e.g., my favorite plan"
     status: { type: 'string', required: true, enum: PLAN_STATUSES, defaultsTo: PLAN_STATUSES[0]  },
-    channelConfigurations: { type: 'json', defaultsTo: {} },
+    channelConfigurations: { type: 'json', defaultsTo: {} }, //will group this with keys being providers, so:?? or perhaps, just make it an array, no reason to namespace using the provider
       /*
-        type: { type: 'string', required: true },//"PERSONAL_POST",
-        defaultMediumUtm: { type: 'string' },
-        defaultSourceUtm: { type: 'string' },
-        defaultContentUtm: { type: 'string' },
-        defaultTermUtm: { type: 'string' },
-        defaultCustomUtm: { type: 'string' },
-        active: { type: 'boolean', defaultsTo: true },
+       * FACEBOOK: [
+       *   {
+       *      providerAccountId: 'string'
+       *      type: { type: 'string', required: true },//"PERSONAL_POST",
+       *      defaultMediumUtm: { type: 'string' },
+       *      defaultSourceUtm: { type: 'string' },
+       *      defaultContentUtm: { type: 'string' },
+       *      defaultTermUtm: { type: 'string' },
+       *      defaultCustomUtm: { type: 'string' },
+       *      active: { type: 'boolean', defaultsTo: true },
+       *    },...
+       *  ],
+       *  TWITTER: [...
       */
 
     //Association
