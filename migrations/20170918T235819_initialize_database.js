@@ -66,15 +66,15 @@ exports.up = function(knex, Promise) {
     }),
 
     //joins tables
-    knex.schema.createTable('provider_accounts_plans', function (t) {
+    knex.schema.createTable('plans_provideraccounts__provideraccounts_plans', function (t) {
       t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('planId').references('id').inTable('plans');
     }),
-    knex.schema.createTable('provider_accounts_messages', function (t) {
+    knex.schema.createTable('messages_provideraccounts__provideraccounts_messages', function (t) {
       t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('messageId').references('id').inTable('messages');
     }),
-    knex.schema.createTable('provider_accounts_posts', function (t) {
+    knex.schema.createTable('posts_provideraccounts__provideraccounts_posts', function (t) {
       t.integer('providerAccountId').references('id').inTable('providerAccounts');
       t.integer('postId').references('id').inTable('posts');
     }),
@@ -88,9 +88,9 @@ exports.down = function(knex, Promise) {
     knex.raw('DROP TABLE if exists posts cascade'),
     knex.raw('DROP TABLE if exists "providerAccounts" cascade'),
     knex.raw('DROP TABLE if exists users cascade'),
-    knex.raw('DROP TABLE if exists provider_accounts_plans cascade'),
-    knex.raw('DROP TABLE if exists provider_accounts_messages cascade'),
-    knex.raw('DROP TABLE if exists provider_accounts_posts cascade'),
+    knex.raw('DROP TABLE if exists plans_provideraccounts__provideraccounts_plans cascade'),
+    knex.raw('DROP TABLE if exists messages_provideraccounts__provideraccounts_messages cascade'),
+    knex.raw('DROP TABLE if exists posts_provideraccounts__provideraccounts_posts cascade'),
   ])
 
 };
