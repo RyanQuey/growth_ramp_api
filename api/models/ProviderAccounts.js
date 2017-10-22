@@ -23,21 +23,29 @@ module.exports = {
       required: true,
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
+
     //should make a hash of these, to dehash before sending
     providerUserId: { type: 'string' },
     accessToken: { type: 'string' },
     accessTokenExpires: { type: 'datetime' },
     refreshToken: { type: 'string' },
     refreshTokenExpires: { type: 'datetime' },
+
     //might make this an array, since FB returns multiple emails
     email: { type: 'string', required: false },
+
     //these are the different channels that the user has for this account, and the metadata for those channels
     //but if they do not have the scope set, they will not be able to post to this channel
     channels: { type: 'json', defaultsTo: {} },
+
     //the channels can be configured by the front end, but the Scopes should be always in sync with their provider's scopes
     //use the exact same strings that the provider takes/returns
     //facebook returns as: {permission: 'the permission', status: 'granted'}
     scopes: { type: 'array', defaultsTo: [] },
+
+    //this will hold data such as friend lists, available pages, and other channels that haven't been configured, but could be
+    //the primary keys on the object
+    potentialChannels: { type: 'json', defaultsTo: {} },
     userName: { type: 'string' },
     profileUrl: { type: 'string' },
     status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
@@ -73,7 +81,7 @@ module.exports = {
   loginWithProvider(req) {
 
     //0) confirm / extract user information from provider
-    //1) find user and account
+    //1) find user (if already has an account and is logged in) and account
     //2) determine what to do with both user and account information
     //create or update account information including the account tokens
     //.1) return user info, along with plans and posts and API token, to the client server
@@ -93,9 +101,8 @@ module.exports = {
       }
     })
 
-
     const getProviderAccount = (accountData) => {
-      ProviderAccounts.findOne({provider: accountData.provider, providerUserId: accountData.providerUserId})
+      return ProviderAccounts.findOne({provider: accountData.provider, providerUserId: accountData.providerUserId})
       //cannot just updateOrCreate, because you have to check if something is amiss (see `else if (provider && user)` conditional below)
       //return ProviderAccounts.updateOrCreate({userId: user.id, name: providerAccountData.name}, providerAccountData)
       //might create security hole ...? too tired to think about right now
@@ -107,38 +114,39 @@ module.exports = {
       if (!providerAccountData.provider) {return reject("no provider defined")}
 
       //1)
-      Promise.all([getProviderAccount(providerAccountData), getUser()])
+      Promise.all([ getUser(), getProviderAccount(providerAccountData) ])
       .then((results) => {
         //handling the different situations here
-        const [loggedIn, account] = results
-console.log("already existing accounts?");
-console.log(loggedIn, account);
+        const [user, account] = results
         let promises
-        if (account && !loggedIn) {
+        if (account && !user) {
           //logging in with a provider
           //TODO only update the relevant part of the provider data, eg not the user ID, etc.
-          promises = [Users.login({id: account.userId}), ProviderAccounts.update(providerAccountData)]
+          promises = [
+            Users.login({id: account.userId}),
+            ProviderAccounts.update({id: account.id}, providerAccountData),
+          ]
+
           return Promise.all(promises)
 
-        } else if (!account && !loggedIn) {
+        } else if (!account && !user) {
           //creating an account with social login
-          console.log("creating an account with provider");
           return ProviderAccounts.createUserWithProvider(providerAccountData)
 
-        } else if (account && loggedIn) {
+        } else if (account && user) {
           //is updating the provider information (particularly the tokens)
           //however, don't allow it if the records don't match (some user has logged into the provider account of some other user)
           if (account.userId !== user.id) {
             throw {message: "this provider account has already been linked with a different user"}
           }
 
-          promises = [loggedIn, ProviderAccounts.update(providerAccountData)]
+          promises = [user, ProviderAccounts.update({id: account.id}, providerAccountData)]
           return Promise.all(promises)
 
-        } else if (!account && loggedIn) {
+        } else if (!account && user) {
           //is linking a new account to an already existing user account
           providerAccountData.userId = user.id
-          promises = [loggedIn, ProviderAccounts.create(providerAccountData)]
+          promises = [user, ProviderAccounts.create(providerAccountData)]
           return Promise.all(promises)
 
         }
@@ -146,8 +154,10 @@ console.log(loggedIn, account);
       .then((results) => {
         //should be in array [user, provider]
         //NOTE: if logging in for the first time, `user` is an object with two properties: {user, plans: userPlans}
-        //no use returning the provider; will make another round-trip later anyways to retrieve all the providers and plans
-        const ret = {user: results[0]}
+        // TODO: can use the provider information to give a success message in the browser
+        if (!results || results.length === 0) {throw {message: "didn't retrieve provider or user correctly."}}
+
+        const ret = {user: results[0], provider: results[1]}
         return resolve(ret)
       })
       .catch((err) => {
