@@ -27,7 +27,7 @@ if (HDBURL) {
   //postgres://(user):(password)@(host):(port)/(dbname)
   //S(non- spaces)
   //+ (one or more)
-  //^ beginning of input, or in brackets, means not___
+  //^__ beginning of input, or in brackets, means not___
   ///d digits
   var matches = HDBURL.match(/postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(\S+)/);
   HEROKU_DB = {
