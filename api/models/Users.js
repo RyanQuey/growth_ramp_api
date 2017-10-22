@@ -134,18 +134,18 @@ module.exports = {
       let token = stuff.token;
       let expiration = stuff.expires;
       let user
-
       Users.update({ id: userData.id }, { apiToken: token, apiTokenExpires: expiration })
       .then((result) => {
-console.log(result);
         user = result[0]
+        return resolve(user)
       })
       .catch((err) => {
-        reject(err);
+        return reject(err);
       });
     });
   },
 
+  //is called when user who has an account starts a session
   initialUserData: (userData) => {
     return new Promise((resolve, reject) => {
       //could combine these two, but saves having to look up the user in a database again
