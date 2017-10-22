@@ -1,7 +1,7 @@
 {
-  "name": "growth_ramp",
+  "name": "growth_ramp_api",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "a Sails application",
   "keywords": [],
   "dependencies": {
@@ -55,6 +55,7 @@
   "scripts": {
     "dev": "nodemon -w api -w config",
     "start": "node app.js",
+    "start": "knex migrate:latest; node app.js",
     "debug": "node debug app.js"
   },
   "main": "app.js",
