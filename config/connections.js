@@ -38,6 +38,8 @@ if (HDBURL) {
     dbname: matches[5]
   };
 }
+console.log("database data");
+console.log(HEROKU_DB);
 module.exports.connections = {
 
   //this is the key that will get connected into by the model config

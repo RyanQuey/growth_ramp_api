@@ -3,6 +3,8 @@ const connections = require("./config/connections").connections
 const development = connections.development
 const production = connections.production
 
+console.log("knex said");
+console.log(production);
 module.exports = {
 
   development: {
