@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "description": "a Sails application",
   "keywords": [],
+  "engines": {
+    "node": "8.4.0"
+  },
   "dependencies": {
     "axios": "^0.16.2",
     "babel-cli": "^6.26.0",
