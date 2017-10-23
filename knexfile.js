@@ -12,7 +12,8 @@ module.exports = {
     connection: {
       database: development.database,
       user:     development.user,
-      password: development.password
+      password: development.password,
+      host: development.host
     },
     pool: {
       min: 2,
@@ -44,7 +45,8 @@ module.exports = {
     connection: {
       database: production.database,
       user:     production.user,
-      password: production.password
+      password: production.password,
+      host: production.host
     },
     pool: {
       min: 2,
