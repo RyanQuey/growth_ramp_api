@@ -55,7 +55,7 @@
   "scripts": {
     "dev": "nodemon -w api -w config",
     "start": "node app.js",
-    "start": "knex migrate:latest; node app.js",
+    "start": "knex migrate:latest && node app.js",
     "debug": "node debug app.js"
   },
   "main": "app.js",
