@@ -86,6 +86,7 @@ module.exports = {
     //create or update account information including the account tokens
     //.1) return user info, along with plans and posts and API token, to the client server
 
+console.log("now logging in with provider");
     const getUser = (() => {
       //1)
       //if account data is sent with apiToken, will update this users provider account
