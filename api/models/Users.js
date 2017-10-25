@@ -159,9 +159,10 @@ module.exports = {
         .then((results) => {
           const [plans, accounts] = results
           const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
+          const sortedPlans = Helpers.sortRecordsById(plans)
           resolve({
             userData,
-            plans,
+            plans: sortedPlans,
             providerAccounts: sortedAccounts
           });
         })
@@ -172,7 +173,9 @@ module.exports = {
         .then((result) => {
         //req.user should already be set by the API token policy
           const plans = result.plans
+          const sortedPlans = Helpers.sortRecordsById(plans)
           delete result.plans
+
           const accounts = result.providerAccounts
           const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
 console.log(sortedAccounts);
@@ -180,7 +183,7 @@ console.log(sortedAccounts);
 
           resolve({
             user: result,
-            plans,
+            plans: sortedPlans,
             providerAccounts: sortedAccounts,
           })
         })

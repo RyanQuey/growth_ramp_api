@@ -281,5 +281,17 @@ export default {
     })
 
     return returnedObject
-  }
+  },
+
+  //turns an array of records into an object, with keys being id
+  sortRecordsById: function(records) {
+    const ret = {}
+
+    for (let i = 0; i < records.length; i++) {
+      let record = records[i]
+      ret[record.id] = record
+    }
+
+    return ret
+  },
 }
