@@ -41,7 +41,7 @@ module.exports = {
     //the channels can be configured by the front end, but the Scopes should be always in sync with their provider's scopes
     //use the exact same strings that the provider takes/returns
     //facebook returns as: {permission: 'the permission', status: 'granted'}
-    scopes: { type: 'array', defaultsTo: [] },
+    scopes: { type: 'json', defaultsTo: {} },
 
     //this will hold data such as friend lists, available pages, and other channels that haven't been configured, but could be
     //the primary keys on the object
