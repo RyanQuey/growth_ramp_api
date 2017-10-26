@@ -23,11 +23,11 @@ module.exports = {
     },
 
     planId: { model: 'plans', required: true },
-    providerAccounts: {
+    /*providerAccounts: {
       collection: 'providerAccounts',
       via: 'posts',
       dominant: true
-    },
+    },*/
   },
 
   autoCreatedAt: true,

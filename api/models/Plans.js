@@ -25,7 +25,7 @@ module.exports = {
        *   },
        *   //keep this format very similar to messages for simplicity's sake. the idea is that this plan will send one message per channel configuration
        *   //I don't imagine that there will be terribly large amount of channels for a given plan either, so just sort in browser
-       *   MessageTemplate: [
+       *   messageTemplates: [
        *     {
        *       providerAccountId: 'string'
        *       type: { type: 'string', required: true },//"PERSONAL_POST",
@@ -38,7 +38,7 @@ module.exports = {
        *     },...
        *   ]
        * },
-       * TWITTER: [...
+       * TWITTER: {...
       */
 
     //Association
@@ -47,11 +47,11 @@ module.exports = {
       required: true,
     }, //will be the userid, until it is populated (.populate('user'))
 
-    providerAccounts: {//(necessary to toggle entire providerAccounts without messing up channel configurations...edit: actually, not really, channelConfigurations is json, so can put settings there)
+    /*providerAccounts: {//(necessary to toggle entire providerAccounts without messing up channel configurations...edit: actually, not really, channelConfigurations is json, so can put settings there)
       collection: 'providerAccounts',
       via: 'plans',
       dominant: true
-    },
+    },*/
 
     posts: {
       collection: 'posts',
@@ -59,8 +59,7 @@ module.exports = {
     },
     messages: {
       collection: 'messages',
-      via: 'plans',
-      through: 'posts'
+      via: 'planId',
     },
   },
   autoCreatedAt: true,
