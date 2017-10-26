@@ -48,13 +48,15 @@ module.exports = {
     potentialChannels: { type: 'json', defaultsTo: {} },
     userName: { type: 'string' },
     profileUrl: { type: 'string' },
+    photoUrl: { type: 'string' },
     status: { type: 'string', defaultsTo: "ACTIVE", enum: PROVIDER_STATUSES },
 
     //**associations**
     userId: { model: 'users', required: true },
 
     //the data below you will just be helpful later on, for analytics/filtering etc.
-    plans: {
+    //probably don't need it; just search the messages, plans, posts themselves.
+    /*plans: {
       collection: 'plans',
       via: 'providerAccounts'
     },
@@ -63,6 +65,7 @@ module.exports = {
       collection: 'posts',
       via: 'providerAccounts'
     },
+*/
     messages: {
       collection: 'messages',
       via: 'providerAccountId'
