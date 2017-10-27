@@ -28,12 +28,12 @@ module.exports = {
        *   messageTemplates: [
        *     {
        *       providerAccountId: 'string'
-       *       type: { type: 'string', required: true },//"PERSONAL_POST",
-       *       defaultMediumUtm: { type: 'string' },
-       *       defaultSourceUtm: { type: 'string' },
-       *       defaultContentUtm: { type: 'string' },
-       *       defaultTermUtm: { type: 'string' },
-       *       defaultCustomUtm: { type: 'string' },
+       *       type: { type: 'string', required: true },//eg "PERSONAL_POST",
+       *       defaultMediumUtm: { active: true, value: 'string' },
+       *       defaultSourceUtm:
+       *       defaultContentUtm:
+       *       defaultTermUtm:
+       *       defaultCustomUtm:
        *       active: { type: 'boolean', defaultsTo: true }, //don't just delete, these might be a pain for users to come up with
        *     },...
        *   ]
