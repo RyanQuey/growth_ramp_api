@@ -4,8 +4,12 @@ const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
 const callbackUrl = domain + callbackPath
 
 module.exports = {
+  MESSAGE_TEMPLATE_STATUSES: [
+    "ACTIVE",
+    "DISABLED",
+  ],
   PLAN_STATUSES: [
-    "DRAFT",
+    "DRAFT", //not sure when it would be a draft...or what difference it would make?
     "ACTIVE",
     "ARCHIVED"
   ],
@@ -71,6 +75,16 @@ module.exports = {
         "PRIVATE_MESSAGE",
       ]
     },
+  },
+
+
+  UTM_TYPES: {
+    campaignUtm: "utm_campaign",
+    mediumUtm: "utm_medium",
+    sourceUtm: "utm_source",
+    contentUtm: "utm_content",
+    termUtm: "utm_term",
+    customUtm: "utm_custom",
   },
 }
       //keep this in sync with the frontend constants

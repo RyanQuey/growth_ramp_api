@@ -12,7 +12,10 @@ module.exports = {
     name: { type: 'string', required: true }, //"e.g., my favorite plan"
     status: { type: 'string', required: true, enum: PLAN_STATUSES, defaultsTo: PLAN_STATUSES[0]  },
     //messages does put the channel info on first level, so can query there. No reason to make the data readily accessible/normalized here in plans, where a plan can change constantly, and data can just be retrieved from the messages
-    channelConfigurations: { type: 'json', defaultsTo: {} },
+    channelConfigurations: { type: 'json', defaultsTo: {} }, //is just if each provider and each account for the provider is disabled or not for this plan (for UI)
+
+      //previously:
+      //don't set a default object; want this to scale to many providers, so don't want to have to set this enormous default. Instead, handle on creation
       //will group this with keys being providers, so:
       /*
        * FACEBOOK: {
@@ -25,27 +28,19 @@ module.exports = {
        *   },
        *   //keep this format very similar to messages for simplicity's sake. the idea is that this plan will send one message per channel configuration
        *   //I don't imagine that there will be terribly large amount of channels for a given plan either, so just sort in browser
-       *   messageTemplates: [
-       *     {
-       *       providerAccountId: 'string'
-       *       type: { type: 'string', required: true },//eg "PERSONAL_POST",
-       *       defaultMediumUtm: { active: true, value: 'string' },
-       *       defaultSourceUtm:
-       *       defaultContentUtm:
-       *       defaultTermUtm:
-       *       defaultCustomUtm:
-       *       active: { type: 'boolean', defaultsTo: true }, //don't just delete, these might be a pain for users to come up with
-       *     },...
-       *   ]
        * },
        * TWITTER: {...
       */
 
-    //Association
+    //Associations
     userId: {
       model: 'users',
       required: true,
     }, //will be the userid, until it is populated (.populate('user'))
+    messageTemplates: {
+      collection: 'messageTemplates',
+      via: 'planId',
+    },
 
     /*providerAccounts: {//(necessary to toggle entire providerAccounts without messing up channel configurations...edit: actually, not really, channelConfigurations is json, so can put settings there)
       collection: 'providerAccounts',

@@ -52,6 +52,25 @@ module.exports.routes = {
     action: 'signOut'
   },
 
+  ////////////////////////////////////////////////////////////////
+  //posts
+  //
+
+  'post /posts/:id/publish': {
+    controller: 'PostsController',
+    action: 'publish'
+  },
+
+  ////////////////////////////////////////////////////////////////
+  //providers
+  //will set a tentative new record, with scopes set and provider name and user id
+  //if confirmed, at that point can either connect to an existing account (if there is a match) or, if provider userId does not match, that is the new account
+  //if cancelled, all of that user's pending accounts for that provider are destroyed (because, I have no way of telling which
+  'put /providers/:providerName/tentativelySetScope': {
+    controller: 'UsersController',
+    action: 'signOut'
+  },
+
 
 
   /***************************************************************************
