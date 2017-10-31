@@ -6,6 +6,13 @@
  */
 
 module.exports = {
-	
+
+  publish: (req, res) => {
+    Posts.publish(req.body)
+    .then((results) => {
+      res.ok(results)
+    })
+    .catch((err) => {res.badRequest(err)})
+  },
 };
 

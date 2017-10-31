@@ -40,6 +40,10 @@ module.exports = {
       collection: 'messages',
       via: 'userId'
     },
+    messageTemplates: {
+      collection: 'messageTemplates',
+      via: 'userId'
+    },
 
     // Override the default toJSON method, which is called before returning data back to the client
     toJSON: function() {
@@ -151,8 +155,8 @@ module.exports = {
       //could combine these two, but saves having to look up the user in a database again
       if (typeof userData === "object") {
         const promises = [
-          Plans.find({userId: userData.id}),
-          providerAccounts.find({userId: userData.id}),
+          Plans.find({userId: userData.id, status: ["DRAFT", "ACTIVE"]}),
+          ProviderAccounts.find({userId: userData.id}),
         ]
 
         return Promise.all(promises)
@@ -169,7 +173,7 @@ module.exports = {
 
       //this should be the userid
       } else if (["number", "string"].includes(typeof userData)) {
-        Users.findOne(userData).populate('plans').populate('providerAccounts')
+        Users.findOne(userData).populate('plans', {where: {status: ["DRAFT", "ACTIVE"]}}).populate('providerAccounts')
         .then((result) => {
         //req.user should already be set by the API token policy
           const plans = result.plans

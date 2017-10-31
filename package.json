@@ -17,9 +17,8 @@
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
     "body-parser": "~1.17.1",
-    "cross-env": "^5.0.5",
-    "codebird": "^2.6.0",
     "cookie-parser": "~1.4.3",
+    "cross-env": "^5.0.5",
     "debug": "~2.6.3",
     "dotenv": "^4.0.0",
     "ejs": "2.3.4",
@@ -51,13 +50,12 @@
     "sails-postgresql": "^0.12.2",
     "serve-favicon": "~2.4.2",
     "sqlstring": "^2.2.0",
+    "twit": "^2.2.9",
     "uuid": "^3.1.0"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "scripts": {
     "dev": "nodemon -w api -w config",
-    "start": "node app.js",
     "start": "knex migrate:latest && node app.js",
     "debug": "node debug app.js"
   },
