@@ -3,8 +3,8 @@ const FB = require('fb')
 const _setup = (account) => {
   const fb = new FB.Facebook({
     //this lib automatically adds the app secret key
-    appId: process.env.CLIENT_FACEBOOK_KEY,
-    appSecret: process.env.CLIENT_FACEBOOK_SECRET,
+    appId: sails.config.env.CLIENT_FACEBOOK_KEY,
+    appSecret: sails.config.env.CLIENT_FACEBOOK_SECRET,
     accessToken: account.accessToken,
     version: 'v2.10',
     timeout_ms: 60*1000,

@@ -23,7 +23,7 @@ assets/app.js.map
 **/.env
 .env
 **/.env*
-
+config/local.js
 #credentials
 **/serviceAccountKey.json
 

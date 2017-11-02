@@ -30,7 +30,7 @@ module.exports = {
       dominant: true
     },
 
-    planId: { model: 'plans', required: true },
+    planId: { model: 'plans' },
     /*providerAccounts: {
       collection: 'providerAccounts',
       via: 'posts',

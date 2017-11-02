@@ -1,8 +1,8 @@
 const T = require('twit')
 const _setup = (account) => {
   const Twit = new T({
-    consumer_key: process.env.TWITTER_CONSUMER_KEY,
-    consumer_secret: process.env.TWITTER_CONSUMER_SECRET,
+    consumer_key: sails.config.env.TWITTER_CONSUMER_KEY,
+    consumer_secret: sails.config.env.TWITTER_CONSUMER_SECRET,
     access_token: account.accessToken,
     access_token_secret: account.accessTokenSecret,
     timeout_ms: 60*1000,
@@ -12,7 +12,7 @@ const _setup = (account) => {
 }
 
 module.exports = {
-  createStatusUpdate: (message, account) => {
+  createStatusUpdate: (message, account, utms) => {
     Twit = _setup(account)
 
     Twit.post('statuses/update', {status: message.text}, (err, data, response) => {
@@ -21,7 +21,7 @@ module.exports = {
       console.log(data, response);
     })
   },
-  retweet: (message, account) => {
+  retweet: (message, account, utms) => {
     Twit = _setup(account)
 
     Twit.post(`statuses/retweet/:id`, {id: message.id}, (err, data, response) => {

@@ -5,6 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+var bcrypt = require('bcrypt');
 import crypto from 'crypto'
 module.exports = {
 
@@ -13,13 +14,15 @@ module.exports = {
       type: 'string',
       regex: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
       required: false,
+      unique: true, //might have to add a ;unique index in knex
     },
     phone: { type: 'string', regex: /\+1\d{3}\d{3}\d{4}/ },
     firstName: { type: 'string' },
     lastName: { type: 'string' },
     password: { type: 'string' },//store as a hash
     apiToken: { type: 'string' },
-    apiTokenExpires: { type: 'string' },
+    apiTokenExpires: {  type: 'string' },
+    emailConfirmed: { type: 'boolean', defaultsTo: false },
 
     //associations
     providerAccounts: {
@@ -61,55 +64,31 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-	passwordAuthenticate: function (user, password) {
-    return new Promise((resolve, reject) => {
-      let getUser
+  //makes sure not to persist plain password
+  transform: (values) => {
+    if (values.password) {
+      let orig = values.password;
+      let salt = bcrypt.genSaltSync(10);
+      let hash = bcrypt.hashSync(values.password, salt);
+      values.password = hash;
+    }
 
-      if (!user || !password) {
-        reject({ error: 'Invalid user or password specified' });
+    return values;
+  },
 
-      //string can be id or email
-      } else if (typeof user === 'string') {
-        getUser = () => {
-          return Users.find({ or: [ { id: user }, { email: user } ] })
-          .then((users) => {
-            if (err || users.length === 0) {
-              reject({ error: 'No users match that email/id (whichever was passed in)' });
-            } else {
-              return users[0]
-            }
-          })
-          .catch((err) => {
-            reject({ error: 'error getting user' });
-          })
-        }
-
-      //user is the whole user record
-      } else {
-        getUser = () => {
-          return user
-        }
+  beforeValidate: function (values, cb) {
+    /*if (values.phone) {
+      try {
+        values.phone = Helpers.returnPhoneNumber(values.phone);
+      } catch (e) {
+        sails.log.error('Invalid phone number provided.');
+        // return cb('Invalid phone number provided.');
       }
+    }*/
 
-      getUser()
-      .then((user) => {
-        if (user.authenticate(password)) {
-          return user
-        } else {
-          return reject({ error: 'invalid password' });
-        }
-      })
-      .then((user) => {
-        return Users.login(user)
-      })
-      .then((userWithTokenAndPlans) => {
-        return resolve(userWithTokenAndPlans);
-      })
-      .catch((err) => {
-        reject(err)
-      })
-    })
-	},
+    values = Users.transform(values);
+    cb();
+  },
 
   //create token for them
   beforeCreate: (user, cb) => {
@@ -121,26 +100,48 @@ module.exports = {
   },
 
   //send them an email with their password, which they can reset
-  afterCreate: function (newUser, callback) {
+  afterCreate: function (newUser, cb) {
     //some users will create an account using a provider, and only later create an email
+    //can send an email to that one too
     if (newUser.email) {
-      Users.sendLoginToken(newUser)
-      .then(() => { callback(); })
-      .catch((err) => { sails.log.error(err); callback(); })
-    } else {
-      callback()
+      Notifier.signupConfirmation(newUser)
     }
+
+    cb()
   },
 
+	passwordAuthenticate: function (userData, password) {
+    return new Promise((resolve, reject) => {
+      if (!userData || !password) {
+        return reject({ error: 'Invalid user or password specified' });
+
+      //string can be id or email
+      }
+
+      Users.findOne({email: userData})
+      .then((user) => {
+        if (user.authenticate(password)) {
+          return resolve(user)
+        } else {
+          return reject({ error: 'invalid password' });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
+    })
+	},
   login: function (userData) {
     return new Promise((resolve, reject) => {
-      let stuff = Users.createApiToken();
-      let token = stuff.token;
-      let expiration = stuff.expires;
+      let apiTokenObj = Users.createApiToken();
+      let apiToken = apiTokenObj.token;
+      let expiration = apiTokenObj.expires;
       let user
-      Users.update({ id: userData.id }, { apiToken: token, apiTokenExpires: expiration })
+      Users.update({ id: userData.id }, { apiToken: apiToken, apiTokenExpires: expiration })
       .then((result) => {
         user = result[0]
+
         return resolve(user)
       })
       .catch((err) => {
@@ -208,19 +209,20 @@ console.log(sortedAccounts);
     };
   },
 
+  //might just call Notifier directly??
 	sendLoginToken: function (user) {
     return new Promise((resolve, reject) => {
   		if (!user.email) {
   			return reject({ error: 'E-mail is required to receive login token.' });
   		}
 
-  		Users.findByEmail(email)
+  		Users.findOneByEmail(user.email)
   		.then((user) => {
   			if (!user) {
 					return reject({ error: 'No user with that e-mail was found.' });
 				}
 
-  			return user //UserNotifier.sendLoginToken(user) need to implement mailer
+  			return Notifier.sendLoginToken(user)
   		})
   		.catch((e) => {
   			sails.log.error(e);

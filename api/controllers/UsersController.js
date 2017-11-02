@@ -16,24 +16,44 @@ module.exports = {
   authenticate: function (req, res) {
 		let email = req.body.email;
 		let password = req.body.password;
+    //this is any token but a login token
+    let tokenString = req.body.token
 
     const checkUser = () => {
-  		if (req.body.token) {
-  			return Users.tokenAuthenticate(email, req.body.token)
+  		if (req.body.loginToken) {
+  			return Users.tokenAuthenticate(email, req.body.loginToken)
       } else {
   		  return Users.passwordAuthenticate(email, password)
       }
     }
 
+    //user with plans, posts, etc
+    let user, populatedUser
     checkUser()
-		.then((user) => {
-      Users.login(user)
+		.then((authenticatedUser) => {
+
+      return Users.login(authenticatedUser)
     })
-    .then((user) => {
-			return res.ok(user);
+    .then((u) => { //u has the right api token
+      user = u
+      return Users.initialUserData(user)
+    })
+    .then((p) => {
+      populatedUser = p
+      if (tokenString) {
+        //check if need to send a success/failure message
+        return Tokens.processToken(tokenString, user)
+      } else {
+        return "no token to process and that's ok"
+      }
+    })
+    .then((result) => {
+      //if we want to let users know they confirmed successfully, could return something here
+			return res.ok(populatedUser);
 		})
-		.catch((e) => {
-			return res.forbidden(e);
+		.catch((err) => {
+      console.log(err);
+			return res.forbidden(err);
 		});
   },
 
@@ -42,8 +62,6 @@ module.exports = {
     .then((userAndAccount) => {
       //TODO don't send refresh and access tokens
       //eventually need to build up the provider information with this
-console.log("ab");
-console.log(userAndAccount);
       return res.ok(userAndAccount)
     })
     .catch((err) => {
@@ -79,12 +97,13 @@ console.log(userAndAccount);
 		let email = req.param('email') || req.body.email;
 
 		if (!email) {
+      console.log("should not have this problem");
 			return res.badRequest({ code: 400, error: 'E-mail is required' });
 		}
 
 		let info, user;
 
-		Users.update({email}, {})
+		Users.findOneByEmail(email)
 		.then((u) => {
 			if (!u) {
 				// It isn't okay, but we don't want to tell anyone that.
@@ -94,6 +113,7 @@ console.log(userAndAccount);
 
 			user = u;
 
+      //destroy any previous if they exist
 			return Tokens.destroy({ userId: user.id, action: 'resetPassword' });
 		})
 		.then(() => {
@@ -101,25 +121,15 @@ console.log(userAndAccount);
 		})
 		.then((t) => {
 			info = {
+        email: email,
 				token: t.token
 			};
 
-			return templates.resetPassword(info);
+      return Notifier.resetPassword(info)
 		})
-		.then((template) => {
-			let emailNotification = {
-				method: 'email',
-				subject: template.email.subject,
-				body: template.email.body,
-				addresses: [ user.email ],
-				from: ""
-			};
-
-			sails.log.debug(emailNotification);
-			Notifications.create(emailNotification).then((notif) => {});
-
+    .then(() => {
 			return res.ok();
-		})
+    })
 		.catch((err) => {
 			sails.log.error(error);
 			return res.badRequest();

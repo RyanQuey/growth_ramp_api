@@ -1,0 +1,24 @@
+/*don't put this into source control
+
+#if I ever with the backend on a different server anyway, it'll be fine to have 2 different environment variable files
+#probably won't overlap too much anyway with environment variables
+*/
+
+module.exports.env = {
+  CLIENT_FACEBOOK_SECRET: '',
+  CLIENT_FACEBOOK_ID: '',
+  TWITTER_CONSUMER_KEY: '',
+  TWITTER_CONSUMER_SECRET: '',
+  CLIENT_LINKEDIN_ID: '',
+  CLIENT_LINKEDIN_SECRET: '',
+  MAILGUN_PRIVATE_KEY: '',
+  MAILGUN_PUBLIC_KEY: '',
+  RUN_BACKGROUND_JOBS: 'true',
+
+  PG_PASSWORD: '',
+  PG_USER: '',
+  PG_DATABASE: '',
+  API_URL: 'http://localhost:1337',
+  CLIENT_URL: 'http://www.local.dev:5000',
+}
+
