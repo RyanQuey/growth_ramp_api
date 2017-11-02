@@ -7,14 +7,14 @@ axios.defaults.baseUrl = "https://api.linkedin.com/v1"
 axios.defaults.headers.common['x-li-format'] = 'json'
 
 module.exports = {
-  createPost: (data) => {
+  createPost: (message, account, utms) => {
     const path = ``
     const body = {
-      "comment": data.message.text, //"Check out developer.linkedin.com!", //this is the main message body.
+      "comment": message.text, //"Check out developer.linkedin.com!", //this is the main message body.
       "content": {
-        "title": data.message.contentTitle, //"LinkedIn Developers Resources", //the title of the shared article
-        "description": data.message.contentDescription, //"Leverage LinkedIn's APIs to maximize engagement", //description of the shared article
-        "submitted-url": `${data.message.contentUrl}?${data.utms.join("& or use querystring js")}`, //other urls can be in the comment, but LI will only analyze the first one for content to share
+        "title": message.contentTitle, //"LinkedIn Developers Resources", //the title of the shared article
+        "description": message.contentDescription, //"Leverage LinkedIn's APIs to maximize engagement", //description of the shared article
+        "submitted-url": `${message.contentUrl}?${utms}`, //other urls can be in the comment, but LI will only analyze the first one for content to share
         "submitted-image-url": "https://example.com/logo.png"
       },
       "visibility": {

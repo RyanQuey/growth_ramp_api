@@ -28,10 +28,11 @@ module.exports.policies = {
 
   //by default, nothing is allowed once this is uncommented (recommended best practice)
   '*': false,
-  '*': ['userTokenAuth', ],
+  '*': ['userTokenAuth'],
 
   UsersController: {
-    create: ['userTokenAuth', 'canWrite'],
+    create: true,
+    authenticate: true,
     update: ['userTokenAuth', 'canWrite'],
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
     find: ['userTokenAuth', 'canRead'],
@@ -39,6 +40,7 @@ module.exports.policies = {
     loginWithProvider: ['userTokenAuth', 'checkProviderData'],
     initialUserData: ['userTokenAuth', 'canRead'],
     getPosts: ['userTokenAuth', 'canRead'],
+    resetPassword: true,
     signOut: ['userTokenAuth'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
@@ -60,6 +62,15 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
+  },
+  TokensController: {
+    //create: ['userTokenAuth', 'canWrite'],
+    //update: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    useToken: ['userTokenAuth'],
+    //need one for the login token
   },
 
   /***************************************************************************

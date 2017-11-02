@@ -3,7 +3,7 @@ module.exports = function canRead (req, res, next) {
   const action = req.options.action
   let fail = (message) => {
     // still going onto next, but with no user set
-    console.log("failing request for ", action, "on", modelIdentity)
+    console.log("forbidden request for ", action, "on", modelIdentity)
     console.log(message);
     console.log("failing data: ", req.params, req.body);
     res.status(400).json("Insufficient permissions")
@@ -27,9 +27,11 @@ module.exports = function canRead (req, res, next) {
       //check the possible variables in the same order that sails will to determine target resource
       //otherwise, an attacker could set params to match their own userid, the final user using the req.body
       //using req.params for now, which searches all three.
+
       if (req.param("id") == req.user.id) { //one of these is a string
         pass();
       } else {
+        console.log("should not ever be here");
         fail(`these are not the same: ${req.param("id")} and ${req.user.id}`);
       }
 
@@ -37,7 +39,7 @@ module.exports = function canRead (req, res, next) {
     } else {
       //try to skip a trip to the database by finding and setting the record on the request body
       //as long as we are using this, make sure that no one can change the userId unless admin
-console.log("now will try to ",action, "with userid", req.param("userId"));
+      console.log("now will try to ",action, "with userid", req.param("userId"));
       if (action === "create" || req.param("userId")) {
         if (req.param("userId") == req.user.id) { //one of these is a string
           pass();
@@ -62,7 +64,7 @@ console.log("now will try to ",action, "with userid", req.param("userId"));
       }
     }
   } else {
-    fail();
+    fail("user session required to update");
   }
 };
 

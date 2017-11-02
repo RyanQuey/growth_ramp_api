@@ -29,6 +29,18 @@ module.exports.routes = {
   ////////////////////////////////////////////////////////////////
   //users
 
+  //logging in with Token instance or credentials
+  'post /users/authenticate': {
+    controller: 'UsersController',
+    action: 'authenticate'
+  },
+
+  //logging in, or also probably when linking a new provider account
+  'post /users/login_with_provider': {
+    controller: 'UsersController',
+    action: 'loginWithProvider'
+  },
+
   //when logging in or restoring session from the cookie
   'get /users/:id/initialUserData': {
     controller: 'UsersController',
@@ -41,10 +53,9 @@ module.exports.routes = {
     action: 'getPosts'
   },
 
-  //logging in, or also probably when linking a new provider account
-  'post /users/login_with_provider': {
+  'post /users/resetPassword': {
     controller: 'UsersController',
-    action: 'loginWithProvider'
+    action: 'resetPassword'
   },
 
   'post /users/signOut': {
@@ -71,6 +82,14 @@ module.exports.routes = {
     action: 'signOut'
   },
 
+
+  ////////////////////////////////////////////////////////////////
+  //tokens
+
+  'post /tokens/:token/useToken': {
+    controller: 'TokensController',
+    action: 'useToken'
+  },
 
 
   /***************************************************************************

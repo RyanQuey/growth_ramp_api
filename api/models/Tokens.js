@@ -43,21 +43,87 @@ module.exports = {
     look(values.token);
   },
 
+  createConfirmationToken: function (userId) {
+    return Tokens.create({ userId, action: 'confirmation', objectId: userId, token: Tokens.generateToken(6) });
+  },
+
   createLoginToken: function (userId) {
     return Tokens.create({ userId, action: 'login', objectId: userId, token: Tokens.generateToken(6) });
   },
 
   invalidate: function (token) {
-    if (token) {
-      return Tokens.update({ id: token.id }, { valid: false });
-    } else {
-      return new Promise((resolve, reject) => {
-        resolve();
-      })
-    }
+    return Tokens.update({ id: token.id }, { valid: false });
   },
 
   generateToken: function (length) {
     return rs.generate(length);
-  }
+  },
+
+  processToken: function(tokenString, currentUser) {
+    return new Promise((resolve, reject) => {
+      let tokenRecord
+      Tokens.findOne({token: tokenString})
+      .then((t) => {
+        tokenRecord = t
+        if (!tokenRecord) {
+          return
+        } else if (tokenRecord.expires < moment.utc().format()) {
+          //TODO token has expired
+        } else if (!tokenRecord.valid){
+          //TODO this token has been invalidated (maybe a later one for same action, maybe already used, etc)
+
+        } else {
+          switch (tokenRecord.action){
+            case "confirmation":
+              return Tokens.checkConfirmationToken(tokenRecord, currentUser)
+            case "login":
+              return Users.login({id: currentUser.id}, {emailConfirmed: true})
+
+            default:
+              console.log("should never get here");
+              return "broken token"
+          }
+        }
+      })
+      .then((result) => {
+        //result will either be an object with a message
+        return resolve({result, token: tokenRecord.token})
+      })
+      .catch((err) => {
+        return reject(err)
+      })
+    })
+  },
+
+  //check if user on the token is the user in the session
+  checkUser: function (token, user, cb) {
+    return new Promise((resolve, reject) => {
+      if (user && token.userId === user.id) {
+        resolve(cb())
+      } else {
+        resolve({message: "Need to Login", code: "promptLogin"})
+      }
+    })
+  },
+
+  checkConfirmationToken: function (token, currentUser) {
+    return new Promise((resolve, reject) => {
+      Tokens.checkUser(token, currentUser, () => {
+        return Users.update({id: currentUser.id}, {
+          emailConfirmed: true,
+          emailConfirmedAt: moment().format(), //might want to do timezone...should standardize this eventually for the backend
+        })
+      })
+      .then((result) => {
+        //if result is an updated user, it is successful, so invalidate token
+        if (result.id) {Tokens.invalidate(token)}
+
+        return resolve(result)
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
+    })
+  },
 };
