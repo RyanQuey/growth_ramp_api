@@ -4,7 +4,6 @@
  * @description :: Server-side logic for managing Workgroupmemberships
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
-console.log(sails.model);
 module.exports = {
 
 };
