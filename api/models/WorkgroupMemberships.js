@@ -1,7 +1,8 @@
 /**
  * WorkgroupMemberships.js
  *
- * @description :: TODO: You might write a short summary of how this model works and what it represents here.
+ * @description :: NOTE: it is unfortunate that we have to have a separate model for this, but was struggling with any other way, getting an "unknown error" from waterline when following their docs for a many-to-many, and some had offered this as a solution, so just running with it. make sure to capitalize/lowercase things as shown in this example.
+ * createdAt is basically when a user joined the group
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
