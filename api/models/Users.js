@@ -47,6 +47,20 @@ module.exports = {
       collection: 'messageTemplates',
       via: 'userId'
     },
+    // not supporting individual permissions yet; just do group perms
+    /*permissions: {
+      collection: 'permissions',
+      via: 'userId'
+    },*/
+    memberships: {
+      collection: 'workgroups',
+      via: 'memberId',
+      through: 'workgroupmemberships',
+    },
+    workgroups: { //might not use this very much, since owner is also member, so can just populate memberships
+      collection: 'workgroups',
+      via: 'ownerId'
+    },
 
     // Override the default toJSON method, which is called before returning data back to the client
     toJSON: function() {
@@ -151,54 +165,43 @@ module.exports = {
   },
 
   //is called when user who has an account starts a session
+  //nicely sends everything all at once; saves some trips
   initialUserData: (userData) => {
     return new Promise((resolve, reject) => {
-      //could combine these two, but saves having to look up the user in a database again
+      const promises = []
+      let userId
       if (typeof userData === "object") {
-        const promises = [
-          Plans.find({userId: userData.id, status: ["DRAFT", "ACTIVE"]}),
-          ProviderAccounts.find({userId: userData.id}),
-        ]
-
-        return Promise.all(promises)
-        .then((results) => {
-          const [plans, accounts] = results
-          const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
-          const sortedPlans = Helpers.sortRecordsById(plans)
-          resolve({
-            userData,
-            plans: sortedPlans,
-            providerAccounts: sortedAccounts
-          });
-        })
+        userId = userData.id
 
       //this should be the userid
       } else if (["number", "string"].includes(typeof userData)) {
-        Users.findOne(userData).populate('plans', {where: {status: ["DRAFT", "ACTIVE"]}}).populate('providerAccounts')
-        .then((result) => {
-        //req.user should already be set by the API token policy
-          const plans = result.plans
-          const sortedPlans = Helpers.sortRecordsById(plans)
-          delete result.plans
-
-          const accounts = result.providerAccounts
-          const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
-console.log(sortedAccounts);
-          delete result.providerAccounts
-
-          resolve({
-            user: result,
-            plans: sortedPlans,
-            providerAccounts: sortedAccounts,
-          })
-        })
-        .catch((err) => {
-          reject(err)
-        })
-      } else {
-        throw {message: "invalid user data when trying to get initial user data"}
+        userId = userData
+        promises.push(Users.findOne(userData))
       }
 
+      promises.unshift(ProviderAccounts.find({userId})) //will be results[0]
+      promises.unshift(Plans.find({userId})) //will be results[1]
+
+      return Promise.all(promises)
+      .then((results) => {
+        const [plans, accounts, user] = results
+        const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
+        const sortedPlans = Helpers.sortRecordsById(plans)
+
+        let userRecord
+        //i.e., if had to search for the user record just now
+        if (user) {
+          userRecord = user
+        } else {
+          userRecord = userData
+        }
+
+        resolve({
+          user: userRecord,
+          plans: sortedPlans,
+          providerAccounts: sortedAccounts,
+        });
+      })
     })
   },
 

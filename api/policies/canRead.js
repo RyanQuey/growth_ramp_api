@@ -19,33 +19,40 @@ module.exports = function canRead (req, res, next) {
   }
 
   if (req.user) {
+    //convert id params into integers
+    //these are record's attributes, not the user's...unless user is the record, then it's both
+    let id = parseInt(req.param("id"))
+    let ownerId = parseInt(req.param("ownerId"))
+    let userId = parseInt(req.param("userId"))
+
     //accesses the model (eg, Users)
     //ie, users
+
 
     //this would be modifying their own record, so the body/param id needs to match the userid
     if (modelIdentity === "users" && req.user) {
       //check the possible variables in the same order that sails will to determine target resource
       //otherwise, an attacker could set params to match their own userid, the final user using the req.body
       //using req.params for now, which searches all three.
-      if (req.param("id") == req.user.id) { //one of these is a string
+      if (id == req.user.id) {
         pass();
       } else {
-        fail(`these are not the same: ${req.param("id")} and ${req.user.id}`);
+        fail(`these are not the same: ${id} and ${req.user.id}`);
       }
 
     //for all other resources
     } else {
       //try to skip a trip to the database by finding and setting the record on the request body
       //as long as we are using this, make sure that no one can change the userId unless admin
-      if (req.param("userId")) {
-        if (req.param("userId") == req.user.id) { //one of these is a string
+      if (userId || ownerId) { //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
+        if ([userId, ownerId].includes(req.user.id)) {
           pass();
         } else {
-          fail(`these userids are not the same: ${req.param("userId")} and ${req.user.id}`);
+          fail(`these userids are not the same: ${userId} and ${req.user.id}`);
         }
 
       } else {
-        sails.models[modelIdentity].find(req.param("id"))
+        sails.models[modelIdentity].find(id)
         .then((record) => {
           if (record.userId == req.user.id) {
             pass(record)

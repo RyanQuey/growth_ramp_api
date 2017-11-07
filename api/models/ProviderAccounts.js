@@ -74,6 +74,10 @@ module.exports = {
       collection: 'messageTemplates',
       via: 'providerAccountId',
     },
+    permissions: {
+      collection: 'permissions',
+      via: 'providerAccountId'
+    },
     // Override the default toJSON method
     toJSON: function() {
       let obj = this.toObject();
