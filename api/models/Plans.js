@@ -56,9 +56,14 @@ module.exports = {
       collection: 'messages',
       via: 'planId',
     },
+    permissions: {
+      collection: 'permissions',
+      via: 'planId'
+    },
   },
   autoCreatedAt: true,
   autoUpdatedAt: true,
-//I wonder if this will collide with knex
+
+
 };
 

@@ -45,6 +45,15 @@ module.exports.policies = {
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
+  PermissionsController: {
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    //eventually will set controller actions for this for the resources
+    //changePermissions: ['canChangePermissions'],
+  },
   PostsController: {
     create: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
@@ -71,6 +80,15 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     useToken: ['userTokenAuth'],
     //need one for the login token
+  },
+  WorkgroupsController: {
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth'],  //will only retrieve the user's groups
+    findOne: ['userTokenAuth', 'canRead'],
+    //eventually will set controller actions for this for the resources
+    //changePermissions: ['canChangePermissions'],
   },
 
   /***************************************************************************
