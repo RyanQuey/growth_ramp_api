@@ -10,10 +10,7 @@ import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 module.exports = {
   //TODO: if the asynchronous stuff gets too complicated, try async lib, which is placed as a global in sails by default
 
-  ////////////////////////////////////////////////////////
-  //login / authentication stuff
-  ///////////////////////////////////////////////////////////
-
+  //TODO for these routes, take advantage of blueprints stuff, for long-term functionality, since it helps with populating, handling params, error checking, etc
   create: function(req, res) {
     Users.create(req.body)
     .then((user) => {
@@ -26,6 +23,24 @@ module.exports = {
       res.badRequest(err)
     })
   },
+
+  //TODO for these routes, take advantage of blueprints stuff, for long-term functionality, since it helps with populating, handling params, error checking, etc
+  update: function(req, res) {
+    Users.update({id: req.param('id')}, req.body)
+    .then((user) => {
+      //sent as object with user as key, to be consistent with signing in/provider signin
+      res.ok({user})
+    })
+    .catch((err) => {
+      console.log("error signing up:");
+      console.log(err);
+      res.badRequest(err)
+    })
+  },
+
+  ////////////////////////////////////////////////////////
+  //login / authentication stuff
+  ///////////////////////////////////////////////////////////
 
   authenticate: function (req, res) {
 		let email = req.body.email;
