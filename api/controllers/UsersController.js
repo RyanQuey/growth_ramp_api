@@ -13,6 +13,20 @@ module.exports = {
   ////////////////////////////////////////////////////////
   //login / authentication stuff
   ///////////////////////////////////////////////////////////
+
+  create: function(req, res) {
+    Users.create(req.body)
+    .then((user) => {
+      //sent as object with user as key, to be consistent with signing in/provider signin
+      res.ok({user})
+    })
+    .catch((err) => {
+      console.log("error signing up:");
+      console.log(err);
+      res.badRequest(err)
+    })
+  },
+
   authenticate: function (req, res) {
 		let email = req.body.email;
 		let password = req.body.password;
