@@ -8,7 +8,6 @@ module.exports = function userTokenAuth (req, res, next) {
   };
 
   let pass = () => {
-    console.log("token is right");
     next();
   }
 
