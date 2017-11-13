@@ -19,7 +19,8 @@ module.exports = {
 
   models: {
     connection: 'production'
-  }
+  },
+  keepResponseErrors: true, //preserves error data when sending error using blueprints. Only affects production either way
 
   /***************************************************************************
    * Set the port in the production environment to 80                        *
