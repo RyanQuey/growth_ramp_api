@@ -2,11 +2,13 @@ module.exports = function userTokenAuth (req, res, next) {
 
   let fail = (message) => {
     // still going onto next, but with no user set
+    console.log("ERROR: Failed user api token: ");
     console.log(message)
     next();
   };
 
   let pass = () => {
+    console.log("token is right");
     next();
   }
 
