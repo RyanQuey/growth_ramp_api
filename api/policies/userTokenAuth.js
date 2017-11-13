@@ -33,6 +33,6 @@ module.exports = function userTokenAuth (req, res, next) {
       fail(`error trying to retrieve with this token: ${token}`);
     });
   } else {
-    fail();
+    fail("no user token for user");
   }
 };

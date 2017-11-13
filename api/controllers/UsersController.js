@@ -159,8 +159,8 @@ module.exports = {
   initialUserData: ((req, res) => {
     Users.initialUserData(req.user.id)
     .then((ret) => {
-console.log("getting here");
-console.log(ret.userData);
+console.log("got the user");
+console.log(ret.user);
       res.ok(ret)
     })
     .catch((err) => {
