@@ -23,6 +23,9 @@
  *
  */
 
+//keeps us developing on same tz heroku servers are
+process.env.TZ = 'UTC'
+
 module.exports.blueprints = {
 
   /***************************************************************************
