@@ -91,8 +91,8 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
-    */
   },
+    */
 
   /***************************************************************************
   *                                                                          *
