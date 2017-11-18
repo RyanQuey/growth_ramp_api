@@ -1,71 +1,43 @@
 /**
- * Post.js
+ * Posts.js
  *
- * @description :: perhaps this would be better called a "postSet" . it is a group of messages, all drafted and sent at the same time, with the same "one click" (the famous one click of one click promotion)
+ * @description :: this is a single message to a single provider, which are kept on record for the utm Codes and future analytics
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
-
-    //!!!!!!!note that a given channel configuration, provider, or plan may change, but that won't actually change the message itself, once the message has been sent!!!!!!!!
-var constants = require('../constants')
-var POST_STATUSES = constants.POST_STATUSES
-const UTM_TYPES = constants.UTM_TYPES
-
-const providerWrappers = {
-  FACEBOOK: Facebook,
-  TWITTER: Twitter,
-  LINKEDIN: LinkedIn,
-}
 
 module.exports = {
 
   attributes: {
-    status: { type: 'string', required: true, defaultsTo: POST_STATUSES[0], enum: POST_STATUSES },
-    publishedAt: { type: 'datetime' },
+    //stuff to use to create the posted message
+    text: { type: 'string' }, //caption/comment for the post
+    channel: { type: 'string', required: true },
+    thumbnailUrl: { type: 'string' }, //[string for data storage of image]
+    contentUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
+    contentTitle: { type: 'string'},// (of what is being shared...LI has it as field)
+    contentDescription: { type: 'string'},// (of what is being shared...LI has it as field)
+
+    campaignUtm: { type: 'string', defaultsTo: '' },//{ active: true, value: 'string' }, //
+    mediumUtm: { type: 'string', defaultsTo: ''  },
+    sourceUtm: { type: 'string', defaultsTo: ''  },
+    contentUtm: { type: 'string', defaultsTo: ''  },
+    termUtm: { type: 'string', defaultsTo: ''  },
+    customUtm: { type: 'string', defaultsTo: ''  },
+
+    //stuff we might get back from the provider
+    postUrl: { type: 'string'},// (link they can follow);
+    postKey: { type: 'string'},// (LI gives it, others might too, for updating the message)
+    visibility: { type: 'string'},// LinkedIn wants this
 
     //Associations
     userId: { model: 'users', required: true },
-    messages: {
-      collection: 'messages',
-      via: 'postId',
-      dominant: true
-    },
-
-    planId: { model: 'plans' },
-    /*providerAccounts: {
-      collection: 'providerAccounts',
-      via: 'posts',
-      dominant: true
-    },*/
+    campaignId: { model: 'campaigns', required: true },
+    //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
+    providerAccountId: { model: 'providerAccounts', required: true },
+    planId: { model: 'plans', required: true },
+    postTemplateId: { model: 'postTemplates', required: 'true'},
   },
-
-  autoCreatedAt: true,
-  autoUpdatedAt: true,
-
-  publish: (data) => {
-    // - publish each message for each channelConfiguration(presumably, they would actually already be made when making the post draft)
-    // - set utms for each (actually, maybe do this while writing draft also)
-    // - update post status to published
-
-    Messages.find({postId: data.postId}).populate('providerAccountId')
-    .then((messages) => {
-      const promises = []
-      //not using FB's batch message sending for now
-
-      for (let i = 0; i < messages.length; i++) {
-        let message = messages[i]
-        let account = message.providerAccountId
-
-        //TODO make this a helper
-        let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].map((type) => {
-          return `${UTM_TYPES[type]}=${message[type]}`
-        })
-        let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
-
-        //api will be the api for the social network
-        let api = providerWrappers[account.provider]
-        api[message.channel](message, account, utmsx)
-      }
-    })
-  },
+  // don't need these because it's part of post already
+  autoCreatedAt: false,
+  autoUpdatedAt: false
 };
 

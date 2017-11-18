@@ -37,8 +37,8 @@ module.exports = {
       model: 'users',
       required: true,
     }, //will be the userid, until it is populated (.populate('user'))
-    messageTemplates: {
-      collection: 'messageTemplates',
+    postTemplates: {
+      collection: 'postTemplates',
       via: 'planId',
     },
 
@@ -48,12 +48,12 @@ module.exports = {
       dominant: true
     },*/
 
-    posts: {
-      collection: 'posts',
+    campaigns: {
+      collection: 'campaigns',
       via: 'planId'
     },
-    messages: {
-      collection: 'messages',
+    posts: {
+      collection: 'posts',
       via: 'planId',
     },
     permissions: {

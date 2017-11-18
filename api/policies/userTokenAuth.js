@@ -15,7 +15,7 @@ module.exports = function userTokenAuth (req, res, next) {
     let token = req.get('x-user-token');
 
     let id = req.get('x-id')
-    if (id.length > 5) {//removes "user-" from the front
+    if (id && id.length > 5) {//removes "user-" from the front
       id = parseInt(id.slice(5))
     }
 

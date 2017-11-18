@@ -66,12 +66,12 @@ module.exports = {
       via: 'providerAccounts'
     },
 */
-    messages: {
-      collection: 'messages',
+    posts: {
+      collection: 'posts',
       via: 'providerAccountId'
     },
-    messageTemplates: {
-      collection: 'messageTemplates',
+    postTemplates: {
+      collection: 'postTemplates',
       via: 'providerAccountId',
     },
     permissions: {
@@ -95,7 +95,7 @@ module.exports = {
     //1) find user (if already has an account and is logged in) and account
     //2) determine what to do with both user and account information
     //create or update account information including the account tokens
-    //.1) return user info, along with plans and posts and API token, to the client server
+    //.1) return user info, along with plans and campaigns and API token, to the client server
 
     const getUser = (() => {
       //1)
@@ -217,7 +217,7 @@ module.exports = {
     return sorted
   },
 
-  HandleNewRefreshToken: function(refreshToken) {
+  handleNewRefreshToken: function(refreshToken) {
 
   },
 
