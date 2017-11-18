@@ -10,7 +10,7 @@ module.exports = {
   attributes: {
     userId: { model: 'users', type: 'text', required: true },
     action: { type: 'text', required: true }, // e.g., reset-password, login,
-    objectId: { type: 'text', required: true }, // e.g., the post or plan to have temporary access to. depends on the action
+    objectId: { type: 'text', required: true }, // e.g., the campaign or plan to have temporary access to. depends on the action
     expires: { type: 'datetime', defaultsTo: function () { return moment.utc().add(12, 'hours').format(); } },
     token: { type: 'text', required: true, defaultsTo: function () { return Tokens.generateToken(16); } },
     valid: { type: 'boolean', defaultsTo: true }

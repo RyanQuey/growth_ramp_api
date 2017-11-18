@@ -4,7 +4,7 @@ const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
 const callbackUrl = domain + callbackPath
 
 module.exports = {
-  MESSAGE_TEMPLATE_STATUSES: [
+  POST_TEMPLATE_STATUSES: [
     "ACTIVE",
     "DISABLED",
   ],
@@ -17,7 +17,7 @@ module.exports = {
     "ACTIVE",
     "ARCHIVED"
   ],
-  POST_STATUSES: [
+  CAMPAIGN_STATUSES: [
     "DRAFT",
     "PUBLISHED",
     "ARCHIVED"

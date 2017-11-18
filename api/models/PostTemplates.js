@@ -6,7 +6,7 @@
  */
 
 
-import { MESSAGE_TEMPLATE_STATUSES } from "../constants"
+import { POST_TEMPLATE_STATUSES } from "../constants"
 module.exports = {
 
   attributes: {
@@ -18,7 +18,7 @@ module.exports = {
     contentUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     termUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     customUtm: { type: 'json', defaultsTo: {active: true, value: '' } },
-    status: { type: 'string', defaultsTo: MESSAGE_TEMPLATE_STATUSES[0], enum: MESSAGE_TEMPLATE_STATUSES }, //don't just delete, these might be a pain for users to come up with
+    status: { type: 'string', defaultsTo: POST_TEMPLATE_STATUSES[0], enum: POST_TEMPLATE_STATUSES }, //don't just delete, these might be a pain for users to come up with
 
     //Associations
     providerAccountId: {
@@ -33,9 +33,9 @@ module.exports = {
       model: 'plans',
       required: true,
     },
-    messages: {
-      collection: 'messages',
-      via: 'messageTemplateId',
+    posts: {
+      collection: 'posts',
+      via: 'postTemplateId',
     },
   },
 }

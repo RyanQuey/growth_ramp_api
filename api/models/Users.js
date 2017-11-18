@@ -35,16 +35,16 @@ module.exports = {
       collection: 'plans',
       via: 'userId'
     },
+    campaigns: {
+      collection: 'campaigns',
+      via: 'userId'
+    },
     posts: {
       collection: 'posts',
       via: 'userId'
     },
-    messages: {
-      collection: 'messages',
-      via: 'userId'
-    },
-    messageTemplates: {
-      collection: 'messageTemplates',
+    postTemplates: {
+      collection: 'postTemplates',
       via: 'userId'
     },
     // not supporting individual permissions yet; just do group perms

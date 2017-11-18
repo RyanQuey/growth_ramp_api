@@ -4,10 +4,6 @@
  * @description :: HOW PERMISSIONS WORK
  *
  *  1) need at least provider account permission to read/write/give permissions for any details of a provider account
- *  2) for plans: (maybe eventually do...for now, THERE ARE NO PLAN PERMISSIONS, if they have access to all accounts in a plan, they have access to plan
- *     - need read permissions for all accounts used in the plan to
- *     - need write permissions for all accounts used in plan to make a post with a pan
- *
  *  3) Group vs user:
  *     - user has permission if either they have a permission or are part of a group with permissions
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
