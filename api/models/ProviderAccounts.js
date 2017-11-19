@@ -60,12 +60,8 @@ module.exports = {
       collection: 'plans',
       via: 'providerAccounts'
     },
-    //these are the configurations associated with a given plan
-    posts: {
-      collection: 'posts',
-      via: 'providerAccounts'
-    },
 */
+    //these are the configurations associated with a given plan
     posts: {
       collection: 'posts',
       via: 'providerAccountId'

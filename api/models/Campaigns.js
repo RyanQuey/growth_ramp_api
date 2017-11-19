@@ -19,8 +19,14 @@ const providerWrappers = {
 module.exports = {
 
   attributes: {
-    status: { type: 'string', required: true, defaultsTo: CAMPAIGN_STATUSES[0], enum: CAMPAIGN_STATUSES },
+    name: { type: 'string', defaultsTo: ''},
+    //published once, on submit, even if its related posts aren't published until later
     publishedAt: { type: 'datetime' },
+    status: { type: 'string', required: true, defaultsTo: CAMPAIGN_STATUSES[0], enum: CAMPAIGN_STATUSES },
+    //often will be identical to its child posts' contentUrl, once those are actually made
+    //maybe having both will be overkill?
+    contentUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
+    //promotedContent: { type: 'json', defaultsTo: {url: ''} }, already did migration for this, but might not need it
 
     //Associations
     userId: { model: 'users', required: true },

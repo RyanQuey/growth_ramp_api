@@ -16,6 +16,11 @@ module.exports = {
     contentTitle: { type: 'string'},// (of what is being shared...LI has it as field)
     contentDescription: { type: 'string'},// (of what is being shared...LI has it as field)
 
+    //must be successfully posted for this to be set
+    publishedAt: { type: 'datetime' },
+    //user set time. Stays same even if not successful on first attempt
+    delayedUntil: { type: 'datetime' },
+
     campaignUtm: { type: 'string', defaultsTo: '' },//{ active: true, value: 'string' }, //
     mediumUtm: { type: 'string', defaultsTo: ''  },
     sourceUtm: { type: 'string', defaultsTo: ''  },

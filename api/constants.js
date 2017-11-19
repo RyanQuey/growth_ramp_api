@@ -9,7 +9,7 @@ module.exports = {
     "DISABLED",
   ],
   PLAN_STATUSES: [
-    "DRAFT", //not sure when it would be a draft...or what difference it would make?
+    //"DRAFT", //not sure when it would be a draft...or what difference it would make?
     "ACTIVE",
     "ARCHIVED"
   ],

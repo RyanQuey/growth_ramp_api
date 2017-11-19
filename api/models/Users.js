@@ -180,7 +180,7 @@ module.exports = {
       }
 
       promises.unshift(ProviderAccounts.find({userId})) //will be results[0]
-      promises.unshift(Plans.find({userId})) //will be results[1]
+      promises.unshift(Plans.find({userId, status: "ACTIVE"})) //will be results[1]
 
       return Promise.all(promises)
       .then((results) => {
