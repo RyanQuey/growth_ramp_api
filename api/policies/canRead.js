@@ -44,7 +44,12 @@ module.exports = function canRead (req, res, next) {
     } else {
       //try to skip a trip to the database by finding and setting the record on the request body
       //as long as we are using this, make sure that no one can change the userId unless admin
-      if (userId || ownerId) { //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
+      if (
+        //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
+        //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself
+        userId && modelAttributes.includes('userId') ||
+        ownerId && modelAttributes.includes('ownerId')
+      ) {
         if ([userId, ownerId].includes(req.user.id)) {
           pass();
         } else {
@@ -52,9 +57,11 @@ module.exports = function canRead (req, res, next) {
         }
 
       } else {
-        sails.models[modelIdentity].find(id)
+        //assuming that if no userId or ownerId is specified, only finding one
+        //this keeps the db requests in these policies lower
+        sails.models[modelIdentity].findOne(id)
         .then((record) => {
-          if (record.userId == req.user.id) {
+          if (record.userId == req.user.id || record.ownerId == req.user.id ) {
             pass(record)
           } else {
             //eventually, will need to create permissions, using the onCreate Huck
