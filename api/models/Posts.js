@@ -11,11 +11,13 @@ module.exports = {
     //stuff to use to create the posted message
     text: { type: 'string' }, //caption/comment for the post
     channel: { type: 'string', required: true },
-    thumbnailUrl: { type: 'string' }, //[string for data storage of image]
+    //[{
+    //  url: ,
+    //  type: VIDEO, or IMAGE
+    //}, {...]
+    uploadedContent: { type: 'array' },
     contentUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
-    contentTitle: { type: 'string'},// (of what is being shared...LI has it as field)
-    contentDescription: { type: 'string'},// (of what is being shared...LI has it as field)
-
+    //
     //must be successfully posted for this to be set
     publishedAt: { type: 'datetime' },
     //user set time. Stays same even if not successful on first attempt
@@ -38,8 +40,8 @@ module.exports = {
     campaignId: { model: 'campaigns', required: true },
     //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
     providerAccountId: { model: 'providerAccounts', required: true },
-    planId: { model: 'plans', required: true },
-    postTemplateId: { model: 'postTemplates', required: 'true'},
+    planId: { model: 'plans'},
+    postTemplateId: { model: 'postTemplates'},
   },
   // don't need these because it's part of post already
   autoCreatedAt: false,
