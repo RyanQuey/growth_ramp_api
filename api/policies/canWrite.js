@@ -12,11 +12,8 @@ module.exports = function canRead (req, res, next) {
 
   let pass = (record) => {
     //saves the database call if used later :)
-    if (!req.body) {
-      req.body = {}
-    }
-    //doesn't set a record if creating or user is the record's userId/ownerId
-    req.body.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
+    //NOTE: doesn't set a record if creating or user is the record's userId/ownerId
+    req.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
 console.log("matching record", record);
     next()
   }

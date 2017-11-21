@@ -77,8 +77,9 @@ module.exports = {
     // Override the default toJSON method
     toJSON: function() {
       let obj = this.toObject();
-      delete obj.refreshToken;
-      //delete obj.accessToken; will want this?
+      obj.refreshToken = obj.refreshToken ? true : false;
+      obj.accessToken = obj.accessToken ? true : false;
+
       return obj;
     },
   },
@@ -121,6 +122,7 @@ module.exports = {
       if (!providerAccountData.provider) {return reject("no provider defined")}
 
       //1)
+      //TODO Promise.join is easier and more performant
       Promise.all([ getUser(), getProviderAccount(providerAccountData) ])
       .then((results) => {
         //handling the different situations here
@@ -174,7 +176,6 @@ module.exports = {
     })
   },
 
-
   createUserWithProvider: function (providerAccountData) {
     return new Promise((resolve, reject) => {
       let user
@@ -213,23 +214,64 @@ module.exports = {
     return sorted
   },
 
-  handleNewRefreshToken: function(refreshToken) {
+  //takes an account (or account id, just pass in a string) and returns access or refresh token (depending on tokenType) if available;
+  getUserToken: function(account, tokenType) {
+    //get account
+    return new Promise((resolve, reject) => {
 
-  },
+      new Promise((res, rej) => {
+        if (typeof account === "object") {
+          return res(account)
 
-  userToken: function(providerName, userId, tokenType) {
-    new Promise((resolve, reject) => {
-      ProviderAccounts.find({
-        user: userId,
-        name: providerName
-      })
-//TODO: need to edit, user might have more than one provider account linked up to theirs
-      .then((provider) => {
-        if (moment(provider[`${tokenType}TokenExpires`]).isAfter(moment())) {
-          return provider[`${tokenType}Token`]
-        } else {
-          throw {message: `${tokenType} token expired`}
+        } else if (typeof account === "number") {
+          return res(ProviderAccounts.findOne({id: account}))
+
+        } else if (!account || !["string", "object"].includes(typeof account)) {
+          return rej("invalid account provided")
         }
+
+  //TODO: need to edit, user might have more than one provider account linked up to theirs
+      })
+      .then((providerAccount) => {
+console.log("provider account");
+console.log(providerAccount);
+        //get/check token
+        if (
+          providerAccount[`${tokenType}TokenExpires`] &&
+          moment.utc(providerAccount[`${tokenType}TokenExpires`]).isAfter(moment.utc())
+        ) {
+          //token is found and valid
+          console.log("token is found and is valid");
+          return providerAccount[`${tokenType}Token`]
+
+        } else if (tokenType === "access") {
+          //try to refresh
+          console.log("trying to refresh");
+          return ProviderAccounts.getAccessTokenFromProvider(account.provider, account)
+
+        } else {
+          //just return it to be handled by parent function
+          console.log("token cannot be retrieved");
+          return {
+            message: `${tokenType} token expired and cannot be retrieve; prompt user to reauthenticate`,
+            code: "no-token-retrieved",
+            status: 500,
+          }
+        }
+      })
+      //result is either a token string OR an object error message
+      .then((result) => {
+        if (typeof result === "string") {
+          //result is the token
+          result = {
+            token: result
+          }
+        }
+
+        result.accountId = account.id
+        result.provider = account.provider
+
+        return resolve(result)
       })
       .catch((err) => {
         return reject(err)
@@ -237,30 +279,30 @@ module.exports = {
     })
   },
 
-  getAccessTokenFromProvider: function(providerName, refreshToken) {
-    new Promise((resolve, reject) => {
-      if (refreshToken) {
-        return
-      } else if (!refreshToken && userId) {
-        return ProviderAccounts.userToken(providerName, userId, "access")
-      } else {
-        return reject("need either a refresh token or userid")
-      }
-    })
-    .then((refreshToken) => {
+  //please don't pass in an expired refresh token into here
+  getAccessTokenFromProvider: function(validRefreshToken, providerName) {
+    return new Promise((resolve, reject) => {
       //make a get request, tagging on the refresh token into the query
-      axios(PROVIDERS[providerName].getAccessTokenUrl + refreshToken)
-    })
-    .then((response) => {
-      console.log(response);
-      const accessToken = response.access_token
-      const accessTokenExpires = response.expires_in
-      const tokenType = response.token_type
-    })
-    .catch((err) => {
-      return reject(err)
+      axios.get(`${PROVIDERS[providerName].getAccessTokenUrl}?${validRefreshToken}`)
+      .then((response) => {
+console.log("response from trying to refresh access token");
+        console.log(response);
+        const accessToken = response.access_token
+        const accessTokenExpires = response.expires_in
+        const tokenType = response.token_type
+
+        return resolve(response)
+      })
+      .catch((err) => {
+        return reject(err)
+      })
     })
   },
+
+  handleNewRefreshToken: function(refreshToken) {
+
+  },
+
     //2) verify the token ...except, not getting this from the browser anymore
     /*return axios.get(`graph.facebook.com/debug_token?
       input_token=${accessToken}
