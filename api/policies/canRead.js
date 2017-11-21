@@ -11,10 +11,7 @@ module.exports = function canRead (req, res, next) {
 
   let pass = (record) => {
     //saves the database call if used later :)
-    if (!req.body) {
-      req.body = {}
-    }
-    req.body.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
+    req.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
     next()
   }
 

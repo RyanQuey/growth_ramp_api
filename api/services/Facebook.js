@@ -13,13 +13,48 @@ const _setup = (account) => {
   return fb
 }
 
-module.exports = {
+
+const Facebook = {
+  createPost: (account, channel, post, utms) => {
+    return new Promise((resolve, reject) => {
+      fb = _setup(account)
+      const body = post.text
+
+      Facebook[channel](post, utms)
+      .then((response) => {
+console.log("Facebook response");
+        const {updateKey, updateUrl} = response
+        //perhaps persist these if we want the user to be able to look at the link or update it
+        //TODO
+        return resolve(response)
+      })
+      .catch((err) => {
+        console.log(err, err && err.response);
+        return reject(err)
+      })
+    })
+  },
+
+  PERSONAL_POST: (post, utms) => {
+    return fb.api('me/feed', 'post', {message: body})
+  },
+
+//TODO set to page...
+  PAGE_POST: (post, utms) => {
+    return fb.api('me/feed', 'post', {message: body})
+  },
+
+//TODO set to group...
+  GROUP_POST: (post, utms) => {
+    return fb.api('me/feed', 'post', {message: body})
+  },
+
   //all the posts for one user account
   //not sure if this responds with a promise like the others do ?
   //if not, just have a call back
-  batchRequest: (message, account, options = {}) => {
+  batchRequest: (post, account, options = {}) => {
     fb = _setup(account)
-    fb.api('', 'post', {batch: message.batch.map((post) => {
+    fb.api('', 'post', {batch: post.batch.map((post) => {
 
       return {
         method: 'post', //or maybe sometimes get
@@ -32,3 +67,5 @@ module.exports = {
     .catch((err) => {console.log(err);})
   },
 }
+
+module.exports = Facebook

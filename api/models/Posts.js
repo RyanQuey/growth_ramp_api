@@ -5,6 +5,14 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+const constants = require('../constants')
+const UTM_TYPES = constants.UTM_TYPES
+
+const providerWrappers = {
+  FACEBOOK: Facebook,
+  TWITTER: Twitter,
+  LINKEDIN: LinkedIn,
+}
 module.exports = {
 
   attributes: {
@@ -45,6 +53,27 @@ module.exports = {
   },
   // don't need these because it's part of post already
   autoCreatedAt: false,
-  autoUpdatedAt: false
+  autoUpdatedAt: false,
+
+  publish: (post) => {
+    return new Promise((resolve, reject) => {
+      let account = post.providerAccountId
+
+      //TODO might make this a helper
+      let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm']
+      .filter((type) => post[type])
+      .map((type) => {
+        return `${UTM_TYPES[type]}=${post[type]}`
+      })
+      let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
+
+      //api will be the api for the social network
+      let api = providerWrappers[account.provider]
+console.log( );
+      let channel = post.channel
+
+      return resolve(api.createPost( account, channel, post, utms))
+    })
+  }
 };
 

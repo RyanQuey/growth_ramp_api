@@ -8,13 +8,6 @@
     //!!!!!!!note that a given channel configuration, provider, or plan may change, but that won't actually change the campaign itself, once the campaign has been sent!!!!!!!!
 var constants = require('../constants')
 var CAMPAIGN_STATUSES = constants.CAMPAIGN_STATUSES
-const UTM_TYPES = constants.UTM_TYPES
-
-const providerWrappers = {
-  FACEBOOK: Facebook,
-  TWITTER: Twitter,
-  LINKEDIN: LinkedIn,
-}
 
 module.exports = {
 
@@ -47,30 +40,81 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  publish: (data) => {
+  publish: (campaign) => {
+    // - check each access token, and refresh if necessary
     // - publish each post for each channelConfiguration(presumably, they would actually already be made when making the campaign draft)
     // - set utms for each (actually, maybe do this while writing draft also)
     // - update campaign status to published
 
-    Posts.find({campaignId: data.campaignId}).populate('providerAccountId')
-    .then((posts) => {
-      const promises = []
-      //not using FB's batch post sending for now
+    return new Promise((resolve, reject) => {
+      let posts
 
-      for (let i = 0; i < posts.length; i++) {
-        let post = posts[i]
-        let account = post.providerAccountId
+      Posts.find({campaignId: campaign.id}).populate('providerAccountId')
+      .then((p) => {
+        //check access tokens
+        //hopefully the API has given this all along, but not there yet, and good to check anyways
+        posts = p
+console.log(posts);
+        //technically providerAccountId is required, but whatever
+        _.remove(posts, (post) => !post.providerAccountId)
 
-        //TODO make this a helper
-        let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].map((type) => {
-          return `${UTM_TYPES[type]}=${post[type]}`
-        })
-        let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
+        let allAccounts = posts.reduce((acc, post) => {
+          //remove duplicate accounts
+          let match = acc.find((account) => account.id === post.providerAccountId.id)
+console.log("match");
+console.log(match);
+          if (!match) {
+            acc.push(post.providerAccountId)
+          }
 
-        //api will be the api for the social network
-        let api = providerWrappers[account.provider]
-        api[post.channel](post, account, utms)
-      }
+          return acc
+        }, [])
+
+        const getTokenPromises = allAccounts.map((account) =>
+          ProviderAccounts.getUserToken(account, "access")
+        )
+
+console.log(getTokenPromises);
+  console.log("now checking/refreshing access tokens");
+        return Promise.all(getTokenPromises)
+      })
+      .then((results) => {
+console.log(results);
+        //getUserToken also try to refresh, so at this point they just need to reauthenticate
+        const accountsMissingTokens = results.filter((r) => r.code === "no-token-retrieved")
+        const accessTokens = results.filter((r) => !r.code || r.code !== "no-token-retrieved")
+
+  console.log("accounts missing tokens");
+  console.log(accountsMissingTokens);
+  console.log("access tokens");
+  console.log(accessTokens);
+        if (accountsMissingTokens.length ) {
+          //also an array, so still works
+          return accountsMissingTokens
+        }
+
+        const promises = []
+        //not using FB's batch post sending for now
+
+        for (let i = 0; i < posts.length; i++) {
+          let post = posts[i]
+          promises.push(Posts.publish(post))
+        }
+
+        return Promise.all(promises)
+      })
+      .then((results) => {
+        //results will be a mixture of successes and failures
+        //failures should have a message and code property, and status 500 on the object
+        //not throwing though, just let it all go through
+  console.log("finished trying to publish");
+  console.log(results);
+        return resolve(results)
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
     })
   },
 };
