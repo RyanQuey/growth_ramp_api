@@ -1,7 +1,7 @@
 const FB = require('fb')
-
+let fb
 const _setup = (account) => {
-  const fb = new FB.Facebook({
+  fb = new FB.Facebook({
     //this lib automatically adds the app secret key
     appId: sails.config.env.CLIENT_FACEBOOK_KEY,
     appSecret: sails.config.env.CLIENT_FACEBOOK_SECRET,
@@ -15,18 +15,19 @@ const _setup = (account) => {
 
 
 const Facebook = {
-  createPost: (account, channel, post, utms) => {
+  createPost: (account, post, utms) => {
     return new Promise((resolve, reject) => {
       fb = _setup(account)
-      const body = post.text
+      const body = `${post.text} ${post.contentUrl}?${utms}`
 
-      Facebook[channel](post, utms)
+      Facebook[post.channel](post, body, utms)
       .then((response) => {
-console.log("Facebook response");
-        const {updateKey, updateUrl} = response
+        //FB only returns the post id for personal post
+//console.log("Facebook response");
+//console.log(response);
         //perhaps persist these if we want the user to be able to look at the link or update it
         //TODO
-        return resolve(response)
+        return resolve({postKey: response.id})
       })
       .catch((err) => {
         console.log(err, err && err.response);
@@ -35,17 +36,17 @@ console.log("Facebook response");
     })
   },
 
-  PERSONAL_POST: (post, utms) => {
+  PERSONAL_POST: (post, body, utms) => {
     return fb.api('me/feed', 'post', {message: body})
   },
 
 //TODO set to page...
-  PAGE_POST: (post, utms) => {
+  PAGE_POST: (post, body, utms) => {
     return fb.api('me/feed', 'post', {message: body})
   },
 
 //TODO set to group...
-  GROUP_POST: (post, utms) => {
+  GROUP_POST: (post, body, utms) => {
     return fb.api('me/feed', 'post', {message: body})
   },
 

@@ -40,6 +40,15 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
+
+  beforeValidate: (values, cb) => {
+    //TODO probably there's a better way to make sure it isn't already shortened...
+    if (values.contentUrl && !values.contentUrl.includes('goo.gl')) {
+
+    }
+    cb();
+  },
+
   publish: (campaign) => {
     // - check each access token, and refresh if necessary
     // - publish each post for each channelConfiguration(presumably, they would actually already be made when making the campaign draft)
@@ -47,7 +56,7 @@ module.exports = {
     // - update campaign status to published
 
     return new Promise((resolve, reject) => {
-      let posts
+      let posts, postResults
 
       Posts.find({campaignId: campaign.id}).populate('providerAccountId')
       .then((p) => {
@@ -103,13 +112,21 @@ console.log(results);
 
         return Promise.all(promises)
       })
-      .then((results) => {
+      .then((r) => {
+        postResults = r
         //results will be a mixture of successes and failures
         //failures should have a message and code property, and status 500 on the object
         //not throwing though, just let it all go through
   console.log("finished trying to publish");
-  console.log(results);
-        return resolve(results)
+  console.log(postResults);
+
+        return Campaigns.update({id: campaign.id}, {
+          publishedAt: moment.utc().format(),
+          status: "PUBLISHED",
+        })
+      })
+      .then((c) => {
+        return resolve({campaign: c, postResults})
       })
       .catch((err) => {
         console.log(err);

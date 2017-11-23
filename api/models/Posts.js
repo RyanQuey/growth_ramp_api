@@ -69,10 +69,24 @@ module.exports = {
 
       //api will be the api for the social network
       let api = providerWrappers[account.provider]
-console.log( );
-      let channel = post.channel
 
-      return resolve(api.createPost( account, channel, post, utms))
+      //publishes post on social network
+      api.createPost( account, post, utms)
+      .then((result) => {
+        return Posts.update({id: post.id}, {
+          publishedAt: moment.utc().format(),
+          postUrl: result.postUrl || "",
+          postKey: result.postKey || "",
+        })
+      })
+      .then((p) => {
+        return resolve(p)
+      })
+      .catch((err) => {
+        console.log("Failure posting to social network");
+        console.log(err);
+        return reject(err)
+      })
     })
   }
 };
