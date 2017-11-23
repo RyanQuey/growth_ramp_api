@@ -7,7 +7,7 @@ axios.defaults.baseUrl = "https://api.linkedin.com/v1"
 axios.defaults.headers.common['x-li-format'] = 'json'
 
 const LinkedIn = {
-  createPost: (account, channel, post, utms) => {
+  createPost: (account, post, utms) => {
     return new Promise((resolve, reject) => {
 //if was going to supply all of these; but we'd rather they get them from teh post itself
 /*      const body = {
@@ -34,12 +34,12 @@ const LinkedIn = {
         }
       }
 
-      LinkedIn[PERSONAL_POST](body)
+      LinkedIn[post.channel](body)
       .then((response) => {
         const {updateKey, updateUrl} = response
         //perhaps persist these if we want the user to be able to look at the link or update it
         //TODO
-        return resolve(response)
+        return resolve({postUrl: updateUrl, postKey: updateKey})
       })
       .catch((err) => {
         console.log(err);

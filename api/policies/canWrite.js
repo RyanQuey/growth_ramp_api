@@ -15,10 +15,20 @@ module.exports = function canRead (req, res, next) {
     //NOTE: doesn't set a record if creating or user is the record's userId/ownerId
     req.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
 console.log("matching record", record);
+
+    //strip out empty strings in the body sent to update integers, and save as null instead
+    //TODO maybe should make this a separate policy...but this is so much easier...
+    let keys = Object.keys(req.body)
+    for (let attribute of keys){
+      if (req.body[attribute] === "" && sails.models[modelIdentity].attributes[attribute].type !== 'string') {
+        //should just set to null
+        //if don't want this behavior, set the field to false or whatever you need, just don't send empty string!!
+        req.body[attribute] = null
+      }
+    }
     next()
   }
 
-console.log(req.body);
   if (req.user) {
     //convert id params into integers
     //these are record's attributes, not the user's...unless user is the record, then it's both

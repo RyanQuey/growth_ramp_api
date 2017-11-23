@@ -15,6 +15,9 @@ module.exports.env = {
   MAILGUN_PUBLIC_KEY: '',
   RUN_BACKGROUND_JOBS: 'true',
 
+  //for developers console
+  GOOGLE_API_KEY: '***REMOVED***',
+
   PG_PASSWORD: '',
   PG_USER: '',
   PG_DATABASE: '',

@@ -12,21 +12,20 @@ const _setup = (account) => {
 }
 //PERSONAL_POST, PRIVATE_MESSAGE
 //not supporting private message yet
-module.exports =
 
 const Twitter = {
-  createPost: (account, channel, post, utms) => {
+  createPost: (account, post, utms) => {
     //just returning the promises in these returned functions
     Twit = _setup(account)
     if (post.uploadedContent && post.uploadedContent.length ) {
-      return Twitter._uploadAndPost
+      return Twitter._uploadAndPost(post, utms)
     } else {
-      return Twitter[channel]()
+      return Twitter[post.channel](post, utms)
     }
   },
 
   //upload the files and then create post
-  _uploadAndPost: (channel, post, utms) => {
+  _uploadAndPost: (post, utms) => {
     return new Promise((resolve, reject) => {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
@@ -36,7 +35,7 @@ const Twitter = {
       Promise.all(promises)
       .then((results) => {
 
-        return Twitter[channel](post, utms, )
+        return Twitter[post.channel](post, utms)
       })
       .then(() => {
         return resolve(data)
@@ -106,3 +105,4 @@ const Twitter = {
 }
 
 
+module.exports = Twitter
