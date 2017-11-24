@@ -73,6 +73,7 @@ module.exports = {
       //publishes post on social network
       api.createPost( account, post, utms)
       .then((result) => {
+        //some providers only have url or key, not both
         return Posts.update({id: post.id}, {
           publishedAt: moment.utc().format(),
           postUrl: result.postUrl || "",
