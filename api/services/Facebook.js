@@ -1,7 +1,7 @@
 const FB = require('fb')
-let fb
+
 const _setup = (account) => {
-  fb = new FB.Facebook({
+  const fb = new FB.Facebook({
     //this lib automatically adds the app secret key
     appId: sails.config.env.CLIENT_FACEBOOK_KEY,
     appSecret: sails.config.env.CLIENT_FACEBOOK_SECRET,
@@ -13,41 +13,126 @@ const _setup = (account) => {
   return fb
 }
 
-
 const Facebook = {
   createPost: (account, post, utms) => {
     return new Promise((resolve, reject) => {
-      fb = _setup(account)
+      const fb = _setup(account)
       const body = `${post.text} ${post.contentUrl}?${utms}`
 
-      Facebook[post.channel](post, body, utms)
-      .then((response) => {
-        //FB only returns the post id for personal post
-//console.log("Facebook response");
-//console.log(response);
-        //perhaps persist these if we want the user to be able to look at the link or update it
-        //TODO
-        return resolve({postKey: response.id})
+      if (post.uploadedContent && post.uploadedContent.length ) {
+        return resolve(Facebook._uploadAndPost(post, body, fb))
+      } else {
+        return resolve(Facebook[post.channel](post, body, fb, false))
+      }
+    })
+  },
+
+  //upload the files and then create post
+  _uploadAndPost: (post, body, fb) => {
+    return new Promise((resolve, reject) => {
+      // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
+      // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
+      const uploads = post.uploadedContent.map((c) => c.url)
+      const promises = uploads.map((url) => Facebook._upload(url, fb))
+
+      Promise.all(promises)
+      //these are successful uploads
+      .then((uploadsData) => {
+        return Facebook[post.channel](post, body, fb, uploadsData )
+      })
+      .then((data) => {
+console.log("result from Facebook");
+console.log(data);
+        return resolve({postId: data.id})
       })
       .catch((err) => {
-        console.log(err, err && err.response);
+        //TODO need to handle if uploads works but post does not; probably remove or unpublish etc
+        console.log(err);
         return reject(err)
       })
     })
   },
 
-  PERSONAL_POST: (post, body, utms) => {
-    return fb.api('me/feed', 'post', {message: body})
+  //upload a file
+  _upload: (url, fb) => {
+    return new Promise((resolve, reject) => {
+      // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
+      // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
+      fb.api('me/photos', 'post', {
+        url: url,
+        published: false //to not publish to wall, but still upload content, which remains for 24 hours ONLY unless gets published then. Gets published when post does
+      }) //can add a caption
+      .then((response) => {
+        console.log("finished upload to fb");
+        console.log(response);
+
+//might not need; this helper might take care of it for us
+//if published, returns a post_id too, of the post the photo is published in
+        const mediaId = response.id
+        //not doing this yet
+
+        const metaParams = {
+          mediaId,
+        }
+
+        return resolve(metaParams)
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
+    })
+  },
+
+
+  PERSONAL_POST: (post, body, fb, uploadsData) => {
+    let params = {
+      message: body,
+    }
+    if (uploadsData) {
+      for (let i = 0; i < uploadsData.length; i++) {
+        let upload = uploadsData[i]
+        let key = `attached_media[${i}]`
+        params[key] = JSON.stringify({media_fbid: upload.mediaId})
+      }
+    }
+console.log("params");
+console.log(params);
+    return fb.api('me/feed', 'post', params)
   },
 
 //TODO set to page...
-  PAGE_POST: (post, body, utms) => {
-    return fb.api('me/feed', 'post', {message: body})
+  PAGE_POST: (post, body, fb, uploadsData) => {
+    let params = {
+      message: body,
+    }
+    if (uploadsData) {
+      for (let i = 0; i < uploadsData.length; i++) {
+        let upload = uploadsData[i]
+        let key = `attached_media[${i}]`
+        params[key] = JSON.stringify({media_fbid: upload.mediaId})
+      }
+    }
+console.log("params");
+console.log(params);
+    return fb.api('me/feed', 'post', params)
   },
 
 //TODO set to group...
-  GROUP_POST: (post, body, utms) => {
-    return fb.api('me/feed', 'post', {message: body})
+  GROUP_POST: (post, body, fb, uploadsData) => {
+    let params = {
+      message: body,
+    }
+    if (uploadsData) {
+      for (let i = 0; i < uploadsData.length; i++) {
+        let upload = uploadsData[i]
+        let key = `attached_media[${i}]`
+        params[key] = JSON.stringify({media_fbid: upload.mediaId})
+      }
+    }
+console.log("params");
+console.log(params);
+    return fb.api('me/feed', 'post', params)
   },
 
   //all the posts for one user account

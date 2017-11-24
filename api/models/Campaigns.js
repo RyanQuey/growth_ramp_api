@@ -120,13 +120,13 @@ console.log(results);
   console.log("finished trying to publish");
   console.log(postResults);
 
-        return Campaigns.update({id: campaign.id}, {
+        return Campaigns.update(campaign.id, {
           publishedAt: moment.utc().format(),
           status: "PUBLISHED",
         })
       })
       .then((c) => {
-        return resolve({campaign: c, postResults})
+        return resolve({campaign: c, posts: postResults})
       })
       .catch((err) => {
         console.log(err);

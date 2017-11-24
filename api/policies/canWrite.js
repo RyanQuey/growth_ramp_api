@@ -20,7 +20,7 @@ console.log("matching record", record);
     //TODO maybe should make this a separate policy...but this is so much easier...
     let keys = Object.keys(req.body)
     for (let attribute of keys){
-      if (req.body[attribute] === "" && sails.models[modelIdentity].attributes[attribute].type !== 'string') {
+      if (req.body[attribute] === "" && Helpers.safeDataPath(sails.models, `${modelIdentity}.attributes.${attribute}.type`, false) !== 'string') {
         //should just set to null
         //if don't want this behavior, set the field to false or whatever you need, just don't send empty string!!
         req.body[attribute] = null
