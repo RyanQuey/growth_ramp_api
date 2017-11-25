@@ -12,6 +12,28 @@ module.exports = function canRead (req, res, next) {
   let pass = (record) => {
     //saves the database call if used later :)
     req.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
+
+    //only return unarchived if grabbing more than one
+    if (!req.param("id")) {
+      if (req.query.where) {
+        //TODO not tested
+        let whereParams = JSON.parse(req.query.where)
+        //leave it alone in the offchance it is already set
+        whereParams.status = whereParams.status ? whereParams.status : { "!": "ARCHIVED" }
+        req.query.where = JSON.stringify(whereParams)
+
+      } else {
+console.log("should be here");
+        req.query.where = JSON.stringify({
+          status: {
+            "!": "ARCHIVED"
+          }
+        })
+
+      }
+    }
+console.log(req.query, req.param("id") );
+
     next()
   }
 
