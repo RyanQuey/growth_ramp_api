@@ -14,16 +14,15 @@ module.exports = function canRead (req, res, next) {
     req.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
 
     //only return unarchived if grabbing more than one
+        //TODO not tested
     if (!req.param("id")) {
       if (req.query.where) {
-        //TODO not tested
         let whereParams = JSON.parse(req.query.where)
         //leave it alone in the offchance it is already set
         whereParams.status = whereParams.status ? whereParams.status : { "!": "ARCHIVED" }
         req.query.where = JSON.stringify(whereParams)
 
       } else {
-console.log("should be here");
         req.query.where = JSON.stringify({
           status: {
             "!": "ARCHIVED"
@@ -32,7 +31,6 @@ console.log("should be here");
 
       }
     }
-console.log(req.query, req.param("id") );
 
     next()
   }
