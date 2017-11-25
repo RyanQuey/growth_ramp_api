@@ -160,9 +160,9 @@ console.log(ret.user);
   //user posts actions
   ///////////////////////////////////////////////////////////
   //default is to get all user posts, but eventually should paginate, filter, etc.
-  getPosts: ((req, res) => {
+  getCampaigns: ((req, res) => {
     //could also do req.params.id, since it is in the route
-    Posts.find({userId: req.user.id})
+    Campaigns.find({userId: req.user.id, status: {"!": "ARCHIVED"}})
     .then((ret) => {
       res.ok(ret)
     })

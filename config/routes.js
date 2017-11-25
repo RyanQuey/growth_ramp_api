@@ -48,9 +48,10 @@ module.exports.routes = {
   },
 
   //fetching user posts
-  'get /users/:id/posts': {
+  //note that this kind of route works even without a route; is a default blueprints route
+  'get /users/:id/campaigns': {
     controller: 'UsersController',
-    action: 'getPosts'
+    action: 'getCampaigns'
   },
 
   'post /users/resetPassword': {

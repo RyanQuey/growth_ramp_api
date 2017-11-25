@@ -49,7 +49,8 @@ module.exports = {
     cb();
   },
 
-  publish: (campaign) => {
+  //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
+  publishCampaign: (campaign) => {
     // - check each access token, and refresh if necessary
     // - publish each post for each channelConfiguration(presumably, they would actually already be made when making the campaign draft)
     // - set utms for each (actually, maybe do this while writing draft also)
@@ -107,7 +108,7 @@ console.log(results);
 
         for (let i = 0; i < posts.length; i++) {
           let post = posts[i]
-          promises.push(Posts.publish(post))
+          promises.push(Posts.publishPost(post))
         }
 
         return Promise.all(promises)

@@ -9,7 +9,8 @@ module.exports = {
 
   publish: (req, res) => {
     const campaign = req.matchingRecord
-    Campaigns.publish(campaign)
+
+    Campaigns.publishCampaign(campaign)
     .then((results) => {
       res.ok(results)
     })

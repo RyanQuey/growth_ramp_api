@@ -55,7 +55,8 @@ module.exports = {
   autoCreatedAt: false,
   autoUpdatedAt: false,
 
-  publish: (post) => {
+  //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
+  publishPost: (post) => {
     return new Promise((resolve, reject) => {
       let account = post.providerAccountId
 

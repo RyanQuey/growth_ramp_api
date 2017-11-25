@@ -28,7 +28,6 @@ module.exports.policies = {
 
   //by default, nothing is allowed once this is uncommented (recommended best practice)
   '*': false,
-  '*': ['userTokenAuth'],
 
   UsersController: {
     create: true,
@@ -39,7 +38,7 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     loginWithProvider: ['userTokenAuth', 'checkProviderData'],
     initialUserData: ['userTokenAuth', 'canRead'],
-    getPosts: ['userTokenAuth', 'canRead'],
+    getCampaigns: ['userTokenAuth', 'canRead'],
     resetPassword: true,
     signOut: ['userTokenAuth'],
     //eventually will set controller actions for this for the resources
