@@ -27,6 +27,7 @@ module.exports = {
     //should make a hash of these, to dehash before sending
     providerUserId: { type: 'string' },
     accessToken: { type: 'string' },
+    accessTokenSecret: { type: 'string' }, //only for twitter, probably because oauth1
     accessTokenExpires: { type: 'datetime' },
     refreshToken: { type: 'string' },
     refreshTokenExpires: { type: 'datetime' },

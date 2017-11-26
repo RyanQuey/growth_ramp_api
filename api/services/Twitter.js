@@ -16,7 +16,7 @@ const _setup = (account) => {
 const Twitter = {
   createPost: (account, post, utms) => {
     //just returning the promises in these returned functions
-    Twit = _setup(account)
+    const Twit = _setup(account)
     if (post.uploadedContent && post.uploadedContent.length ) {
       return Twitter._uploadAndPost(post, utms, Twit)
     } else {
@@ -38,6 +38,8 @@ const Twitter = {
         return Twitter[post.channel](post, utms, Twit, uploadsData)
       })
       .then((data) => {
+console.log("SUCCESSFUL");
+console.log(data);
         return resolve(data)
       })
       .catch((err) => {
@@ -50,26 +52,46 @@ const Twitter = {
   //upload a file
   _upload: (url, Twit) => {
     return new Promise((resolve, reject) => {
-      // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
-      // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
-      Twit.postMediaChunked({ file_path: url})
-      .then((data, response) => {
-        console.log("finished upload");
-        console.log(data, response);
+      // Note: seems like I cannot use Twit.postMediaChunked  since it was not liking a url for file path; wanted local path I assume
 
-//might not need; this helper might take care of it for us
-        const mediaId = data.media_id_string
+      let mediaId
+
+      axios.get(url, {responseType: 'arraybuffer'})
+      .then((response) => {
+        const b64content = new Buffer(response.data, 'binary').toString('base64')
+        return Twit.post('media/upload', { media_data: b64content})
+      })
+      .then((result) => {
+        if (result.error || !result.data) {
+          console.log(result.error || "no data returned");
+          throw new Error("failed to upload to Twitter")
+        }
+        console.log("finished upload:");
+        //response is just the full res data; don't need it, data extracts what I need
+
+        mediaId = result.data.media_id_string
         //not doing this yet
         const altText = ""
-
+console.log("media ID",mediaId);
         const metaParams = {
           media_id: mediaId,
           alt_text: {
-            text: altText
+            text: "Picture", //twitter requires it...
           }
         }
 
-        return resolve(metaParams)
+        return Twit.post('media/metadata/create', metaParams)
+      })
+      .then((result) => {
+        if (result.error) {
+          console.log(result.error);
+          throw new Error("failed to set media metadata to Twitter")
+        }
+        console.log("finished creating media metadata:");
+
+//might not need; this helper might take care of it for us
+
+        return resolve({mediaId})
       })
       .catch((err) => {
         console.log(err);
@@ -79,16 +101,15 @@ const Twitter = {
   },
   //createStatusUpdate:
   PERSONAL_POST: (post, utms, Twit, uploadsData) => {
-    return new Promise((resolve, reject) => {
-      Twit.post('statuses/update', {status: post.text}, (err, data, response) => {
-        if (err) {}
+      const params = {status: post.text}
+      if (uploadsData) {
+        //should be array of responses from uploading media
+        const mediaIds = uploadsData.map((u) => u.mediaId)
+        params.media_ids = mediaIds
+      }
 
-        console.log(data, response);
-      })
-
-    })
-
-
+      console.log(params);
+    return Twit.post('statuses/update', params)
   },
   /*
   _retweet: (post,  utms, Twit, uploadsData) => {
