@@ -14,7 +14,7 @@ module.exports.bootstrap = function(cb) {
   //do these belong here? I don't know, but it works
 
   global.moment = require('moment');
-  global.axios = require('axios')
+  global.axios = require('axios').default;
   //necessary b/c used es6 there
   global.Helpers = require('../api/services/Helpers').default
   // It's very important to trigger this callback method when you are finished
