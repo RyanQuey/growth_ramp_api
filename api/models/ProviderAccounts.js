@@ -17,6 +17,8 @@ const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
 const callbackUrl = domain + callbackPath
 
 module.exports = {
+  tableName: "providerAccounts",
+
   attributes: {
     provider: {
       type: 'string',
@@ -37,6 +39,17 @@ module.exports = {
 
     //these are the different channels that the user has for this account, and the metadata for those channels
     //but if they do not have the scope set, they will not be able to post to this channel
+    //since scope is set, only use this for friends they want to specifically contact, company pages, groups they are a part of, etc
+    //format:
+    // {
+    //   'GROUP_POST': [
+    //     {
+    //       id: (whatever id the provider has for this channel),
+    //
+    //
+    //     }
+    //   ]
+    // }
     channels: { type: 'json', defaultsTo: {} },
 
     //the channels can be configured by the front end, but the Scopes should be always in sync with their provider's scopes
@@ -85,7 +98,6 @@ module.exports = {
     },
   },
 
-  tableName: "providerAccounts",
 
   loginWithProvider(req) {
 

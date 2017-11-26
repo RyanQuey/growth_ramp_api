@@ -63,6 +63,7 @@ const LinkedIn = {
   },
 
 //TODO set to page...
+  // these are business pages
   PAGE_POST: (body, axiosLI) => {
     return axiosLI.post(`${LIApi}/v1/people/~/shares?format=json`, body)
   },

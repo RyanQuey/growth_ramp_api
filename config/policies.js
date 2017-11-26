@@ -29,21 +29,6 @@ module.exports.policies = {
   //by default, nothing is allowed once this is uncommented (recommended best practice)
   '*': false,
 
-  UsersController: {
-    create: true,
-    authenticate: true,
-    update: ['userTokenAuth', 'canWrite'],
-    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
-    find: ['userTokenAuth', 'canRead'],
-    findOne: ['userTokenAuth', 'canRead'],
-    loginWithProvider: ['userTokenAuth', 'checkProviderData'],
-    initialUserData: ['userTokenAuth', 'canRead'],
-    getCampaigns: ['userTokenAuth', 'canRead'],
-    resetPassword: true,
-    signOut: ['userTokenAuth'],
-    //eventually will set controller actions for this for the resources
-    //changePermissions: ['userTokenAuth', 'canChangePermissions'],
-  },
   /* disabling until v2
  * PermissionsController: {
     create: ['userTokenAuth', 'canWrite'],
@@ -64,18 +49,9 @@ module.exports.policies = {
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
   },
-  PostsController: {
-    create: ['userTokenAuth', 'canWrite'],
-    update: ['userTokenAuth', 'canWrite'],
-    destroy: ['userTokenAuth', 'canWrite'],
-    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
-    find: ['userTokenAuth', 'canRead'],
-    findOne: ['userTokenAuth', 'canRead'],
-    //eventually will set controller actions for this for the resources
-    //changePermissions: ['canChangePermissions'],
-  },
   PlansController: {
     create: ['userTokenAuth', 'canWrite'],
+    createFromCampaign: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
     find: ['userTokenAuth', 'canRead'],
@@ -91,6 +67,31 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     useToken: ['userTokenAuth'],
     //need one for the login token
+  },
+  PostsController: {
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
+    destroy: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    //eventually will set controller actions for this for the resources
+    //changePermissions: ['canChangePermissions'],
+  },
+  UsersController: {
+    create: true,
+    authenticate: true,
+    update: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    loginWithProvider: ['userTokenAuth', 'checkProviderData'],
+    initialUserData: ['userTokenAuth', 'canRead'],
+    getCampaigns: ['userTokenAuth', 'canRead'],
+    resetPassword: true,
+    signOut: ['userTokenAuth'],
+    //eventually will set controller actions for this for the resources
+    //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
 /* disabling until v2
   WorkgroupsController: {
