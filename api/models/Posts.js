@@ -49,6 +49,9 @@ module.exports = {
     //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
     providerAccountId: { model: 'providerAccounts', required: true },
     planId: { model: 'plans'},
+    //only if post was created from a plan, not if plan was created from a post
+    //I don't know if use case for the latter, so that's why. ALready have planId too
+    //seems mostly helpful if still drafting... (?)... if at all.
     postTemplateId: { model: 'postTemplates'},
   },
   // don't need these because it's part of post already

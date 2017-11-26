@@ -8,9 +8,11 @@
 
 import { POST_TEMPLATE_STATUSES } from "../constants"
 module.exports = {
+  tableName: "postTemplates",
 
   attributes: {
-    name: { type: 'string', required: true },//eg "my friendly post",
+    //might want this; would need migration
+    //name: { type: 'string' },//eg "my friendly post",
     channel: { type: 'string', required: true },//eg "PERSONAL_POST",
     campaignUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     mediumUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
