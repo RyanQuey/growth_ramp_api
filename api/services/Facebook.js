@@ -173,7 +173,7 @@ console.log(account, channelType);
 
       }
 
-      fb.api(`me/${path}`, params)
+      fb.api(`me/${path}`, {params})
       .then((results) => {
 console.log("my channels");
 console.log(results);

@@ -96,8 +96,10 @@ const LinkedIn = {
 
 
       axiosLI(`${LIApi}/v1/${path}?format=json`, {params} )
-      .then((channels) => {
-        console.log(channels);
+      .then((result) => {
+        console.log(result.data);
+        const total = result.data._total
+//TODO extrat data; see FB for example
       })
       .catch((err) => {
         console.log("Error getting ", channelType);
