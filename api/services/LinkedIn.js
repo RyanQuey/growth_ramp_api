@@ -79,9 +79,11 @@ const LinkedIn = {
       const axiosLI = _setup(account)
 
       let path
+      //gets converted to query string in axios
       let params = {
         start: pagination.start || 0,
         count: pagination.count || 25, //maximum to return
+        //format: "json"
       }
 
       //currently is the only channelType...
@@ -93,7 +95,7 @@ const LinkedIn = {
       }
 
 
-      axiosLI(`${LIApi}/v1/${path}?format=json`, params)
+      axiosLI(`${LIApi}/v1/${path}?format=json`, {params} )
       .then((channels) => {
         console.log(channels);
       })
