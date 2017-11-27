@@ -8,6 +8,7 @@
 const constants = require('../constants')
 const UTM_TYPES = constants.UTM_TYPES
 
+import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 const providerWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
@@ -18,7 +19,13 @@ module.exports = {
   attributes: {
     //stuff to use to create the posted message
     text: { type: 'string' }, //caption/comment for the post
-    channel: { type: 'string', required: true },
+    channelType: { type: 'string', required: true },
+    provider: { //should always match the provider account provider
+      type: 'string',
+      required: true,
+      enum: Object.keys(PROVIDERS)
+    }, //"e.g., FACEBOOK"
+
     //[{
     //  url: ,
     //  type: VIDEO, or IMAGE
@@ -46,7 +53,7 @@ module.exports = {
     //Associations
     userId: { model: 'users', required: true },
     campaignId: { model: 'campaigns', required: true },
-    //note that a given channel configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
+    //note that a given channelType configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
     providerAccountId: { model: 'providerAccounts', required: true },
     planId: { model: 'plans'},
     //only if post was created from a plan, not if plan was created from a post

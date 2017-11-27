@@ -29,24 +29,26 @@ module.exports.models = {
   ***************************************************************************/
   migrate: 'safe',
   updateOrCreate: function(criteria, values, cb) {
-    //is no values are specified, use criteria
-    if (!values) {values = criteria.where ? criteria.where : criteria};
+    return new Promise((resolve, reject) => {
+      //is no values are specified, use criteria
+      if (!values) {values = criteria.where ? criteria.where : criteria};
 
-    this.findOne(criteria, (err, result) => {
-      if (err) {
-        if (typeof cb === "function") {
-          return cb(err, false)
+      this.findOne(criteria, (err, result) => {
+        if (err) {
+          if (typeof cb === "function") {
+            return cb(err, false)
+          } else {
+            console.log(err);
+            return
+          }
+
+        } else if (result) {
+          return resolve(this.update(criteria, values, cb))
+
         } else {
-          console.log(err);
-          return
+          return resolve(this.create(values, cb))
         }
-
-      } else if (result) {
-        this.update(criteria, values, cb);
-
-      } else {
-        this.create(values, cb);
-      }
+      })
     });
   },
 

@@ -28,7 +28,7 @@ module.exports = {
     FACEBOOK: {
       name: 'Facebook',
       providerId: 'FACEBOOK',
-      channels: [
+      channelTypeTypes: [
         "PERSONAL_POST",
         //"PRIVATE_MESSAGE",
         "GROUP_POST",
@@ -55,12 +55,12 @@ module.exports = {
     GOOGLE: {
       name: 'Google',
       providerId: 'GOOGLE',
-      channels: []
+      channelTypes: []
     },
     LINKEDIN: {
       name: 'LinkedIn',
       providerId: 'LINKEDIN',
-      channels: [
+      channelTypes: [
         "PERSONAL_POST",
         //"PRIVATE_MESSAGE",
         "GROUP_POST",
@@ -70,7 +70,7 @@ module.exports = {
     TWITTER: {
       name: 'Twitter',
       providerId: 'TWITTER',
-      channels: [
+      channelTypes: [
         "PERSONAL_POST", //tweet. distinct from business post?
         "PRIVATE_MESSAGE",
       ]

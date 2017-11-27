@@ -15,6 +15,11 @@ import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 const domain = process.env.CLIENT_URL || 'http://www.local.dev:5000'
 const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
 const callbackUrl = domain + callbackPath
+const providerWrappers = {
+  FACEBOOK: Facebook,
+  TWITTER: Twitter,
+  LINKEDIN: LinkedIn,
+}
 
 module.exports = {
   tableName: "providerAccounts",
@@ -37,6 +42,11 @@ module.exports = {
     //might make this an array, since FB returns multiple emails
     email: { type: 'string', required: false },
 
+    //the channels can be configured by the front end, but the Scopes should be always in sync with their provider's scopes
+    //use the exact same strings that the provider takes/returns
+    //facebook returns as: {permission: 'the permission', status: 'granted'}
+    scopes: { type: 'json', defaultsTo: {} },
+
     //these are the different channels that the user has for this account, and the metadata for those channels
     //but if they do not have the scope set, they will not be able to post to this channel
     //since scope is set, only use this for friends they want to specifically contact, company pages, groups they are a part of, etc
@@ -44,22 +54,16 @@ module.exports = {
     // {
     //   'GROUP_POST': [
     //     {
-    //       id: (whatever id the provider has for this channel),
+    //       id: (whatever id the provider has for this group),
+    //       name: [string]
+    //       sharingAllowed: boolean; (if sharing is enabled for the company in general; LI uses at least)
+    //       canShare: boolean (if current user has permission to share for group, or at least the could if sharingAllowed is true)
     //
     //
     //     }
     //   ]
     // }
-    channels: { type: 'json', defaultsTo: {} },
 
-    //the channels can be configured by the front end, but the Scopes should be always in sync with their provider's scopes
-    //use the exact same strings that the provider takes/returns
-    //facebook returns as: {permission: 'the permission', status: 'granted'}
-    scopes: { type: 'json', defaultsTo: {} },
-
-    //this will hold data such as friend lists, available pages, and other channels that haven't been configured, but could be
-    //the primary keys on the object
-    potentialChannels: { type: 'json', defaultsTo: {} },
     userName: { type: 'string' },
     profileUrl: { type: 'string' },
     photoUrl: { type: 'string' },
@@ -79,6 +83,10 @@ module.exports = {
     posts: {
       collection: 'posts',
       via: 'providerAccountId'
+    },
+    channels: {
+      collection: 'channels',
+      via: 'providerAccountId',
     },
     postTemplates: {
       collection: 'postTemplates',
@@ -329,5 +337,52 @@ console.log("response from trying to refresh access token");
     } else if (res.data.app_id !== process.env.CLIENT_FACEBOOK_ID) {
       //this token is not for my app!
     }*///else if (user_id !== ) {}
+
+
+  //finds all the channels of a given provider account of a certain channelType
+  refreshChannelType: function(account, channelType) {
+    return new Promise((resolve, reject) => {
+
+      //api will be the api for the social network
+      let api = providerWrappers[account.provider]
+      let pagination = {} //TODO probably have to set this... see LI for example of what I need; fb doesn't seem to need
+
+      //publishes post on social network
+      api.getChannels(account, channelType, pagination)
+      .then((results) => {
+console.log("got the channels");
+console.log(results);
+
+        //by the time data is here, results should be ready to persist into the db
+        const promises = results.map((channel) => {
+          channel.providerAccountId = account.id
+          channel.provider = account.provider
+          channel.userId = account.userId
+          channel.type = channelType
+
+          return Channels.updateOrCreate({
+            providerChannelId: channel.providerChannelId,
+            provider: channel.provider
+          }, channel)
+        })
+
+        //replace the channels list for that channelType
+        let updatedChannels = Object.assign({}, account.channels)
+
+        return Promise.all(promises)
+      })
+      .then((p) => {
+console.log(p);
+        return resolve(p)
+      })
+      .catch((err) => {
+        console.log("Failure refreshing channel type");
+        console.log(err);
+        return reject(err)
+      })
+    })
+
+  },
+
 };
 

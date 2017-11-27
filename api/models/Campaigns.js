@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-    //!!!!!!!note that a given channel configuration, provider, or plan may change, but that won't actually change the campaign itself, once the campaign has been sent!!!!!!!!
+    //!!!!!!!note that a given postTemplate, provider, or plan may change, but that won't actually change the campaign itself, once the campaign has been sent!!!!!!!!
 var constants = require('../constants')
 var CAMPAIGN_STATUSES = constants.CAMPAIGN_STATUSES
 
@@ -16,8 +16,7 @@ module.exports = {
     //published once, on submit, even if its related posts aren't published until later
     publishedAt: { type: 'datetime' },
     status: { type: 'string', required: true, defaultsTo: CAMPAIGN_STATUSES[0], enum: CAMPAIGN_STATUSES },
-    //often will be identical to its child posts' contentUrl, once those are actually made
-    //maybe having both will be overkill?
+    //often will be identical to its child posts' contentUrl, once those are actually made. But maybe having both will be overkill?
     contentUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
     //promotedContent: { type: 'json', defaultsTo: {url: ''} }, already did migration for this, but might not need it
 
@@ -79,8 +78,9 @@ module.exports = {
         }
         const newPosts = plan.postTemplates.map((template) => {
           let post = _.pick(template, [
-            "channel",
+            "channelType",
             "campaignUtm",
+            "provider",
             "mediumUtm",
             "sourceUtm",
             "contentUtm",
@@ -122,7 +122,7 @@ module.exports = {
   //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
   publishCampaign: (campaign) => {
     // - check each access token, and refresh if necessary
-    // - publish each post for each channelConfiguration(presumably, they would actually already be made when making the campaign draft)
+    // - publish each post  (presumably, they would actually already be made when making the campaign draft)
     // - set utms for each (actually, maybe do this while writing draft also)
     // - update campaign status to published
 
