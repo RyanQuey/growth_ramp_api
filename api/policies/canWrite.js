@@ -57,11 +57,16 @@ console.log("matching record", record);
       //try to skip a trip to the database by finding and setting the record on the request body
       //as long as we are using this, make sure that no one can change the userId unless admin
       console.log("now will try to ",action, modelIdentity, "with userid", ownerId || userId);
+      //still is ok for reading (sinec will only find resources with that userid hopefully??), but not writing
       if (
+        //can create anything if it's for yourself!
+        ["create", "createfromcampaign"].includes(action)
+
         //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
         //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself
-        userId && modelAttributes.includes('userId') ||
-        ownerId && modelAttributes.includes('ownerId')
+      //NOTE: need to remove this, since someone could do an update on someone else's record, to change the record's userId to yours...
+        /*userId && modelAttributes.includes('userId') ||
+        ownerId && modelAttributes.includes('ownerId')*/
       ) {
         if ([userId, ownerId].includes(req.user.id)) {
           pass();

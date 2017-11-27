@@ -58,7 +58,7 @@ module.exports = {
       .then((result) => {
         newPlan = result
         console.log(newPlan);
-        const postTemplateParams = campaign.posts.map((post) => {
+        const newPostTemplates = campaign.posts.map((post) => {
           let params = _.pick(post, [
             "channel",
             "providerAccountId",
@@ -76,12 +76,12 @@ module.exports = {
           return params
         })
 
-  console.log(postTemplateParams)
+  console.log(newPostTemplates)
         //for (let i = 0; i < postTemplateParams.length; i++) {
 
         //}
         const promises = []
-        promises.push(PostTemplates.create(postTemplateParams))
+        promises.push(PostTemplates.create(newPostTemplates))
         promises.push(Campaigns.update(campaign.id, {planId: newPlan.id}))
         promises.push(Posts.update({campaignId: campaign.id}, {planId: newPlan.id}))
 

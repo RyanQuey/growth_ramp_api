@@ -49,6 +49,75 @@ module.exports = {
     cb();
   },
 
+  //sets posts and utms of a campaign to match the newly updated planId
+  matchToPlan: (params) => {
+    return new Promise((resolve, reject) => {
+
+      let plan, currentCampaignRecord
+      //Front end should already block, but this makes sure
+      Campaigns.findOne(params.id).populate('posts')
+      .then((c) => {
+        currentCampaignRecord = c
+
+        //make sure it's ok to change
+        if (currentCampaignRecord.posts && currentCampaignRecord.posts.length) {
+          throw "Cannot set plan if posts are already made for this campaign"
+        }
+        //should only happen if plan is not set yet
+        if (currentCampaignRecord.planId) {
+          throw "Cannot change plan if plan is already set"
+        }
+
+        return Plans.findOne(params.planId).populate('postTemplates')
+      })
+      .then((p) => {
+        plan = p
+
+        //current record has a validated user id, so this check will make sure requesting user has access to this plan
+        if (plan.userId !== currentCampaignRecord.userId) {
+          throw "Forbidden: this is not your plan"
+        }
+        const newPosts = plan.postTemplates.map((template) => {
+          let post = _.pick(template, [
+            "channel",
+            "campaignUtm",
+            "mediumUtm",
+            "sourceUtm",
+            "contentUtm",
+            "termUtm",
+            "customUtm",
+            "providerAccountId",
+            "userId",
+            "planId",
+          ])
+
+          post.postTemplateId = template.id
+          post.campaignId = currentCampaignRecord.id
+
+          return post
+        })
+
+        const promises = []
+        promises.push(Posts.create(newPosts))
+
+        //perform the regular update, in case name, contentUrl were also changed. BUt also updates the planId
+        promises.push(Campaigns.update(currentCampaignRecord.id, params))
+
+        return Promise.all(promises)
+      })
+      .spread((posts, campaign) => {
+        campaign.posts = posts
+        //so will return updated campaign object, just as regular Campaigns.update would
+        return resolve(campaign)
+      })
+      .catch((err) => {
+        return reject(err)
+      })
+
+    })
+
+  },
+
   //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
   publishCampaign: (campaign) => {
     // - check each access token, and refresh if necessary
