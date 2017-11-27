@@ -72,7 +72,6 @@ console.log(data);
         mediaId = result.data.media_id_string
         //not doing this yet
         const altText = ""
-console.log("media ID",mediaId);
         const metaParams = {
           media_id: mediaId,
           alt_text: {
