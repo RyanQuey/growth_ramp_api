@@ -9,6 +9,7 @@ import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 module.exports = {
 
   attributes: {
+    name: {type: 'string'},
     type: {
       type: 'string',
       required: true,
