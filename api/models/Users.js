@@ -179,9 +179,11 @@ module.exports = {
         promises.push(Users.findOne(userData))
       }
 
-      promises.unshift(ProviderAccounts.find({userId})) //will be results[0]
+//TODO do not want to population here, unless groups are reasonable amount
+//otherwise, populate only when necessary, to increase speed of initial load
+      promises.unshift(ProviderAccounts.find({userId}).populate('channels')) //will be results[0] Will eventually
       promises.unshift(Plans.find({userId, status: "ACTIVE"})) //will be results[1]
-
+//TODO use .spread instead
       return Promise.all(promises)
       .then((results) => {
         const [plans, accounts, user] = results
