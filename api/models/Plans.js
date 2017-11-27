@@ -76,10 +76,6 @@ module.exports = {
           return params
         })
 
-  console.log(newPostTemplates)
-        //for (let i = 0; i < postTemplateParams.length; i++) {
-
-        //}
         const promises = []
         promises.push(PostTemplates.create(newPostTemplates))
         promises.push(Campaigns.update(campaign.id, {planId: newPlan.id}))

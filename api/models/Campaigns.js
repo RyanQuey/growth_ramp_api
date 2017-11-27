@@ -105,7 +105,8 @@ module.exports = {
 
         return Promise.all(promises)
       })
-      .spread((posts, campaign) => {
+      .spread((posts, c) => {
+        let campaign = Object.assign({}, c[0])
         campaign.posts = posts
         //so will return updated campaign object, just as regular Campaigns.update would
         return resolve(campaign)
