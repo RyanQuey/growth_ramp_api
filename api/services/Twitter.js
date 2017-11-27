@@ -20,7 +20,7 @@ const Twitter = {
     if (post.uploadedContent && post.uploadedContent.length ) {
       return Twitter._uploadAndPost(post, utms, Twit)
     } else {
-      return Twitter[post.channel](post, utms, Twit)
+      return Twitter[post.channelType](post, utms, Twit)
     }
   },
 
@@ -35,7 +35,7 @@ const Twitter = {
       Promise.all(promises)
       .then((uploadsData) => {
 
-        return Twitter[post.channel](post, utms, Twit, uploadsData)
+        return Twitter[post.channelType](post, utms, Twit, uploadsData)
       })
       .then((data) => {
 console.log("SUCCESSFUL");
@@ -109,6 +109,12 @@ console.log(data);
 
       console.log(params);
     return Twit.post('statuses/update', params)
+  },
+
+  getChannels: (account, channelType, pagination) => {
+    return new Promise((resolve, reject) => {
+      return reject("no channels available to get for twitter")
+    })
   },
   /*
   _retweet: (post,  utms, Twit, uploadsData) => {

@@ -14,6 +14,7 @@ module.exports = {
     // posts does put the channel info on first level, so can query there. No reason to make the data readily accessible/normalized here in plans, where a plan can change constantly, and data can just be retrieved from the posts
 
     //currently not using, but migration has already been ran
+    //not sure of use case
     //channelConfigurations: { type: 'json', defaultsTo: {} }, //is just if each provider and each account for the provider is disabled or not for this plan (for UI)
 
     //Associations
@@ -62,6 +63,7 @@ module.exports = {
           let params = _.pick(post, [
             "channel",
             "providerAccountId",
+            "provider",
             "userId",
             "campaignUtm",
             "mediumUtm",

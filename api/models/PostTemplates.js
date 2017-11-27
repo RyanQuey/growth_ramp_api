@@ -6,6 +6,7 @@
  */
 
 
+import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 import { POST_TEMPLATE_STATUSES } from "../constants"
 module.exports = {
   tableName: "postTemplates",
@@ -13,7 +14,12 @@ module.exports = {
   attributes: {
     //might want this; would need migration
     //name: { type: 'string' },//eg "my friendly post",
-    channel: { type: 'string', required: true },//eg "PERSONAL_POST",
+    channelType: { type: 'string', required: true },//eg "PERSONAL_POST",
+    provider: { //should always match the provider account provider
+      type: 'string',
+      required: true,
+      enum: Object.keys(PROVIDERS)
+    }, //"e.g., FACEBOOK"
     campaignUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     mediumUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     sourceUtm: { type: 'json', defaultsTo: {active: true, value: ''} },

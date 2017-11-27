@@ -22,7 +22,7 @@ const Facebook = {
       if (post.uploadedContent && post.uploadedContent.length ) {
         return resolve(Facebook._uploadAndPost(post, body, fb))
       } else {
-        return resolve(Facebook[post.channel](post, body, fb, false))
+        return resolve(Facebook[post.channelType](post, body, fb, false))
       }
     })
   },
@@ -38,7 +38,7 @@ const Facebook = {
       Promise.all(promises)
       //these are successful uploads
       .then((uploadsData) => {
-        return Facebook[post.channel](post, body, fb, uploadsData )
+        return Facebook[post.channelType](post, body, fb, uploadsData )
       })
       .then((data) => {
 console.log("result from Facebook");
@@ -58,7 +58,9 @@ console.log(data);
     return new Promise((resolve, reject) => {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
-      fb.api('me/photos', 'post', {
+      let channelPath = "me" //can be groupId, eventId, pageId instead. Or "me" === fb UserId
+      // VIDEOS would be at `me/videos` or whatever the channelType is
+      fb.api(`${channelPath}/photos`, 'post', {
         url: url,
         published: false //to not publish to wall, but still upload content, which remains for 24 hours ONLY unless gets published then. Gets published when post does
       }) //can add a caption
@@ -115,7 +117,7 @@ console.log(params);
     }
 console.log("params");
 console.log(params);
-    return fb.api('me/feed', 'post', params)
+    return fb.api(`${post.channelId}/feed`, 'post', params)
   },
 
 //TODO set to group...
@@ -132,14 +134,14 @@ console.log(params);
     }
 console.log("params");
 console.log(params);
-    return fb.api('me/feed', 'post', params)
+    return fb.api(`${post.channelId}/feed`, 'post', params)
   },
 
   //all the posts for one user account
   //not sure if this responds with a promise like the others do ?
   //if not, just have a call back
   batchRequest: (post, account, options = {}) => {
-    fb = _setup(account)
+    const fb = _setup(account)
     fb.api('', 'post', {batch: post.batch.map((post) => {
 
       return {
@@ -152,6 +154,56 @@ console.log(params);
     .then((response) => {console.log(response);})
     .catch((err) => {console.log(err);})
   },
+
+  //channelType should be PAGE_POST or GROUP_POST
+  getChannels: (account, channelType, pagination) => {
+    return new Promise((resolve, reject) => {
+console.log("in the channels");
+console.log(account, channelType);
+      const fb = _setup(account)
+
+      let path
+      let params = {}
+
+      if (channelType === "PAGE_POST") {
+        path = "accounts" //Facebook pages this person is admin for
+
+      } else if ("GROUP_POST") {
+        path = "groups" //Facebook pages this person is admin for
+
+      }
+
+      fb.api(`me/${path}`, params)
+      .then((results) => {
+console.log("my channels");
+console.log(results);
+
+        const pagination = results.paging //TODO will have to use eventually
+
+        //prepare to be persisted
+        const channelsForType = results.data.map((channel) => (
+          {
+            providerChannelId: channel.id,
+            name: channel.name,
+            sharingAllowed: true, //li might return this; might want to get it from them
+            accessToken: channel.access_token, //fb provides for pages only
+            otherInfo: {
+              category: channel.category, //fb provides for pages only,
+              privacy: channel.privacy, //fb returns this
+            },
+            userPermissions: channel.perms, //fb provides for pages only. What permissions the user has for this page
+          }
+        ));
+        return resolve(channelsForType)
+      })
+      .catch((err) => {
+        console.log("Error getting ", channelType);
+        console.log(err);
+        return reject(err)
+      })
+    })
+  },
+
 }
 
 module.exports = Facebook

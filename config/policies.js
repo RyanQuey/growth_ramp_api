@@ -59,14 +59,8 @@ module.exports.policies = {
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
-  TokensController: {
-    //create: ['userTokenAuth', 'canWrite'],
-    //update: ['userTokenAuth', 'canWrite'],
-    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
-    find: ['userTokenAuth', 'canRead'],
-    findOne: ['userTokenAuth', 'canRead'],
-    useToken: ['userTokenAuth'],
-    //need one for the login token
+  ProviderAccountsController: {
+    refreshChannelType: ['userTokenAuth'],
   },
   PostsController: {
     create: ['userTokenAuth', 'canWrite'],
@@ -77,6 +71,15 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
+  },
+  TokensController: {
+    //create: ['userTokenAuth', 'canWrite'],
+    //update: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    useToken: ['userTokenAuth'],
+    //need one for the login token
   },
   UsersController: {
     create: true,
