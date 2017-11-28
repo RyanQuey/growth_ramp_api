@@ -40,14 +40,6 @@ module.exports = {
   autoUpdatedAt: true,
 
 
-  beforeValidate: (values, cb) => {
-    //TODO probably there's a better way to make sure it isn't already shortened...
-    if (values.contentUrl && !values.contentUrl.includes('goo.gl')) {
-
-    }
-    cb();
-  },
-
   //sets posts and utms of a campaign to match the newly updated planId
   matchToPlan: (params) => {
     return new Promise((resolve, reject) => {
@@ -79,6 +71,7 @@ module.exports = {
         const newPosts = plan.postTemplates.map((template) => {
           let post = _.pick(template, [
             "channelType",
+            "channelId",
             "campaignUtm",
             "provider",
             "mediumUtm",
@@ -125,18 +118,17 @@ module.exports = {
     // - publish each post  (presumably, they would actually already be made when making the campaign draft)
     // - set utms for each (actually, maybe do this while writing draft also)
     // - update campaign status to published
-console.log("beginning to publish");
     return new Promise((resolve, reject) => {
       let posts, postResults
-console.log("in the promise");
       Posts.find({campaignId: campaign.id}).populate('providerAccountId').populate('channelId')
       .then((p) => {
 //console.log("found the posts");
         //check access tokens
         //hopefully the API has given this all along, but not there yet, and good to check anyways
         posts = p
-        //technically providerAccountId is required, but whatever
+        //technically providerAccountId is required so this shouldn't be necessary, but whatever
         _.remove(posts, (post) => !post.providerAccountId)
+
 
         let allAccounts = posts.reduce((acc, post) => {
           //remove duplicate accounts
@@ -169,6 +161,26 @@ console.log("in the promise");
         if (accountsMissingTokens.length ) {
           //also an array, so still works
           return accountsMissingTokens
+        }
+
+        //this should never happen, but just make sure
+        //NOTE if post is published after campaign is, don't make this check, since the contentUrl on the post might have since been removed or edited...if we allow that...
+        if (campaign.contentUrl && posts.some((post) => !post.contentUrl)) {
+          return Posts.update({
+            campaignId: campaign.id,
+            contentUrl: "",
+          }, {
+            contentUrl: campaign.contentUrl
+          })
+
+        } else {
+          return null
+        }
+      })
+      .then((results) => {
+        //in case an update happened
+        if (results) {
+          posts = updatedPosts.map((result) => result[0])
         }
 
         const promises = []

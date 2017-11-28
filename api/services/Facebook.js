@@ -14,10 +14,10 @@ const _setup = (account) => {
 }
 
 const Facebook = {
-  createPost: (account, post, utms, channel) => {
+  createPost: (account, post, channel) => {
     return new Promise((resolve, reject) => {
       const fb = _setup(account)
-      const body = `${post.text} ${post.contentUrl}?${utms}`
+      const body = `${post.text} ${post.shortUrl}`
 
       if (post.uploadedContent && post.uploadedContent.length ) {
         return resolve(Facebook._uploadAndPost(post, body, channel, fb))

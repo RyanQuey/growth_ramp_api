@@ -61,7 +61,8 @@ module.exports = {
         console.log(newPlan);
         const newPostTemplates = campaign.posts.map((post) => {
           let params = _.pick(post, [
-            "channel",
+            "channelId",
+            "channelType",
             "providerAccountId",
             "provider",
             "userId",

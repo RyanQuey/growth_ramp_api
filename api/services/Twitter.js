@@ -14,18 +14,18 @@ const _setup = (account) => {
 //not supporting private message yet
 
 const Twitter = {
-  createPost: (account, post, utms) => {
+  createPost: (account, post) => {
     //just returning the promises in these returned functions
     const Twit = _setup(account)
     if (post.uploadedContent && post.uploadedContent.length ) {
-      return Twitter._uploadAndPost(post, utms, Twit)
+      return Twitter._uploadAndPost(post, Twit)
     } else {
-      return Twitter[post.channelType](post, utms, Twit)
+      return Twitter[post.channelType](post, Twit)
     }
   },
 
   //upload the files and then create post
-  _uploadAndPost: (post, utms, Twit) => {
+  _uploadAndPost: (post, Twit) => {
     return new Promise((resolve, reject) => {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
@@ -35,7 +35,7 @@ const Twitter = {
       Promise.all(promises)
       .then((uploadsData) => {
 
-        return Twitter[post.channelType](post, utms, Twit, uploadsData)
+        return Twitter[post.channelType](post, Twit, uploadsData)
       })
       .then((data) => {
 console.log("SUCCESSFUL");
@@ -99,8 +99,8 @@ console.log(data);
     })
   },
   //createStatusUpdate:
-  PERSONAL_POST: (post, utms, Twit, uploadsData) => {
-      const params = {status: post.text}
+  PERSONAL_POST: (post, Twit, uploadsData) => {
+      const params = {status: `${post.text} ${post.shortUrl}`}
       if (uploadsData) {
         //should be array of responses from uploading media
         const mediaIds = uploadsData.map((u) => u.mediaId)
