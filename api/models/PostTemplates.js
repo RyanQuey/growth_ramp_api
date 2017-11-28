@@ -33,6 +33,7 @@ module.exports = {
       model: 'providerAccounts',
       required: true,
     },
+    channelId: { model: 'channels' },
     userId: {
       model: 'users',
       required: true,

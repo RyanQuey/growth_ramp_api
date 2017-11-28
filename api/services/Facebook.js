@@ -14,31 +14,34 @@ const _setup = (account) => {
 }
 
 const Facebook = {
-  createPost: (account, post, utms) => {
+  createPost: (account, post, utms, channel) => {
     return new Promise((resolve, reject) => {
       const fb = _setup(account)
       const body = `${post.text} ${post.contentUrl}?${utms}`
 
       if (post.uploadedContent && post.uploadedContent.length ) {
-        return resolve(Facebook._uploadAndPost(post, body, fb))
+        return resolve(Facebook._uploadAndPost(post, body, channel, fb))
       } else {
-        return resolve(Facebook[post.channelType](post, body, fb, false))
+        return resolve(Facebook[post.channelType](post, body, channel, fb, false))
       }
     })
   },
 
   //upload the files and then create post
-  _uploadAndPost: (post, body, fb) => {
+  _uploadAndPost: (post, body, channel, fb) => {
     return new Promise((resolve, reject) => {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
       const uploads = post.uploadedContent.map((c) => c.url)
-      const promises = uploads.map((url) => Facebook._upload(url, fb))
+console.log("channel", channel);
+      const channelId = channel && channel.providerChannelId || "me"
+      const promises = uploads.map((url) => Facebook._upload(url, channelId, fb))
 
       Promise.all(promises)
       //these are successful uploads
       .then((uploadsData) => {
-        return Facebook[post.channelType](post, body, fb, uploadsData )
+console.log(uploadsData);
+        return Facebook[post.channelType](post, body, channel, fb, uploadsData )
       })
       .then((data) => {
 console.log("result from Facebook");
@@ -54,11 +57,11 @@ console.log(data);
   },
 
   //upload a file
-  _upload: (url, fb) => {
+  _upload: (url, channelId = "me", fb) => {
     return new Promise((resolve, reject) => {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
-      let channelPath = "me" //can be groupId, eventId, pageId instead. Or "me" === fb UserId
+      let channelPath = channelId //can be groupId, eventId, pageId instead. Or "me" === fb UserId
       // VIDEOS would be at `me/videos` or whatever the channelType is
       fb.api(`${channelPath}/photos`, 'post', {
         url: url,
@@ -87,7 +90,7 @@ console.log(data);
   },
 
 
-  PERSONAL_POST: (post, body, fb, uploadsData) => {
+  PERSONAL_POST: (post, body, channel, fb, uploadsData) => {
     let params = {
       message: body,
     }
@@ -104,7 +107,7 @@ console.log(params);
   },
 
 //TODO set to page...
-  PAGE_POST: (post, body, fb, uploadsData) => {
+  PAGE_POST: (post, body, channel, fb, uploadsData) => {
     let params = {
       message: body,
     }
@@ -117,11 +120,11 @@ console.log(params);
     }
 console.log("params");
 console.log(params);
-    return fb.api(`${post.channelId}/feed`, 'post', params)
+    return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
   },
 
 //TODO set to group...
-  GROUP_POST: (post, body, fb, uploadsData) => {
+  GROUP_POST: (post, body, channel, fb, uploadsData) => {
     let params = {
       message: body,
     }
@@ -134,7 +137,8 @@ console.log(params);
     }
 console.log("params");
 console.log(params);
-    return fb.api(`${post.channelId}/feed`, 'post', params)
+console.log(channel.id);
+    return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
   },
 
   //all the posts for one user account

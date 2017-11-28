@@ -259,7 +259,8 @@ console.log(providerAccount);
         //get/check token
         if (
           providerAccount[`${tokenType}TokenExpires`] &&
-          moment.utc(providerAccount[`${tokenType}TokenExpires`]).isAfter(moment.utc())
+          moment.utc(providerAccount[`${tokenType}TokenExpires`]).isAfter(moment.utc()) ||
+          true //TODO keep until am getting accessTokenExpires from all providers
         ) {
           //token is found and valid
           console.log("token is found and is valid");
@@ -268,7 +269,7 @@ console.log(providerAccount);
         } else if (tokenType === "access") {
           //try to refresh
           console.log("trying to refresh");
-          return ProviderAccounts.getAccessTokenFromProvider(account.provider, account)
+          return ProviderAccounts.getAccessTokenFromProvider(account.refreshTokaccount.provider, account)
 
         } else {
           //just return it to be handled by parent function
@@ -301,6 +302,7 @@ console.log(providerAccount);
   },
 
   //please don't pass in an expired refresh token into here
+  //TODO implement, and use the Services for the social networks
   getAccessTokenFromProvider: function(validRefreshToken, providerName) {
     return new Promise((resolve, reject) => {
       //make a get request, tagging on the refresh token into the query
@@ -342,6 +344,7 @@ console.log("response from trying to refresh access token");
   //finds all the channels of a given provider account of a certain channelType
   refreshChannelType: function(account, channelType) {
     return new Promise((resolve, reject) => {
+      let results
 
       //api will be the api for the social network
       let api = providerWrappers[account.provider]
@@ -349,9 +352,8 @@ console.log("response from trying to refresh access token");
 
       //publishes post on social network
       api.getChannels(account, channelType, pagination)
-      .then((results) => {
-console.log("got the channels");
-console.log(results);
+      .then((r) => {
+        results = r
 
         //by the time data is here, results should be ready to persist into the db
         const promises = results.map((channel) => {
@@ -372,8 +374,7 @@ console.log(results);
         return Promise.all(promises)
       })
       .then((p) => {
-console.log(p);
-        return resolve(p)
+        return resolve(results)
       })
       .catch((err) => {
         console.log("Failure refreshing channel type");

@@ -53,6 +53,7 @@ module.exports = {
     //Associations
     userId: { model: 'users', required: true },
     campaignId: { model: 'campaigns', required: true },
+    channelId: { model: 'channels' },
     //note that a given channelType configuration, provider, or plan may change, but that one actually change the message itself, once the message has been sent
     providerAccountId: { model: 'providerAccounts', required: true },
     planId: { model: 'plans'},
@@ -61,7 +62,9 @@ module.exports = {
     //seems mostly helpful if still drafting... (?)... if at all.
     postTemplateId: { model: 'postTemplates'},
   },
+
   // don't need these because it's part of post already
+  // TODO might add??
   autoCreatedAt: false,
   autoUpdatedAt: false,
 
@@ -69,7 +72,9 @@ module.exports = {
   publishPost: (post) => {
     return new Promise((resolve, reject) => {
       let account = post.providerAccountId
-
+      let channel = post.channelId
+console.log("post in channel");
+console.log(post, channel);
       //TODO might make this a helper
       let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm']
       .filter((type) => post[type])
@@ -82,7 +87,7 @@ module.exports = {
       let api = providerWrappers[account.provider]
 
       //publishes post on social network
-      api.createPost( account, post, utms)
+      api.createPost(account, post, utms, channel)
       .then((result) => {
         //some providers only have url or key, not both
         return Posts.update({id: post.id}, {

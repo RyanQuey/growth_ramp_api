@@ -14,7 +14,7 @@ const _setup = (account) => {
 }
 
 const LinkedIn = {
-  createPost: (account, post, utms) => {
+  createPost: (account, post, utms, channel) => {
     return new Promise((resolve, reject) => {
       const axiosLI = _setup(account)
       //might create sep lib for li if need to use this stuff elsewhere
@@ -45,7 +45,7 @@ const LinkedIn = {
         }
       }
 
-      LinkedIn[post.channelType](post, body, axiosLI)
+      LinkedIn[post.channelType](post, body, channel, axiosLI)
       .then((response) => {
         const {updateKey, updateUrl} = response
         //perhaps persist these if we want the user to be able to look at the link or update it
@@ -59,18 +59,16 @@ const LinkedIn = {
     })
   },
 
-  PERSONAL_POST: (post, body, axiosLI) => {
+  PERSONAL_POST: (post, body, channel, axiosLI) => {
     return axiosLI.post(`${LIApi}/v1/people/~/shares?format=json`, body)
   },
 
 //TODO set to page...
   // these are business pages
-  PAGE_POST: (post, body, axiosLI, ) => {
+  PAGE_POST: (post, body, channel, axiosLI, ) => {
     //not supporting this yet
     //body["share-target-reach"] = {"share-targets": }
-    return axiosLI.post(`${LIApi}/v1/companies/${post.channelId}/shares?format=json`, body)
-
-
+    return axiosLI.post(`${LIApi}/v1/companies/${channel.providerChannelId}/shares?format=json`, body)
   },
 
   //channelType should be PAGE_POST or GROUP_POST
