@@ -42,9 +42,7 @@ const Facebook = {
         return Facebook[post.channelType](post, body, channel, fb, uploadsData )
       })
       .then((data) => {
-console.log("result from Facebook");
-console.log(data);
-        return resolve({postKey: data.id})
+        return resolve(data)
       })
       .catch((err) => {
         //TODO need to handle if uploads works but post does not; probably remove or unpublish etc
@@ -98,8 +96,12 @@ console.log(data);
       }
     }
     return fb.api('me/feed', 'post', params)
-//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
-//will extract out different things depending on the channel anyway, so this is best
+    .then((data) => {
+console.log("result from Facebook");
+console.log(data);
+
+        return {postKey: data.id}
+    })
   },
 
 //TODO set to page...
@@ -115,6 +117,12 @@ console.log(data);
       }
     }
     return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+    .then((data) => {
+console.log("result from Facebook");
+console.log(data);
+
+        return {postKey: data.id}
+    })
 //TODO extract out response data here, so can be returned correctly whether or not uploading stuff
 //will extract out different things depending on the channel anyway, so this is best
   },
@@ -132,6 +140,12 @@ console.log(data);
       }
     }
     return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+    .then((data) => {
+console.log("result from Facebook");
+console.log(data);
+
+        return {postKey: data.id}
+    })
 //TODO extract out response data here, so can be returned correctly whether or not uploading stuff
 //will extract out different things depending on the channel anyway, so this is best
   },
