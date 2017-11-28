@@ -40,6 +40,7 @@ const Twitter = {
       .then((data) => {
 console.log("SUCCESSFUL");
 console.log(data);
+//TODO extract postKey / url
         return resolve(data)
       })
       .catch((err) => {

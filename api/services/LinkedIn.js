@@ -49,7 +49,7 @@ const LinkedIn = {
       .then((response) => {
         const {updateKey, updateUrl} = response
         //perhaps persist these if we want the user to be able to look at the link or update it
-        //TODO
+        //TODO actually get these
         return resolve({postUrl: updateUrl, postKey: updateKey})
       })
       .catch((err) => {
