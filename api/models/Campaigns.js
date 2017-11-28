@@ -101,7 +101,7 @@ module.exports = {
       .spread((posts, c) => {
         let campaign = Object.assign({}, c[0])
         campaign.posts = posts
-        //so will return updated campaign object, just as regular Campaigns.update would
+        //so will return updated campaign object, just as regular Campaigns.update would, but with populated posts
         return resolve(campaign)
       })
       .catch((err) => {
@@ -207,7 +207,10 @@ module.exports = {
         })
       })
       .then((c) => {
-        return resolve({campaign: c, posts: postResults})
+        let campaign = Object.assign({}, c[0])
+        campaign.posts = postResults
+        //so will return updated campaign object, just as regular Campaigns.update would, but with populated posts
+        return resolve(campaign)
       })
       .catch((err) => {
         console.log(err);

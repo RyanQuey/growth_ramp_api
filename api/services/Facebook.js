@@ -33,20 +33,18 @@ const Facebook = {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
       const uploads = post.uploadedContent.map((c) => c.url)
-console.log("channel", channel);
       const channelId = channel && channel.providerChannelId || "me"
       const promises = uploads.map((url) => Facebook._upload(url, channelId, fb))
 
       Promise.all(promises)
       //these are successful uploads
       .then((uploadsData) => {
-console.log(uploadsData);
         return Facebook[post.channelType](post, body, channel, fb, uploadsData )
       })
       .then((data) => {
 console.log("result from Facebook");
 console.log(data);
-        return resolve({postId: data.id})
+        return resolve({postKey: data.id})
       })
       .catch((err) => {
         //TODO need to handle if uploads works but post does not; probably remove or unpublish etc
@@ -68,8 +66,6 @@ console.log(data);
         published: false //to not publish to wall, but still upload content, which remains for 24 hours ONLY unless gets published then. Gets published when post does
       }) //can add a caption
       .then((response) => {
-        console.log("finished upload to fb");
-        console.log(response);
 
 //might not need; this helper might take care of it for us
 //if published, returns a post_id too, of the post the photo is published in
@@ -101,9 +97,9 @@ console.log(data);
         params[key] = JSON.stringify({media_fbid: upload.mediaId})
       }
     }
-console.log("params");
-console.log(params);
     return fb.api('me/feed', 'post', params)
+//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
+//will extract out different things depending on the channel anyway, so this is best
   },
 
 //TODO set to page...
@@ -118,9 +114,9 @@ console.log(params);
         params[key] = JSON.stringify({media_fbid: upload.mediaId})
       }
     }
-console.log("params");
-console.log(params);
     return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
+//will extract out different things depending on the channel anyway, so this is best
   },
 
 //TODO set to group...
@@ -135,10 +131,9 @@ console.log(params);
         params[key] = JSON.stringify({media_fbid: upload.mediaId})
       }
     }
-console.log("params");
-console.log(params);
-console.log(channel.id);
     return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
+//will extract out different things depending on the channel anyway, so this is best
   },
 
   //all the posts for one user account

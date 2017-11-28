@@ -36,6 +36,7 @@ module.exports = {
 
     Campaigns.publishCampaign(campaign)
     .then((results) => {
+      //should be campaign (with posts attached to it)
       res.ok(results)
     })
     .catch((err) => {res.badRequest(err)})

@@ -85,7 +85,6 @@ module.exports = {
 
       Google.shortenUrl(`${post.contentUrl}?${utms}`)
       .then((shortUrl) => {
-console.log("short URL", shortUrl);
         return Posts.update(post.id, {shortUrl: shortUrl})
       })
       .then((result) => {
@@ -104,7 +103,8 @@ console.log("short URL", shortUrl);
         })
       })
       .then((p) => {
-        return resolve(p)
+        //only updating and returning one post
+        return resolve(p[0])
       })
       .catch((err) => {
         console.log("Failure posting to social network");
