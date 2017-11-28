@@ -31,6 +31,16 @@ module.exports = {
     //**associations**
     userId: { model: 'users', required: true },
     providerAccountId: { model: 'providerAccounts', required: true },
+    postTemplates: {
+      collection: 'postTemplates',
+      via: 'channelId',
+      dominant: true
+    },
+    posts: {
+      collection: 'posts',
+      via: 'channelId',
+      dominant: true
+    },
 
     // Override the default toJSON method
     toJSON: function() {

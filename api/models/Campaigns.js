@@ -125,25 +125,23 @@ module.exports = {
     // - publish each post  (presumably, they would actually already be made when making the campaign draft)
     // - set utms for each (actually, maybe do this while writing draft also)
     // - update campaign status to published
-
+console.log("beginning to publish");
     return new Promise((resolve, reject) => {
       let posts, postResults
-
-      Posts.find({campaignId: campaign.id}).populate('providerAccountId')
+console.log("in the promise");
+      Posts.find({campaignId: campaign.id}).populate('providerAccountId').populate('channelId')
       .then((p) => {
+//console.log("found the posts");
         //check access tokens
         //hopefully the API has given this all along, but not there yet, and good to check anyways
         posts = p
-console.log(posts);
         //technically providerAccountId is required, but whatever
         _.remove(posts, (post) => !post.providerAccountId)
 
         let allAccounts = posts.reduce((acc, post) => {
           //remove duplicate accounts
           let match = acc.find((account) => account.id === post.providerAccountId.id)
-console.log("match");
-console.log(match);
-          if (!match) {
+          if (!match || match === -1) {
             acc.push(post.providerAccountId)
           }
 
@@ -154,20 +152,20 @@ console.log(match);
           ProviderAccounts.getUserToken(account, "access")
         )
 
-console.log(getTokenPromises);
-  console.log("now checking/refreshing access tokens");
+//  console.log("now checking/refreshing access tokens");
+//console.log(getTokenPromises);
         return Promise.all(getTokenPromises)
       })
       .then((results) => {
-console.log(results);
+//console.log(results);
         //getUserToken also try to refresh, so at this point they just need to reauthenticate
         const accountsMissingTokens = results.filter((r) => r.code === "no-token-retrieved")
         const accessTokens = results.filter((r) => !r.code || r.code !== "no-token-retrieved")
 
-  console.log("accounts missing tokens");
+/*  console.log("accounts missing tokens");
   console.log(accountsMissingTokens);
   console.log("access tokens");
-  console.log(accessTokens);
+  console.log(accessTokens);*/
         if (accountsMissingTokens.length ) {
           //also an array, so still works
           return accountsMissingTokens

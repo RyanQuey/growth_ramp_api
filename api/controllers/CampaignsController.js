@@ -15,9 +15,9 @@ module.exports = {
         return resolve(Campaigns.matchToPlan(params))
 
       } else {
-        if (!params.id) {reject("No campaign with that ID found, and don't want to update every record accidentally...")}
+        if (!req.param('id')) {reject("No campaign with that ID found, and don't want to update every record accidentally...")}
 
-        return resolve(Campaigns.update(params.id, params))
+        return resolve(Campaigns.update(req.param('id'), params))
       }
     })
     .then((result) => {

@@ -3,11 +3,11 @@ exports.up = function(knex, Promise) {
   return Promise.all([
     knex.schema.table('postTemplates', function (t) {
       t.renameColumn('channel', 'channelType');
-      t.text('channelId');
+      t.integer('channelId');
     }),
     knex.schema.table('posts', function (t) {
       t.renameColumn('channel', 'channelType');
-      t.text('channelId');
+      t.integer('channelId');
     })
   ])
 };
