@@ -31,7 +31,8 @@ module.exports = {
     //  type: VIDEO, or IMAGE
     //}, {...]
     uploadedContent: { type: 'array' },
-    contentUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
+    contentUrl: { type: 'string', defaultsTo: ""},// (of what is being shared...LI has it as field) TODO regex to make sure real url
+    shortUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
     //
     //must be successfully posted for this to be set
     publishedAt: { type: 'datetime' },
@@ -73,8 +74,6 @@ module.exports = {
     return new Promise((resolve, reject) => {
       let account = post.providerAccountId
       let channel = post.channelId
-console.log("post in channel");
-console.log(post, channel);
       //TODO might make this a helper
       let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm']
       .filter((type) => post[type])
@@ -83,11 +82,19 @@ console.log(post, channel);
       })
       let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
 
-      //api will be the api for the social network
-      let api = providerWrappers[account.provider]
 
-      //publishes post on social network
-      api.createPost(account, post, utms, channel)
+      Google.shortenUrl(`${post.contentUrl}?${utms}`)
+      .then((shortUrl) => {
+console.log("short URL", shortUrl);
+        return Posts.update(post.id, {shortUrl: shortUrl})
+      })
+      .then((result) => {
+        post = result[0]
+        //api will be the api for the social network
+        let api = providerWrappers[account.provider]
+        //publishes post on social network
+        return api.createPost(account, post, channel)
+      })
       .then((result) => {
         //some providers only have url or key, not both
         return Posts.update({id: post.id}, {

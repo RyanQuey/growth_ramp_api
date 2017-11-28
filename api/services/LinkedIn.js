@@ -14,7 +14,7 @@ const _setup = (account) => {
 }
 
 const LinkedIn = {
-  createPost: (account, post, utms, channel) => {
+  createPost: (account, post, channel) => {
     return new Promise((resolve, reject) => {
       const axiosLI = _setup(account)
       //might create sep lib for li if need to use this stuff elsewhere
@@ -38,7 +38,7 @@ const LinkedIn = {
         //not sure if this will get sent...
         "content": {
           "submitted-image-url": post.uploadedContent[0].url,
-          "submitted-url": `${post.contentUrl}?${utms}`, //other urls can be in the comment, but LI will only analyze the first one for content to share
+          "submitted-url": post.shortUrl, //other urls can be in the comment, but LI will only analyze the first one for content to share
         },
         "visibility": {
           "code": post.visibility || "connections-only" //"anyone" or "connections-only"
@@ -114,7 +114,7 @@ const LinkedIn = {
 //TODO set to group...
 //LinkedIn deprecated this
 //https://www.linkedin.com/help/linkedin/answer/81635/groups-api-no-longer-available?lang=en
-/*  GROUP_POST: (post, utms) => {
+/*  GROUP_POST: (post) => {
     return axios.post(path, body)
   },
 */
