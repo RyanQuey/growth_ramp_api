@@ -110,6 +110,16 @@ console.log(data);
 
       console.log(params);
     return Twit.post('statuses/update', params)
+    .then((result) => {
+       //Twitter actually sends back a ton of data, might want to save more?
+       //full user object, created at, who it responds to, hashtags, etc
+console.log("result from Twitter");
+console.log(result.data);
+      let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
+        return {postKey}
+    })
+//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
+//will extract out different things depending on the channel anyway, so this is best
   },
 
   getChannels: (account, channelType, pagination) => {
