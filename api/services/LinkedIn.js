@@ -97,7 +97,17 @@ const LinkedIn = {
       .then((result) => {
         console.log(result.data);
         const total = result.data._total
-//TODO extrat data; see FB for example
+        const pages = result.data.values
+        //prepare to be persisted
+        const channelsForType = pages.map((channel) => (
+          {
+            providerChannelId: channel.id,
+            name: channel.name,
+            sharingAllowed: true, //li might return this; might want to get it from them
+          }
+        ));
+
+        return resolve(channelsForType)
       })
       .catch((err) => {
         console.log("Error getting ", channelType);
