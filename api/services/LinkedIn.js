@@ -97,7 +97,7 @@ const LinkedIn = {
       .then((result) => {
         console.log(result.data);
         const total = result.data._total
-        const pages = result.data.values || []
+        const pages = result.data.values || []//in case no hits are found, return empty array
         //prepare to be persisted
         const channelsForType = pages.map((channel) => (
           {
