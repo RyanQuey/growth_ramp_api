@@ -36,10 +36,24 @@ module.exports = {
 
     Campaigns.publishCampaign(campaign)
     .then((results) => {
-      //should be campaign (with posts attached to it)
+      //should be campaign (with posts attached to it, each with analytics to attach to them)
       res.ok(results)
     })
     .catch((err) => {res.badRequest(err)})
+  },
+
+	getAnalytics: (req, res) => {
+    const campaign = Object.assign({}, req.matchingRecord)
+    return Campaigns.getAnalytics(campaign)
+    .then((result) => {
+      //array of posts, mapped with an analytics property
+      campaign.posts = result
+      return res.ok(campaign)
+    })
+    .catch((err) => {
+      console.log("Failed to get analytics for ", shortUrl);
+      return res.negotiate(err)
+    })
   },
 };
 

@@ -180,7 +180,8 @@ module.exports = {
       .then((results) => {
         //in case an update happened
         if (results) {
-          posts = updatedPosts.map((result) => result[0])
+          //each will be returned as an array with one entry, the one post that got updated
+          posts = results.map((result) => result[0])
         }
 
         const promises = []
@@ -216,6 +217,28 @@ module.exports = {
         console.log(err);
         return reject(err)
       })
+    })
+  },
+	getAnalytics: (campaign) => {
+    let posts
+    return Posts.find({campaignId: campaign.id}).populate("channelId")
+    .then((ps) => {
+      posts = ps
+
+      //get analytics for each link
+      const promises = posts.map((post) => Google.getUrlAnalytics(post.shortUrl, {alwaysResolve: true}))
+      return Promise.all(promises)
+    })
+    .then((results) => {
+      //will be returned in the same order as the posts, so:
+      for (let i = 0; i < posts.length; i++) {
+        posts[i].analytics = results[i].analytics || results[i] //if error, won't be any analytics prop, but will still return data
+      }
+      return posts
+    })
+    .catch((err) => {
+      console.log("Failed to get analytics for ", shortUrl);
+      return err
     })
   },
 };

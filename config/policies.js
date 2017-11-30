@@ -48,6 +48,7 @@ module.exports.policies = {
     publish: ['userTokenAuth', 'canWrite'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
+    getAnalytics: ['userTokenAuth', 'canRead'],
   },
   PlansController: {
     create: ['userTokenAuth', 'canWrite'],
@@ -59,9 +60,6 @@ module.exports.policies = {
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
-  ProviderAccountsController: {
-    refreshChannelType: ['userTokenAuth'],
-  },
   PostsController: {
     create: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
@@ -71,6 +69,9 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
+  },
+  ProviderAccountsController: {
+    refreshChannelType: ['userTokenAuth'],
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],

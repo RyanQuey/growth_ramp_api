@@ -14,7 +14,7 @@ module.exports = function canRead (req, res, next) {
     req.matchingRecord = record //make sure not to send a matchingRecord in the body from the front end...not a security issue, but yeah
 
     //only return unarchived if grabbing more than one
-        //TODO not tested
+    //TODO not tested
     if (!req.param("id")) {
       if (req.query.where) {
         let whereParams = JSON.parse(req.query.where)
