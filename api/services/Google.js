@@ -1,6 +1,6 @@
 const apiKey = sails.config.env.GOOGLE_API_KEY
 const Google = {
-  shortenUrl: (url) => {
+  shortenUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {
 console.log("url");
 console.log(url);
@@ -17,11 +17,18 @@ console.log(url);
       })
       .catch((err) => {
         console.log("error shortening URL");
-        console.log(Helpers.safeDataPath(err, "response.data.error.errors", err));
+        let error = Helpers.safeDataPath(err, "response.data.errors", err)
+        console.log(error);
+        if (options.alwaysResolve) {
+          return resolve(error)
+        } else {
+          return reject(error)
+        }
+
       })
     })
   },
-  expandUrl: (url) => {
+  expandUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {
       axios.get(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}&shortUrl=${url}`)
       .then((res) => {
@@ -36,11 +43,18 @@ console.log(url);
       })
       .catch((err) => {
         console.log("error expanding URL");
-        console.log(Helpers.safeDataPath(err, "response.data.errors", err));
+        let error = Helpers.safeDataPath(err, "response.data.errors", err)
+        console.log(error);
+        if (options.alwaysResolve) {
+          return resolve(error)
+        } else {
+          return reject(error)
+        }
       })
     })
   },
-  getUrlAnalytics: (url) => {
+  getUrlAnalytics: (url, options = {}) => {
+console.log("getting analytics from Google");
     return new Promise((resolve, reject) => {
       axios.get(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}&shortUrl=${url}&projection=FULL`)
       .then((res) => {
@@ -62,7 +76,14 @@ console.log(url);
       })
       .catch((err) => {
         console.log("error getting analytics for URL");
-        console.log(Helpers.safeDataPath(err, "response.data.errors", err));
+        let error = Helpers.safeDataPath(err, "response.data.errors", err)
+        console.log(error);
+        if (options.alwaysResolve) {
+          return resolve(error)
+        } else {
+          return reject(error)
+        }
+
       })
     })
   },

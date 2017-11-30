@@ -112,6 +112,7 @@ module.exports = {
         return reject(err)
       })
     })
-  }
+  },
+
 };
 

@@ -35,6 +35,11 @@ module.exports.routes = {
     action: 'publish'
   },
 
+  'get /campaigns/:id/getAnalytics': {
+    controller: 'CampaignsController',
+    action: 'getAnalytics'
+  },
+
   ////////////////////////////////////////////////////////////////
   //plans
   //
@@ -43,6 +48,10 @@ module.exports.routes = {
     controller: 'PlansController',
     action: 'createFromCampaign'
   },
+
+  ////////////////////////////////////////////////////////////////
+  //posts
+  //
 
   ////////////////////////////////////////////////////////////////
   //providers
