@@ -41,6 +41,7 @@ module.exports = {
       collection: 'posts',
       via: 'planId',
     },
+    //not currently using...might not ever use
     permissions: {
       collection: 'permissions',
       via: 'planId'
