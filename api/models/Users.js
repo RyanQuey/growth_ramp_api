@@ -19,7 +19,7 @@ module.exports = {
     phone: { type: 'string', regex: /\+1\d{3}\d{3}\d{4}/ },
     firstName: { type: 'string' },
     lastName: { type: 'string' },
-    password: { type: 'string' },//store as a hash
+    password: { type: 'string', minLength: 8 },//store as a hash
     apiToken: { type: 'string' },
     apiTokenExpires: {  type: 'string' },
     emailConfirmed: { type: 'boolean', defaultsTo: false },

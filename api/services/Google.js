@@ -4,6 +4,11 @@ const Google = {
     return new Promise((resolve, reject) => {
 console.log("url");
 console.log(url);
+      if (!url) {
+        console.log("no url provided; skip sending");
+        return resolve("")
+      }
+
       axios.post(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}`, {longUrl: url})
       .then((res) => {
         const result = res.data
@@ -17,7 +22,7 @@ console.log(url);
       })
       .catch((err) => {
         console.log("error shortening URL");
-        let error = Helpers.safeDataPath(err, "response.data.errors", err)
+        let error = Helpers.safeDataPath(err, "response.data.error", err)
         console.log(error);
         if (options.alwaysResolve) {
           return resolve(error)
@@ -30,6 +35,11 @@ console.log(url);
   },
   expandUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {
+      if (!url) {
+        console.log("no url provided; skip sending");
+        return resolve("")
+      }
+
       axios.get(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}&shortUrl=${url}`)
       .then((res) => {
         const result = res.data
@@ -43,7 +53,7 @@ console.log(url);
       })
       .catch((err) => {
         console.log("error expanding URL");
-        let error = Helpers.safeDataPath(err, "response.data.errors", err)
+        let error = Helpers.safeDataPath(err, "response.data.error", err)
         console.log(error);
         if (options.alwaysResolve) {
           return resolve(error)
@@ -54,8 +64,12 @@ console.log(url);
     })
   },
   getUrlAnalytics: (url, options = {}) => {
-console.log("getting analytics from Google");
     return new Promise((resolve, reject) => {
+      if (!url) {
+        console.log("no url provided; skip sending");
+        return resolve({})
+      }
+
       axios.get(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}&shortUrl=${url}&projection=FULL`)
       .then((res) => {
         const result = res.data
@@ -76,7 +90,7 @@ console.log("getting analytics from Google");
       })
       .catch((err) => {
         console.log("error getting analytics for URL");
-        let error = Helpers.safeDataPath(err, "response.data.errors", err)
+        let error = Helpers.safeDataPath(err, "response.data.error", err)
         console.log(error);
         if (options.alwaysResolve) {
           return resolve(error)

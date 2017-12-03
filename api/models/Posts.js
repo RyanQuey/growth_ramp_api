@@ -31,8 +31,9 @@ module.exports = {
     //  type: VIDEO, or IMAGE
     //}, {...]
     uploadedContent: { type: 'array' },
-    contentUrl: { type: 'string', defaultsTo: ""},// (of what is being shared...LI has it as field) TODO regex to make sure real url
-    shortUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
+    //could use same rgex as frontend, from https://gist.github.com/dperini/729294
+    contentUrl: { type: 'string', defaultsTo: "", url: true},// (of what is being shared...LI has it as field) TODO regex to make sure real url
+    shortUrl: { type: 'string', url: true },// (of what is being shared...LI has it as field) TODO regex to make sure real url
     //
     //must be successfully posted for this to be set
     publishedAt: { type: 'datetime' },
