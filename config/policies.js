@@ -70,6 +70,16 @@ module.exports.policies = {
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
   },
+  PostTemplatesController: {
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
+    destroy: ['userTokenAuth', 'canWrite'],
+    //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
+    find: ['userTokenAuth', 'canRead'],
+    findOne: ['userTokenAuth', 'canRead'],
+    //eventually will set controller actions for this for the resources
+    //changePermissions: ['canChangePermissions'],
+  },
   ProviderAccountsController: {
     refreshChannelType: ['userTokenAuth'],
   },
