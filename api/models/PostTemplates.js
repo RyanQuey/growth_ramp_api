@@ -20,12 +20,14 @@ module.exports = {
       required: true,
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
+
     campaignUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     mediumUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     sourceUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     contentUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     termUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
-    customUtm: { type: 'json', defaultsTo: {active: true, value: '' } },
+    customUtm: { type: 'json', defaultsTo: {active: true, value: '', key: '' } }, //key will be like instead of campaign, it is the key
+
     status: { type: 'string', defaultsTo: POST_TEMPLATE_STATUSES[0], enum: POST_TEMPLATE_STATUSES }, //don't just delete, these might be a pain for users to come up with
 
     //Associations

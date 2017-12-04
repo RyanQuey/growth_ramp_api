@@ -40,12 +40,13 @@ module.exports = {
     //user set time. Stays same even if not successful on first attempt
     delayedUntil: { type: 'datetime' },
 
-    campaignUtm: { type: 'string', defaultsTo: '' },//{ active: true, value: 'string' }, //
-    mediumUtm: { type: 'string', defaultsTo: ''  },
-    sourceUtm: { type: 'string', defaultsTo: ''  },
-    contentUtm: { type: 'string', defaultsTo: ''  },
-    termUtm: { type: 'string', defaultsTo: ''  },
-    customUtm: { type: 'string', defaultsTo: ''  },
+    campaignUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
+    mediumUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
+    sourceUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
+    contentUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
+    termUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
+    customUtm: { type: 'json', defaultsTo: {active: true, value: '', key: '' } }, //key will be like instead of campaign, it is the key
+
 
     //stuff we might get back from the provider
     postUrl: { type: 'string'},// (link they can follow);
@@ -70,34 +71,60 @@ module.exports = {
   autoCreatedAt: false,
   autoUpdatedAt: false,
 
-  //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
-  publishPost: (post) => {
+  shortenUrl: (post) => {
     return new Promise((resolve, reject) => {
-      let account = post.providerAccountId
-      let channel = post.channelId
-      //TODO might make this a helper
+      if (!post.contentUrl) {
+        console.log("no url provided; skip sending");
+        return resolve(post)
+      }
+
       let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm']
-      .filter((type) => post[type])
+      .filter((type) => (post[type] && post[type].active && post[type].value))
       .map((type) => {
-        return `${UTM_TYPES[type]}=${post[type]}`
+        if (type === "customUtm") {
+          return `${post[type].key}=${post[type].value}`
+        } else {
+          return `${UTM_TYPES[type]}=${post[type].value}`
+        }
       })
       let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
 
+      let updatedPost
 
       Google.shortenUrl(`${post.contentUrl}?${utms}`)
       .then((shortUrl) => {
         return Posts.update(post.id, {shortUrl: shortUrl})
       })
       .then((result) => {
-        post = result[0]
+        updatedPost = result[0]
+        return resolve(updatedPost)
+      })
+      .catch((err) => {
+        return reject(err)
+      })
+    })
+
+  },
+
+  //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
+  publishPost: (post) => {
+    return new Promise((resolve, reject) => {
+      let account = post.providerAccountId
+      let channel = post.channelId
+      let updatedPost
+
+      Posts.shortenUrl(post)
+      .then((u) => {
+        updatedPost = u
         //api will be the api for the social network
         let api = providerWrappers[account.provider]
+
         //publishes post on social network
-        return api.createPost(account, post, channel)
+        return api.createPost(account, updatedPost, channel)
       })
       .then((result) => {
         //some providers only have url or key, not both
-        return Posts.update({id: post.id}, {
+        return Posts.update({id: updatedPost.id}, {
           publishedAt: moment.utc().format(),
           postUrl: result.postUrl || "",
           postKey: result.postKey || "",
