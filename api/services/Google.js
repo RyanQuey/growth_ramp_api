@@ -2,13 +2,6 @@ const apiKey = sails.config.env.GOOGLE_API_KEY
 const Google = {
   shortenUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {
-console.log("url");
-console.log(url);
-      if (!url) {
-        console.log("no url provided; skip sending");
-        return resolve("")
-      }
-
       axios.post(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}`, {longUrl: url})
       .then((res) => {
         const result = res.data

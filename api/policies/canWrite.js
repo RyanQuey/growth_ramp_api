@@ -79,7 +79,10 @@ console.log("matching record", record);
         //this keeps the db requests in these policies lower
         sails.models[modelIdentity].findOne(parseInt(id))
         .then((record) => {
-          if ([record.userId, record.ownerId].includes(req.user.id)) {
+          if (!record) {
+            fail(`Record not found of ${modelIdentity} with ID ${id}`)
+
+          } else if ([record.userId, record.ownerId].includes(req.user.id)) {
             pass(record)
           } else {
             //eventually, will need to create permissions, using the onCreate Hook
