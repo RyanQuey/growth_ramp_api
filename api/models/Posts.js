@@ -45,7 +45,8 @@ module.exports = {
     sourceUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     contentUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     termUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
-    customUtm: { type: 'json', defaultsTo: {active: true, value: '', key: '' } }, //key will be like instead of campaign, it is the key
+    //migration ran, but not supporting
+    //customUtm: { type: 'json', defaultsTo: {active: true, value: '', key: '' } }, //key will be like instead of campaign, it is the key
 
 
     //stuff we might get back from the provider
