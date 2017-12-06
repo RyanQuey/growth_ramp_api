@@ -29,7 +29,7 @@ const Google = {
   expandUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {
       if (!url) {
-        console.log("no url provided; skip sending");
+        console.log("no url provided; skip sending to Google utm shortening");
         return resolve("")
       }
 
