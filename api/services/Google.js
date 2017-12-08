@@ -1,4 +1,4 @@
-const apiKey = sails.config.env.GOOGLE_API_KEY
+const apiKey = process.env.GOOGLE_API_KEY || sails.config.env.GOOGLE_API_KEY
 const Google = {
   shortenUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {

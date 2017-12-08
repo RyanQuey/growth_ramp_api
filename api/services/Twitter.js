@@ -2,8 +2,8 @@ const T = require('twit')
 //NOTE don't get accessToken from account record; that is encrypted still
 const _setup = (account, accessTokenData) => {
   const Twit = new T({
-    consumer_key: sails.config.env.TWITTER_CONSUMER_KEY,
-    consumer_secret: sails.config.env.TWITTER_CONSUMER_SECRET,
+    consumer_key: process.env.TWITTER_CONSUMER_KEY || sails.config.env.TWITTER_CONSUMER_KEY,
+    consumer_secret: process.env.TWITTER_CONSUMER_SECRET || sails.config.env.TWITTER_CONSUMER_SECRET,
     access_token: accessTokenData.accessToken,
     access_token_secret: accessTokenData.accessTokenSecret,
     timeout_ms: 60*1000,

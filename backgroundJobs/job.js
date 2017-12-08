@@ -1,6 +1,6 @@
 var moment = require('moment');
 
-JOBS_ENABLED = String(sails.config.env.RUN_BACKGROUND_JOBS) === 'true';
+JOBS_ENABLED = String(process.env.RUN_BACKGROUND_JOBS || sails.config.env.RUN_BACKGROUND_JOBS) === 'true';
 
 module.exports = class Job {
   constructor () {
