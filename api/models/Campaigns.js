@@ -119,10 +119,10 @@ module.exports = {
     // - set utms for each (actually, maybe do this while writing draft also)
     // - update campaign status to published
     return new Promise((resolve, reject) => {
-      let posts, postResults
-      Posts.find({campaignId: campaign.id}).populate('providerAccountId').populate('channelId')
+      let posts, postResults, allAccessTokenData
+      //if null publishedAt, is not published yet
+      Posts.find({campaignId: campaign.id, publishedAt: null}).populate('providerAccountId').populate('channelId')
       .then((p) => {
-//console.log("found the posts");
         //check access tokens
         //hopefully the API has given this all along, but not there yet, and good to check anyways
         posts = p
@@ -141,31 +141,36 @@ module.exports = {
         }, [])
 
         const getTokenPromises = allAccounts.map((account) =>
+          //returns access tokens and access token secrets if applicable
           ProviderAccounts.getUserToken(account, "access")
         )
 
-//  console.log("now checking/refreshing access tokens");
-//console.log(getTokenPromises);
         return Promise.all(getTokenPromises)
       })
       .then((results) => {
 //console.log(results);
         //getUserToken also try to refresh, so at this point they just need to reauthenticate
         const accountsMissingTokens = results.filter((r) => r.code === "no-token-retrieved")
-        const accessTokens = results.filter((r) => !r.code || r.code !== "no-token-retrieved")
 
-/*  console.log("accounts missing tokens");
-  console.log(accountsMissingTokens);
-  console.log("access tokens");
-  console.log(accessTokens);*/
+        //objects with accessToken and accessTokenSecret (if applicable)
+        //organized by accountId
+        allAccessTokenData = results.reduce((acc, r) => {
+          if (!r.code || r.code !== "no-token-retrieved") {
+
+            acc[r.accountId] = r
+          }
+          return acc
+        }, {})
+console.log("all tokens", allAccessTokenData);
+        //these accounts don't have tokens, and couldn't even refresh. Should just
         if (accountsMissingTokens.length ) {
           //also an array, so still works
-          return accountsMissingTokens
+          throw new Error(`Could not get tokens for: ${accountsMissingTokens.join(", ")}`)
         }
 
-        //this should never happen, but just make sure
-        //NOTE if post is published after campaign is, don't make this check, since the contentUrl on the post might have since been removed or edited...if we allow that...
-        if (campaign.contentUrl && posts.some((post) => !post.contentUrl)) {
+        //this should never have to happen, but just make sure
+        //NOTE post should always have same contentUrl as campaign
+        if (campaign.contentUrl && posts.some((post) => !post.contentUrl || post.contentUrl !== campaign.contentUrl)) {
           return Posts.update({
             campaignId: campaign.id,
             contentUrl: "",
@@ -189,7 +194,9 @@ module.exports = {
 
         for (let i = 0; i < posts.length; i++) {
           let post = posts[i]
-          promises.push(Posts.publishPost(post))
+          //whether or not provider account is populated
+          let accessTokenData = allAccessTokenData[post.providerAccountId.id || post.providerAccountId]
+          promises.push(Posts.publishPost(post, accessTokenData))
         }
 
         return Promise.all(promises)

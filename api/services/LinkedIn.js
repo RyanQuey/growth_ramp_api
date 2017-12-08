@@ -2,11 +2,12 @@
 //this also gives me greater flexibility
 //node-linkedin would be the one though if I did use one
 const LIApi = "https://api.linkedin.com"
-const _setup = (account) => {
+//NOTE don't get accessToken from account record; that is encrypted still
+const _setup = (account, accessToken) => {
   const axiosLI = axios.create({
       headers: {
         'x-li-format': 'json',
-        'Authorization': `Bearer ${account.accessToken}`
+        'Authorization': `Bearer ${accessToken}`
       }
   })
 
@@ -14,9 +15,9 @@ const _setup = (account) => {
 }
 
 const LinkedIn = {
-  createPost: (account, post, channel) => {
+  createPost: (account, post, channel, accessTokenData) => {
     return new Promise((resolve, reject) => {
-      const axiosLI = _setup(account)
+      const axiosLI = _setup(account, accessTokenData.accessToken)
       //might create sep lib for li if need to use this stuff elsewhere
 
 //if was going to supply all of these; but we'd rather they get them from teh post itself
@@ -33,28 +34,35 @@ const LinkedIn = {
         }
       }*/
 
+      //only allowing one image for LI
+      const imageUrl = Helpers.safeDataPath(post, "uploadedContent.0.url", "")
+
       const body = {
-        "comment": post.text, //"Check out developer.linkedin.com!", //this is the main post body.
-        //not sure if this will get sent...
-        "content": {
-          "submitted-image-url": post.uploadedContent[0].url,
-          "submitted-url": post.shortUrl, //other urls can be in the comment, but LI will only analyze the first one for content to share
-        },
-        "visibility": {
-          "code": post.visibility || "connections-only" //"anyone" or "connections-only"
+        comment: post.text, //"Check out developer.linkedin.com!", //this is the main post body.
+        visibility: {
+          code: post.visibility || "anyone" //"anyone" or "connections-only"
         }
+      }
+
+      //if a property but blank, LI raises error
+      if (post.shortUrl || imageUrl) {
+        body.content = {}
+        if (post.shortUrl) body.content["submitted-url"] = post.shortUrl //other urls can be in the comment, but LI will only analyze the first one for content to share
+        if (imageUrl) body.content["submitted-image-url"] = imageUrl //other urls can be in the comment, but LI will only analyze the first one for content to share
       }
 
       LinkedIn[post.channelType](post, body, channel, axiosLI)
       .then((response) => {
+        console.log("Successfully posted to LI");
         const {updateKey, updateUrl} = response
         //perhaps persist these if we want the user to be able to look at the link or update it
         //TODO actually get these
         return resolve({postUrl: updateUrl, postKey: updateKey})
       })
       .catch((err) => {
-        console.log(err);
-        return reject(err)
+        console.log("Failure from publishing to LinkedIn:");
+        console.log(err.response.data || err);
+        return reject(err.response.data || err)
       })
     })
   },

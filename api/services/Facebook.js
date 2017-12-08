@@ -1,11 +1,12 @@
 const FB = require('fb')
 
-const _setup = (account) => {
+//NOTE don't get accessToken from account record; that is encrypted still
+const _setup = (account, accessToken) => {
   const fb = new FB.Facebook({
     //this lib automatically adds the app secret key
     appId: sails.config.env.CLIENT_FACEBOOK_KEY,
     appSecret: sails.config.env.CLIENT_FACEBOOK_SECRET,
-    accessToken: account.accessToken,
+    accessToken: accessToken,
     version: 'v2.10',
     timeout_ms: 60*1000,
   })
@@ -14,9 +15,9 @@ const _setup = (account) => {
 }
 
 const Facebook = {
-  createPost: (account, post, channel) => {
+  createPost: (account, post, channel, accessTokenData) => {
     return new Promise((resolve, reject) => {
-      const fb = _setup(account)
+      const fb = _setup(account, accessTokenData.accessToken)
       const body = `${post.text} ${post.shortUrl}`
 
       if (post.uploadedContent && post.uploadedContent.length ) {
@@ -171,8 +172,6 @@ console.log(data);
   //channelType should be PAGE_POST or GROUP_POST
   getChannels: (account, channelType, pagination) => {
     return new Promise((resolve, reject) => {
-console.log("in the channels");
-console.log(account, channelType);
       const fb = _setup(account)
 
       let path
@@ -188,9 +187,6 @@ console.log(account, channelType);
 
       fb.api(`me/${path}`, {params})
       .then((results) => {
-console.log("my channels");
-console.log(results);
-
         const pagination = results.paging //TODO will have to use eventually
 
         //prepare to be persisted

@@ -11,10 +11,11 @@
  * note that many of the columns may be slightly different than the user information, but is what the user information is from the provider, when the user is using the provider (e.g., their account information in the social network)
  *
  */
+import crypto from 'crypto'
+const TOKEN_ENCRYPTION_KEY = sails.config.env.TOKEN_ENCRYPTION_KEY //must be 256 bytes (32 characters)
+const IV_LENGTH = 16 // For AES, this is always 16
+
 import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
-const domain = process.env.CLIENT_URL || 'http://www.local.dev:5000'
-const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
-const callbackUrl = domain + callbackPath
 const providerWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
@@ -106,6 +107,52 @@ module.exports = {
     },
   },
 
+  beforeValidate: (values, cb) => {
+console.log("now validating", values);
+    if (values.accessToken) {
+      values.accessToken = ProviderAccounts.encryptToken(values.accessToken)
+    }
+    if (values.refreshToken) {
+      values.refreshToken = ProviderAccounts.encryptToken(values.refreshToken)
+    }
+    if (values.accessTokenSecret) {
+      values.accessTokenSecret = ProviderAccounts.encryptToken(values.accessTokenSecret)
+    }
+
+    cb()
+  },
+
+  //takes access or refresh token and encrypt, adding unique key to end
+  //http://vancelucas.com/blog/stronger-encryption-and-decryption-in-node-js/
+  encryptToken: (token) => {
+console.log("decrypted");
+console.log(token);
+    let iv = crypto.randomBytes(IV_LENGTH);
+    let cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(TOKEN_ENCRYPTION_KEY), iv);
+    let encrypted = cipher.update(token);
+
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+    //attaches the iv to the encrypted token for later retrieval.
+    let fullEncryptedString = iv.toString('hex') + ':' + encrypted.toString('hex');
+console.log("encrypted");
+console.log(fullEncryptedString);
+    return fullEncryptedString
+  },
+
+  decryptToken: (text) => {
+console.log("now decrypting, ", text);
+    let textParts = text.split(':');
+    let iv = new Buffer(textParts.shift(), 'hex');
+    let encryptedText = new Buffer(textParts.join(':'), 'hex');
+    let decipher = crypto.createDecipheriv('aes-256-cbc', new Buffer(TOKEN_ENCRYPTION_KEY), iv);
+    let decrypted = decipher.update(encryptedText);
+
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    let token = decrypted.toString();
+
+    return token
+  },
 
   loginWithProvider(req) {
 
@@ -237,6 +284,8 @@ module.exports = {
 
   //takes an account (or account id, just pass in a string) and returns access or refresh token (depending on tokenType) if available;
   getUserToken: function(account, tokenType) {
+    let providerAccount
+
     //get account
     return new Promise((resolve, reject) => {
 
@@ -253,18 +302,22 @@ module.exports = {
 
   //TODO: need to edit, user might have more than one provider account linked up to theirs
       })
-      .then((providerAccount) => {
-console.log("provider account");
-console.log(providerAccount);
+      .then((p) => {
+        providerAccount = p
+
         //get/check token
         if (
-          providerAccount[`${tokenType}TokenExpires`] &&
+          !PROVIDERS[providerAccount.provider].tokensExpire ||
+          //if no entry in column, this will return false, which is what we want also
           moment.utc(providerAccount[`${tokenType}TokenExpires`]).isAfter(moment.utc()) ||
           true //TODO keep until am getting accessTokenExpires from all providers
+          //NOTE twitter tokens never expire
         ) {
           //token is found and valid
           console.log("token is found and is valid");
-          return providerAccount[`${tokenType}Token`]
+          return {
+            [`${tokenType}Token`]: providerAccount[`${tokenType}Token`]
+          }
 
         } else if (tokenType === "access") {
           //try to refresh
@@ -275,7 +328,7 @@ console.log(providerAccount);
           //just return it to be handled by parent function
           console.log("token cannot be retrieved");
           return {
-            message: `${tokenType} token expired and cannot be retrieve; prompt user to reauthenticate`,
+            message: `${tokenType} token expired and cannot be retrieve; prompt user to reauthenticate for account ${providerAccount.id}`,
             code: "no-token-retrieved",
             status: 500,
           }
@@ -283,13 +336,32 @@ console.log(providerAccount);
       })
       //result is either a token string OR an object error message
       .then((result) => {
-        if (typeof result === "string") {
-          //result is the token
-          result = {
-            token: result
+        if (typeof result[`${tokenType}Token`] === "string") {
+          //result has the token, but is encrypted
+          //now need to decrypt real quick:
+
+          result[`${tokenType}Token`] = ProviderAccounts.decryptToken(result[`${tokenType}Token`])
+        }
+
+        //check if needs accessTokenSecret (so far, only Twitter), and if so, get it
+        if (tokenType === "access" && PROVIDERS[providerAccount.provider].requiresAccessTokenSecret) {
+          //should either be returned with the accessToken when refreshed account OR should be in account already...if not, something went wrong
+          let accessTokenSecret = result.accessTokenSecret ? result.accessTokenSecret : providerAccount.accessTokenSecret
+          result.accessTokenSecret = ProviderAccounts.decryptToken(accessTokenSecret)
+
+          if (!accessTokenSecret) {
+            //override result; this access token won't work after all
+            result = {
+              message: `access token was found, but access token secret is required and could not be found for account ${providerAccount.id}`,
+              code: "no-token-retrieved",
+              status: 500,
+            }
           }
         }
 
+console.log("decrypted");
+console.log(result.accessToken);
+console.log(result);
         result.accountId = account.id
         result.provider = account.provider
 
@@ -302,6 +374,7 @@ console.log(providerAccount);
   },
 
   //please don't pass in an expired refresh token into here
+  //for getting using refresh token
   //TODO implement, and use the Services for the social networks
   getAccessTokenFromProvider: function(validRefreshToken, providerName) {
     return new Promise((resolve, reject) => {

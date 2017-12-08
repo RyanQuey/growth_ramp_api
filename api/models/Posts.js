@@ -36,7 +36,7 @@ module.exports = {
     shortUrl: { type: 'string', url: true },// (of what is being shared...LI has it as field) TODO regex to make sure real url
     //
     //must be successfully posted for this to be set
-    publishedAt: { type: 'datetime' },
+    publishedAt: { type: 'datetime', defaultsTo: null },
     //user set time. Stays same even if not successful on first attempt
     delayedUntil: { type: 'datetime' },
 
@@ -108,12 +108,18 @@ module.exports = {
   },
 
   //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
-  publishPost: (post) => {
+  //do not call without doing all fo the checks done in Campaigns.publishCampaign
+  //accessTokenData is object with {accessToken: (decrypted) and accessTokenSecret: (if applicable. also decrypted)}
+  publishPost: (post, accessTokenData) => {
     return new Promise((resolve, reject) => {
       let account = post.providerAccountId
       let channel = post.channelId
       let updatedPost
 
+      if (!accessTokenData) {
+        //TODO will have to retrieve. Should never happen for as longas posts are being published through campaigns. When published independently...deal with that later
+      }
+console.log("in the post", accessTokenData);
       Posts.shortenUrl(post)
       .then((u) => {
         updatedPost = u
@@ -121,7 +127,7 @@ module.exports = {
         let api = providerWrappers[account.provider]
 
         //publishes post on social network
-        return api.createPost(account, updatedPost, channel)
+        return api.createPost(account, updatedPost, channel, accessTokenData)
       })
       .then((result) => {
         //some providers only have url or key, not both
