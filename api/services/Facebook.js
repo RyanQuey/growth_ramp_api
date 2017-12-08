@@ -4,8 +4,8 @@ const FB = require('fb')
 const _setup = (account, accessToken) => {
   const fb = new FB.Facebook({
     //this lib automatically adds the app secret key
-    appId: sails.config.env.CLIENT_FACEBOOK_KEY,
-    appSecret: sails.config.env.CLIENT_FACEBOOK_SECRET,
+    appId: process.env.CLIENT_FACEBOOK_KEY || sails.config.env.CLIENT_FACEBOOK_KEY,
+    appSecret: process.env.CLIENT_FACEBOOK_SECRET || sails.config.env.CLIENT_FACEBOOK_SECRET,
     accessToken: accessToken,
     version: 'v2.10',
     timeout_ms: 60*1000,
@@ -142,10 +142,10 @@ console.log(data);
     }
     return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
     .then((data) => {
-console.log("result from Facebook");
-console.log(data);
+      console.log("result from Facebook");
+      console.log(data);
 
-        return {postKey: data.id}
+      return {postKey: data.id}
     })
 //TODO extract out response data here, so can be returned correctly whether or not uploading stuff
 //will extract out different things depending on the channel anyway, so this is best

@@ -12,7 +12,7 @@
  *
  */
 import crypto from 'crypto'
-const TOKEN_ENCRYPTION_KEY = sails.config.env.TOKEN_ENCRYPTION_KEY //must be 256 bytes (32 characters)
+const TOKEN_ENCRYPTION_KEY = process.env.TOKEN_ENCRYPTION_KEY || sails.config.env.TOKEN_ENCRYPTION_KEY //must be 256 bytes (32 characters)
 const IV_LENGTH = 16 // For AES, this is always 16
 
 import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
@@ -125,8 +125,6 @@ console.log("now validating", values);
   //takes access or refresh token and encrypt, adding unique key to end
   //http://vancelucas.com/blog/stronger-encryption-and-decryption-in-node-js/
   encryptToken: (token) => {
-console.log("decrypted");
-console.log(token);
     let iv = crypto.randomBytes(IV_LENGTH);
     let cipher = crypto.createCipheriv('aes-256-cbc', new Buffer(TOKEN_ENCRYPTION_KEY), iv);
     let encrypted = cipher.update(token);
@@ -135,13 +133,10 @@ console.log(token);
 
     //attaches the iv to the encrypted token for later retrieval.
     let fullEncryptedString = iv.toString('hex') + ':' + encrypted.toString('hex');
-console.log("encrypted");
-console.log(fullEncryptedString);
     return fullEncryptedString
   },
 
   decryptToken: (text) => {
-console.log("now decrypting, ", text);
     let textParts = text.split(':');
     let iv = new Buffer(textParts.shift(), 'hex');
     let encryptedText = new Buffer(textParts.join(':'), 'hex');
