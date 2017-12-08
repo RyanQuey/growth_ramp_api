@@ -48,14 +48,18 @@ module.exports = {
         redirect_uri: `${callbackUrl}/facebook`,
         //Promise: require('bluebird')//maybe want to do this?
         //scope: 'email, '
-      }
+      },
+      tokensExpire: true,
       //appsecret is automatically set (?)
+      requiresAccessTokenSecret: false,
     },
     //GITHUB: 'github',
     GOOGLE: {
       name: 'Google',
       providerId: 'GOOGLE',
-      channelTypes: []
+      channelTypes: [],
+      tokensExpire: true, //need to double check
+      requiresAccessTokenSecret: false,
     },
     LINKEDIN: {
       name: 'LinkedIn',
@@ -65,7 +69,9 @@ module.exports = {
         //"PRIVATE_MESSAGE",
         "GROUP_POST",
         "PAGE_POST", //mostly for businesses
-      ]
+      ],
+      tokensExpire: true,
+      requiresAccessTokenSecret: false,
     },
     TWITTER: {
       name: 'Twitter',
@@ -73,7 +79,9 @@ module.exports = {
       channelTypes: [
         "PERSONAL_POST", //tweet. distinct from business post?
         "PRIVATE_MESSAGE",
-      ]
+      ],
+      tokensExpire: false,
+      requiresAccessTokenSecret: true,
     },
   },
 

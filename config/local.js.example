@@ -17,6 +17,7 @@ module.exports.env = {
 
   //for developers console
   GOOGLE_API_KEY: 'AIzaSyCFJco9rKvcqPUAxP1UcQPjpHtXfRSrJRw',
+  TOKEN_ENCRYPTION_KEY: '', //should be 32 characters
 
   PG_PASSWORD: '',
   PG_USER: '',

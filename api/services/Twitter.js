@@ -1,10 +1,11 @@
 const T = require('twit')
-const _setup = (account) => {
+//NOTE don't get accessToken from account record; that is encrypted still
+const _setup = (account, accessTokenData) => {
   const Twit = new T({
     consumer_key: sails.config.env.TWITTER_CONSUMER_KEY,
     consumer_secret: sails.config.env.TWITTER_CONSUMER_SECRET,
-    access_token: account.accessToken,
-    access_token_secret: account.accessTokenSecret,
+    access_token: accessTokenData.accessToken,
+    access_token_secret: accessTokenData.accessTokenSecret,
     timeout_ms: 60*1000,
   })
 
@@ -14,9 +15,9 @@ const _setup = (account) => {
 //not supporting private message yet
 
 const Twitter = {
-  createPost: (account, post) => {
+  createPost: (account, post, channel = false, accessTokenData) => {
     //just returning the promises in these returned functions
-    const Twit = _setup(account)
+    const Twit = _setup(account, accessTokenData)
     if (post.uploadedContent && post.uploadedContent.length ) {
       return Twitter._uploadAndPost(post, Twit)
     } else {
@@ -38,10 +39,11 @@ const Twitter = {
         return Twitter[post.channelType](post, Twit, uploadsData)
       })
       .then((data) => {
-console.log("SUCCESSFUL");
-console.log(data);
-//TODO extract postKey / url
-        return resolve(data)
+        console.log("SUCCESSFUL post to Twitter");
+        console.log(data);
+
+        //id should work, just an integer version. ORM should convert
+        return {postKey: data.id_str || data.id}
       })
       .catch((err) => {
         console.log(err);
@@ -115,8 +117,119 @@ console.log(data);
        //full user object, created at, who it responds to, hashtags, etc
 console.log("result from Twitter");
 console.log(result.data);
-      let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
+
+      //this is how Twitter/Twit returns errors
+      if (result.data.errors) {
+
+        throw new Error("Failed to publish: " + result.data.errors.map((e) => e.message).join("; "))
+      } else {
+        let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
         return {postKey}
+
+      }
+    })
+//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
+//will extract out different things depending on the channel anyway, so this is best
+  },
+
+  getChannels: (account, channelType, pagination) => {
+    return new Promise((resolve, reject) => {
+      return reject("no channels available to get for twitter")
+    })
+  },
+  /*
+  _retweet: (post,  utms, Twit, uploadsData) => {
+    Twit = _setup(account)
+
+    Twit.post(`statuses/retweet/:id`, {id: post.id}, (err, data, response) => {
+      if (err) {}
+
+      console.log(data, response);
+    })
+  },
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
+    })
+  },
+
+  //upload a file
+  _upload: (url, Twit) => {
+    return new Promise((resolve, reject) => {
+      // Note: seems like I cannot use Twit.postMediaChunked  since it was not liking a url for file path; wanted local path I assume
+
+      let mediaId
+
+      axios.get(url, {responseType: 'arraybuffer'})
+      .then((response) => {
+        const b64content = new Buffer(response.data, 'binary').toString('base64')
+        return Twit.post('media/upload', { media_data: b64content})
+      })
+      .then((result) => {
+        if (result.error || !result.data) {
+          console.log(result.error || "no data returned");
+          throw new Error("failed to upload to Twitter")
+        }
+        console.log("finished upload:");
+        //response is just the full res data; don't need it, data extracts what I need
+
+        mediaId = result.data.media_id_string
+        //not doing this yet
+        const altText = ""
+        const metaParams = {
+          media_id: mediaId,
+          alt_text: {
+            text: "Picture", //twitter requires it...
+          }
+        }
+
+        return Twit.post('media/metadata/create', metaParams)
+      })
+      .then((result) => {
+        if (result.error) {
+          console.log(result.error);
+          throw new Error("failed to set media metadata to Twitter")
+        }
+        console.log("finished creating media metadata:");
+
+//might not need; this helper might take care of it for us
+
+        return resolve({mediaId})
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
+    })
+  },
+  //createStatusUpdate:
+  PERSONAL_POST: (post, Twit, uploadsData) => {
+      const params = {status: `${post.text} ${post.shortUrl}`}
+      if (uploadsData) {
+        //should be array of responses from uploading media
+        const mediaIds = uploadsData.map((u) => u.mediaId)
+        params.media_ids = mediaIds
+      }
+
+      console.log(params);
+    return Twit.post('statuses/update', params)
+    .then((result) => {
+       //Twitter actually sends back a ton of data, might want to save more?
+       //full user object, created at, who it responds to, hashtags, etc
+console.log("result from Twitter");
+console.log(result.data);
+
+      //this is how Twitter/Twit returns errors
+      if (result.data.errors) {
+
+        throw new Error("Failed to publish: " + result.data.errors.map((e) => e.message).join("; "))
+      } else {
+        let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
+        return {postKey}
+
+      }
     })
 //TODO extract out response data here, so can be returned correctly whether or not uploading stuff
 //will extract out different things depending on the channel anyway, so this is best
