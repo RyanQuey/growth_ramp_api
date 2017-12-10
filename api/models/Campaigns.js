@@ -51,11 +51,17 @@ module.exports = {
         currentCampaignRecord = c
 
         //make sure it's ok to change
-        if (currentCampaignRecord.posts && currentCampaignRecord.posts.length) {
+        if (
+          currentCampaignRecord.posts && currentCampaignRecord.posts.length &&
+          currentCampaignRecord.planId != params.planId
+        ) {
           throw "Cannot set plan if posts are already made for this campaign"
         }
         //should only happen if plan is not set yet
-        if (currentCampaignRecord.planId && currentCampaignRecord.planId !== params.planId) {
+        if (
+          currentCampaignRecord.planId &&
+          currentCampaignRecord.planId != params.planId
+        ) {
           throw "Cannot change plan if plan is already set"
         }
 
