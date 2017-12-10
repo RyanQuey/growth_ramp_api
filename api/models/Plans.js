@@ -87,9 +87,11 @@ module.exports = {
 
         return Promise.all(promises)
       })
-      .then((results) => {
-        console.log(results);
-        return resolve(results)
+      .spread((postTemplates, updatedCampaigns, updatedPosts) => {
+        let updatedCampaign = updatedCampaigns[0]
+        newPlan.postTemplates = postTemplates
+
+        return resolve({newPlan, updatedCampaign, updatedPosts})
       })
       .catch((err) => {
         return reject(err)
