@@ -55,7 +55,7 @@ module.exports = {
           throw "Cannot set plan if posts are already made for this campaign"
         }
         //should only happen if plan is not set yet
-        if (currentCampaignRecord.planId) {
+        if (currentCampaignRecord.planId && currentCampaignRecord.planId !== params.planId) {
           throw "Cannot change plan if plan is already set"
         }
 
