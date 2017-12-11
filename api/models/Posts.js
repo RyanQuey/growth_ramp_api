@@ -5,11 +5,9 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-const constants = require('../constants')
-const UTM_TYPES = constants.UTM_TYPES
 
-import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
-const providerWrappers = {
+import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES } from "../constants"
+const providerApiWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
   LINKEDIN: LinkedIn,
@@ -19,7 +17,7 @@ module.exports = {
   attributes: {
     //stuff to use to create the posted message
     text: { type: 'string' }, //caption/comment for the post
-    channelType: { type: 'string', required: true },
+    channelType: { type: 'string', required: true, enum: ALL_CHANNEL_TYPES },//eg "PERSONAL_POST"
     provider: { //should always match the provider account provider
       type: 'string',
       required: true,
@@ -124,7 +122,7 @@ console.log("in the post", accessTokenData);
       .then((u) => {
         updatedPost = u
         //api will be the api for the social network
-        let api = providerWrappers[account.provider]
+        let api = providerApiWrappers[account.provider]
 
         //publishes post on social network
         return api.createPost(account, updatedPost, channel, accessTokenData)

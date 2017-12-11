@@ -6,8 +6,7 @@
  */
 
     //!!!!!!!note that a given postTemplate, provider, or plan may change, but that won't actually change the campaign itself, once the campaign has been sent!!!!!!!!
-var constants = require('../constants')
-var CAMPAIGN_STATUSES = constants.CAMPAIGN_STATUSES
+import { CAMPAIGN_STATUSES, } from "../constants"
 
 module.exports = {
 
@@ -39,6 +38,11 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
+  afterUpdate: (updatedRecord, cb) => {
+    Posts.update({campaignId: updatedRecord.id}, {contentUrl: updatedRecord.contentUrl})
+
+    cb()
+  },
 
   //sets posts and utms of a campaign to match the newly updated planId
   matchToPlan: (params) => {
@@ -212,8 +216,6 @@ console.log("all tokens", allAccessTokenData);
         //results will be a mixture of successes and failures
         //failures should have a message and code property, and status 500 on the object
         //not throwing though, just let it all go through
-  console.log("finished trying to publish");
-  console.log(postResults);
 
         return Campaigns.update(campaign.id, {
           publishedAt: moment.utc().format(),
