@@ -20,14 +20,18 @@ const Facebook = {
   createPost: (account, post, channel, accessTokenData, options = {}) => {
     return new Promise((resolve, reject) => {
       let accessTokenToUse
-      //right now, only posting as page for PAGE_POSTS; no individual posts
-      if (options.postAsPage || post.channelType === "PAGE_POST") {
+      if (post.postingAs === "PAGE") {
         accessTokenToUse = channel.accessToken
+
       } else {
         accessTokenToUse = accessTokenData.accessToken
       }
       const fb = _setup(account, accessTokenToUse)
-      const body = `${post.text} ${post.shortUrl}`
+//      const body =
+      const body = {
+        message: `${post.text} ${post.shortUrl}`,
+        link: post.shortUrl,
+      }
 
       if (post.uploadedContent && post.uploadedContent.length ) {
         return resolve(Facebook._uploadAndPost(post, body, channel, fb))
@@ -50,7 +54,6 @@ const Facebook = {
       //these are successful uploads
       .then((uploadsData) => {
 
-console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
         return Facebook[post.channelType](post, body, channel, fb, uploadsData )
       })
     })
@@ -87,9 +90,9 @@ console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
 
   PERSONAL_POST: (post, body, channel, fb, uploadsData) => {
-console.log("333333333333333333333333333333########");
     let params = {
-      message: body,
+      message: body.message,
+      link: body.link,
     }
     if (uploadsData) {
       for (let i = 0; i < uploadsData.length; i++) {
@@ -100,17 +103,18 @@ console.log("333333333333333333333333333333########");
     }
     return fb.api('me/feed', 'post', params)
     .then((data) => {
-console.log("result from Facebook");
-console.log(data);
+      console.log("result from Facebook");
+      console.log(data);
 
-        return {postKey: data.id}
+      return {postKey: data.id}
     })
   },
 
 //TODO set to page...
-  PAGE_POST: (post, body, channel, fb, uploadsData, options = {}) => {
+  PAGE_POST: (post, body, channel, fb, uploadsData) => {
     let params = {
-      message: body,
+      message: body.message,
+      link: body.link,
       //channel.access_token, unneeded for just making posts
     }
     if (uploadsData) {
@@ -122,12 +126,10 @@ console.log(data);
     }
 
     return new Promise((resolve, reject) => {
-      //right now, only posting as page
-      if (options.postAsPage || true) {
+      if (post.postingAs === "PAGE") {
         return resolve(fb.api(`${channel.providerChannelId}/feed`, 'post', params))
 
-      } else {
-        //posting as individual
+      } else if (post.postingAs === "SELF") {
         //TODO use a diff endpoint, for individuals...because the way I'm doing it, I don't think it is officially supported
         return resolve(fb.api(`${channel.providerChannelId}/feed`, 'post', params))
 
@@ -143,7 +145,8 @@ console.log(data);
 //TODO set to group...
   GROUP_POST: (post, body, channel, fb, uploadsData) => {
     let params = {
-      message: body,
+      message: body.message,
+      link: body.link,
     }
     if (uploadsData) {
       for (let i = 0; i < uploadsData.length; i++) {

@@ -28,14 +28,6 @@ module.exports = {
     FACEBOOK: {
       name: 'Facebook',
       providerId: 'FACEBOOK',
-      channelTypeTypes: [
-        "PERSONAL_POST",
-        //"PRIVATE_MESSAGE",
-        "GROUP_POST",
-        "PAGE_POST",//mostly for businesses
-        //"DARK_POST",
-        //"BUSINESS_MESSAGE",
-      ],
       getAccessTokenUrl: `https://graph.facebook.com/v2.10/oauth/access_token?
         client_id=${env.CLIENT_FACEBOOK_ID}
         &redirect_uri=${callbackUrl}/facebook
@@ -52,36 +44,99 @@ module.exports = {
       tokensExpire: true,
       //appsecret is automatically set (?)
       requiresAccessTokenSecret: false,
+      channelTypes: {
+        PERSONAL_POST: {
+          name: "Personal",
+          requiredScopes: ["publish_actions"],
+          hasMultiple: false, //if there are a list of channels for this channelType
+          maxImages: 4,
+          maxCharacters: 63206,
+        },
+        //PRIVATE_MESSAGE: [probably friends, ],
+        GROUP_POST: {
+          name: "Group",
+          requiredScopes: ["publish_actions", "user_managed_groups"],
+          hasMultiple: true,
+          maxImages: 4,
+          maxCharacters: 63206,
+        },
+        PAGE_POST: {
+          name: "Page",
+          requiredScopes: ["manage_pages", "publish_pages", "pages_show_list"], //mostly for businesses
+          hasMultiple: true,
+          maxImages: 4,
+          maxCharacters: 63206 ,
+          //only putting this prop in constant if there's more than one type for now
+          postingAsTypes: {
+            SELF: {
+              label: "Yourself",
+              requirements: { //
+                "NO_PHOTO": true,
+              }
+            },
+            PAGE: {
+              label: "Page",
+              requirements: { //
+                "ROLES": [
+                  "CREATE_CONTENT",
+                ]
+              }
+            },
+          }
+        },
+      },
     },
     //GITHUB: 'github',
     GOOGLE: {
       name: 'Google',
       providerId: 'GOOGLE',
-      channelTypes: [],
+      channelTypes: {},
       tokensExpire: true, //need to double check
       requiresAccessTokenSecret: false,
     },
     LINKEDIN: {
       name: 'LinkedIn',
       providerId: 'LINKEDIN',
-      channelTypes: [
-        "PERSONAL_POST",
-        //"PRIVATE_MESSAGE",
-        "GROUP_POST",
-        "PAGE_POST", //mostly for businesses
-      ],
       tokensExpire: true,
       requiresAccessTokenSecret: false,
+      channelTypes: {
+        PERSONAL_POST: {
+          name: "Personal",
+          requiredScopes: ['w_share'],
+          hasMultiple: false,
+          maxImages: 1,
+          maxCharacters: 500,
+        },
+        //PRIVATE_MESSAGE: [probably friends, ],
+        //GROUP_POST: ['w_share'], discontinued: https://www.linkedin.com/help/linkedin/answer/81635/groups-api-no-longer-available?lang=en
+        PAGE_POST: {
+          name: "Company Page",
+          requiredScopes: ['rw_company_admin'], //mostly for businesses https://developer.linkedin.com/docs/company-pages. Watch out, will want to check page settings to see if they have permitted it in their linkedIn accoutn
+          hasMultiple: true,
+          maxImages: 1,
+          maxCharacters: 700,
+        },
+      }
     },
     TWITTER: {
       name: 'Twitter',
       providerId: 'TWITTER',
-      channelTypes: [
-        "PERSONAL_POST", //tweet. distinct from business post?
-        "PRIVATE_MESSAGE",
-      ],
       tokensExpire: false,
       requiresAccessTokenSecret: true,
+      channelTypes: {
+        PERSONAL_POST: {
+          name: "Personal",
+          requiredScopes: [],//tweet. distinct from business post?
+          hasMultiple: false,
+          maxImages: 4,
+          maxCharacters: 280,
+        },
+        //PRIVATE_MESSAGE:,, TODO want to support soon
+        //  requiredScopes: [],//probably friends, ]
+        //  hasMultiple: true,
+        //  maxImages: 1,
+        //  maxCharacters: 100*1000,
+      },
     },
   },
 
@@ -92,6 +147,11 @@ module.exports = {
     "PAGE_POST",
     "DARK_POST",
     "BUSINESS_MESSAGE",
+  ],
+
+  ALL_POSTING_AS_TYPES: [
+    "SELF",
+    "PAGE",
   ],
 
   UTM_TYPES: {
