@@ -40,8 +40,13 @@ module.exports = {
 
   afterUpdate: (updatedRecord, cb) => {
     Posts.update({campaignId: updatedRecord.id}, {contentUrl: updatedRecord.contentUrl})
+    .then((posts) => {
+      cb()
+    })
+    .catch((err) => {
+      cb()
+    })
 
-    cb()
   },
 
   //sets posts and utms of a campaign to match the newly updated planId

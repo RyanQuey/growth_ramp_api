@@ -12,6 +12,7 @@ const providerApiWrappers = {
   TWITTER: Twitter,
   LINKEDIN: LinkedIn,
 }
+
 module.exports = {
 
   attributes: {
@@ -117,7 +118,7 @@ module.exports = {
       if (!accessTokenData) {
         //TODO will have to retrieve. Should never happen for as longas posts are being published through campaigns. When published independently...deal with that later
       }
-console.log("in the post", accessTokenData);
+
       Posts.shortenUrl(post)
       .then((u) => {
         updatedPost = u

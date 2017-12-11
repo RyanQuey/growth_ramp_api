@@ -108,7 +108,6 @@ module.exports = {
   },
 
   beforeValidate: (values, cb) => {
-console.log("now validating", values);
     if (values.accessToken) {
       values.accessToken = ProviderAccounts.encryptToken(values.accessToken)
     }

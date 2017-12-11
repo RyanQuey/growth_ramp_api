@@ -5,8 +5,8 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-
 import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, POST_TEMPLATE_STATUSES } from "../constants"
+
 module.exports = {
   tableName: "postTemplates",
 
