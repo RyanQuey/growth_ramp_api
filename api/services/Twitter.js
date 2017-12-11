@@ -103,6 +103,7 @@ const Twitter = {
   },
   //createStatusUpdate:
   PERSONAL_POST: (post, Twit, uploadsData) => {
+    return new Promise((resolve, reject) => {
       const params = {status: `${post.text} ${post.shortUrl}`}
       if (uploadsData) {
         //should be array of responses from uploading media
@@ -111,22 +112,26 @@ const Twitter = {
       }
 
       console.log(params);
-    return Twit.post('statuses/update', params)
-    .then((result) => {
-       //Twitter actually sends back a ton of data, might want to save more?
-       //full user object, created at, who it responds to, hashtags, etc
-console.log("result from Twitter");
-console.log(result.data);
+      Twit.post('statuses/update', params)
+      .then((result) => {
+         //Twitter actually sends back a ton of data, might want to save more?
+         //full user object, created at, who it responds to, hashtags, etc
+  console.log("result from Twitter");
+  console.log(result.data);
 
-      //this is how Twitter/Twit returns errors
-      if (result.data.errors) {
+        //this is how Twitter/Twit returns errors
+        if (result.data.errors) {
 
-        throw new Error("Failed to publish: " + result.data.errors.map((e) => e.message).join("; "))
-      } else {
-        let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
-        return {postKey}
+          //throw new Error("Failed to publish: " + result.data.errors.map((e) => e.message).join("; "))
+          //just handle the first for now TODO
+          return reject(Twitter.handleError(result.data.errors[0]))
 
-      }
+        } else {
+          let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
+          return resolve({postKey})
+
+        }
+      })
     })
 //TODO extract out response data here, so can be returned correctly whether or not uploading stuff
 //will extract out different things depending on the channel anyway, so this is best
@@ -136,6 +141,36 @@ console.log(result.data);
     return new Promise((resolve, reject) => {
       return reject("no channels available to get for twitter")
     })
+  },
+  handleError: (err, code = false) => {
+    code = code || err.code
+
+    //this will be returned to the front end, which will handle depending on the code
+    let ret = {code: "", originalError: err}
+
+    switch (code) {
+      case 32: //HTTP 401
+        // they removed permissions, or access token expired
+        // this shouldn't publish
+        ret.code = 'require-reauthorization'
+        break
+      case 93: //HTTP 403
+        // they never gave us this scope...
+        // should never get here, but here it is
+        // this shouldn't publish
+        ret.code = 'insufficient-permissions'
+        break
+      case 88:
+        // rate limit reached
+        // this shouldn't publish
+        ret.code = 'rate-limit-reached'
+        break
+      default:
+        ret.code = 'unknown-error-while-publishing'
+        break
+    }
+
+    return ret
   },
   /*
   _retweet: (post,  utms, Twit, uploadsData) => {

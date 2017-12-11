@@ -20,6 +20,7 @@ module.exports = {
   CAMPAIGN_STATUSES: [
     "DRAFT",
     "PUBLISHED",
+    "PARTIALLY_PUBLISHED", //if some but not all posts are published
     "ARCHIVED"
   ],
 

@@ -54,7 +54,7 @@ const Facebook = {
       //these are successful uploads
       .then((uploadsData) => {
 
-        return Facebook[post.channelType](post, body, channel, fb, uploadsData )
+        return resolve(Facebook[post.channelType](post, body, channel, fb, uploadsData ))
       })
     })
   },
@@ -82,7 +82,7 @@ const Facebook = {
       })
       .catch((err) => {
         console.log("FAILED_TO_UPLOAD");
-        return reject(err)
+        return reject(Facebook.handleError(err))
       })
 
     })
@@ -90,85 +90,101 @@ const Facebook = {
 
 
   PERSONAL_POST: (post, body, channel, fb, uploadsData) => {
-    let params = {
-      message: body.message,
-      link: body.link,
-    }
-    if (uploadsData) {
-      for (let i = 0; i < uploadsData.length; i++) {
-        let upload = uploadsData[i]
-        let key = `attached_media[${i}]`
-        params[key] = JSON.stringify({media_fbid: upload.mediaId})
+    return new Promise((resolve, reject) => {
+      let params = {
+        message: body.message,
+        link: body.link,
       }
-    }
-    return fb.api('me/feed', 'post', params)
-    .then((data) => {
-      console.log("result from Facebook");
-      console.log(data);
+      if (uploadsData) {
+        for (let i = 0; i < uploadsData.length; i++) {
+          let upload = uploadsData[i]
+          let key = `attached_media[${i}]`
+          params[key] = JSON.stringify({media_fbid: upload.mediaId})
+        }
+      }
+      fb.api('me/feed', 'post', params)
+      .then((data) => {
+        console.log("result from Facebook");
+        console.log(data);
 
-      return {postKey: data.id}
+        return resolve({postKey: data.id})
+      })
+      .catch((err) => {
+        return reject(Facebook.handleError(err))
+      })
     })
   },
 
 //TODO set to page...
   PAGE_POST: (post, body, channel, fb, uploadsData) => {
-    let params = {
-      message: body.message,
-      link: body.link,
-      //channel.access_token, unneeded for just making posts
-    }
-    if (uploadsData) {
-      for (let i = 0; i < uploadsData.length; i++) {
-        let upload = uploadsData[i]
-        let key = `attached_media[${i}]`
-        params[key] = JSON.stringify({media_fbid: upload.mediaId})
-      }
-    }
-
     return new Promise((resolve, reject) => {
-      if (post.postingAs === "PAGE") {
-        return resolve(fb.api(`${channel.providerChannelId}/feed`, 'post', params))
-
-      } else if (post.postingAs === "SELF") {
-        //TODO use a diff endpoint, for individuals...because the way I'm doing it, I don't think it is officially supported
-        return resolve(fb.api(`${channel.providerChannelId}/feed`, 'post', params))
-
+      let params = {
+        message: body.message,
+        link: body.link,
+        //channel.access_token, unneeded for just making posts
       }
-    })
-    .then((data) => {
-      console.log("result from Facebook");
-      console.log(data);
-      return {postKey: data.id}
+      if (uploadsData) {
+        for (let i = 0; i < uploadsData.length; i++) {
+          let upload = uploadsData[i]
+          let key = `attached_media[${i}]`
+          params[key] = JSON.stringify({media_fbid: upload.mediaId})
+        }
+      }
+
+      //could make this a promise, but no need
+      const postIt = () => {
+        if (post.postingAs === "PAGE") {
+          return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+        } else if (post.postingAs === "SELF") {
+          //TODO use a diff endpoint, for individuals...because the way I'm doing it, I don't think it is officially supported
+          return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+        }
+      }
+
+      postIt()
+      .then((data) => {
+        console.log("result from Facebook");
+        console.log(data);
+        return resolve({postKey: data.id})
+      })
+      .catch((err) => {
+        return reject(Facebook.handleError(err))
+      })
     })
   },
 
 //TODO set to group...
   GROUP_POST: (post, body, channel, fb, uploadsData) => {
-    let params = {
-      message: body.message,
-      link: body.link,
-    }
-    if (uploadsData) {
-      for (let i = 0; i < uploadsData.length; i++) {
-        let upload = uploadsData[i]
-        let key = `attached_media[${i}]`
-        params[key] = JSON.stringify({media_fbid: upload.mediaId})
+    return new Promise((resolve, reject) => {
+      let params = {
+        message: body.message,
+        link: body.link,
       }
-    }
-    return fb.api(`${channel.providerChannelId}/feed`, 'post', params)
-    .then((data) => {
-      console.log("result from Facebook");
-      console.log(data);
+      if (uploadsData) {
+        for (let i = 0; i < uploadsData.length; i++) {
+          let upload = uploadsData[i]
+          let key = `attached_media[${i}]`
+          params[key] = JSON.stringify({media_fbid: upload.mediaId})
+        }
+      }
 
-      return {postKey: data.id}
+      fb.api(`${channel.providerChannelId}/feed`, 'post', params)
+      .then((data) => {
+        console.log("result from Facebook");
+        console.log(data);
+
+        return resolve({postKey: data.id})
+      })
+      .catch((err) => {
+        return reject(Facebook.handleError(err))
+      })
     })
-//TODO extract out response data here, so can be returned correctly whether or not uploading stuff
-//will extract out different things depending on the channel anyway, so this is best
   },
 
   //all the posts for one user account
   //not sure if this responds with a promise like the others do ?
   //if not, just have a call back
+  /*
   batchRequest: (post, account, options = {}) => {
     const fb = _setup(account)
     fb.api('', 'post', {batch: post.batch.map((post) => {
@@ -183,6 +199,8 @@ const Facebook = {
     .then((response) => {console.log(response);})
     .catch((err) => {console.log(err);})
   },
+
+  */
 
   //channelType should be PAGE_POST or GROUP_POST
   getChannels: (account, channelType, pagination) => {
@@ -223,7 +241,8 @@ const Facebook = {
       .catch((err) => {
         console.log("Error getting ", channelType);
         console.log(err);
-        return reject(err)
+
+        return reject(Facebook.handleError(err))
       })
     })
   },
@@ -238,7 +257,7 @@ const Facebook = {
       const shortLivedAccessToken = oauthData.accessToken
       //should never happen. But if it does, let the caller handle it.
       if (!shortLivedAccessToken) {return resolve(oauthData)}
-console.log(appId, appSecret);
+
       FB.api('oauth/access_token', {
         client_id: appId,
         client_secret: appSecret,
@@ -256,8 +275,6 @@ console.log(appId, appSecret);
           accessToken: longLivedAccessToken,
           accessTokenExpires,
         })
-console.log("getting longer token", data);
-console.log(ret);
         return resolve(ret)
       })
       .catch((err) => {
@@ -269,6 +286,40 @@ console.log(ret);
     })
   },
 
+  handleError: (err, code = false) => {
+    code = code || Helpers.safeDataPath(err, `response.error.code`, false)
+
+    //this will be returned to the front end, which will handle depending on the code
+    let ret = {code: "", originalError: err}
+
+    switch (true) {
+      case (code == 190):
+        // they removed permissions, or access token expired
+        // this shouldn't publish
+        ret.code = 'require-reauthorization'
+        break
+      case (code > 199 && code < 300):
+        // this is for failed scopes
+        // this shouldn't publish
+        ret.code = 'insufficient-permissions'
+        break
+      //4 means GR did too many; 17 means user
+      case (code === 4 || code === 17):
+        // this shouldn't publish
+        ret.code = 'rate-limit-reached'
+        break
+
+      case (code === 506):
+        // this shouldn't publish
+        ret.code = 'duplicate-post'
+        break
+      default:
+        ret.code = 'unknown-error-while-publishing'
+        break
+    }
+
+    return ret
+  },
 }
 
 module.exports = Facebook
