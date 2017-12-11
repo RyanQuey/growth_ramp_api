@@ -136,14 +136,12 @@ module.exports = {
     return new Promise((resolve, reject) => {
       let posts, postResults, allAccessTokenData
       //if null publishedAt, is not published yet
+
       Posts.find({campaignId: campaign.id, publishedAt: null}).populate('providerAccountId').populate('channelId')
       .then((p) => {
         //check access tokens
         //hopefully the API has given this all along, but not there yet, and good to check anyways
         posts = p
-        //technically providerAccountId is required so this shouldn't be necessary, but whatever
-        _.remove(posts, (post) => !post.providerAccountId)
-
 
         let allAccounts = posts.reduce((acc, post) => {
           //remove duplicate accounts
@@ -209,6 +207,8 @@ console.log("all tokens", allAccessTokenData);
 
         for (let i = 0; i < posts.length; i++) {
           let post = posts[i]
+console.log("POSTS", posts);
+console.log("post", post);
           //whether or not provider account is populated
           let accessTokenData = allAccessTokenData[post.providerAccountId.id || post.providerAccountId]
           promises.push(Posts.publishPost(post, accessTokenData))
@@ -221,17 +221,33 @@ console.log("all tokens", allAccessTokenData);
         //results will be a mixture of successes and failures
         //failures should have a message and code property, and status 500 on the object
         //not throwing though, just let it all go through
+        // NOTE: really should not have to check !post.publishedAt...but thjis just adds some fool proofing
+        const failedPosts = postResults.filter((post) => post.error || !post.publishedAt)
 
-        return Campaigns.update(campaign.id, {
-          publishedAt: moment.utc().format(),
-          status: "PUBLISHED",
-        })
+        if (failedPosts.length === 0) {
+          return Campaigns.update(campaign.id, {
+            publishedAt: moment.utc().format(),
+            status: "PUBLISHED",
+          })
+
+        } else if (failedPosts.length === postResults.length) {
+          //keep it as is; don't do anything
+          return [campaign] //faking what campaigns.update returns
+
+        } else if (failedPosts.length !== postResults.length) {
+          return Campaigns.update(campaign.id, {
+            //can use updatedAt to see when it was
+            status: "PARTIALLY_PUBLISHED",
+          })
+
+        }
       })
       .then((c) => {
-        let campaign = Object.assign({}, c[0])
-        campaign.posts = postResults
+        let updatedCampaign = Object.assign({}, c[0])
+        updatedCampaign.posts = postResults //DO NOT POPULATE! Need to have error prop on the posts, as is returned here
+
         //so will return updated campaign object, just as regular Campaigns.update would, but with populated posts
-        return resolve(campaign)
+        return resolve(updatedCampaign)
       })
       .catch((err) => {
         console.log(err);

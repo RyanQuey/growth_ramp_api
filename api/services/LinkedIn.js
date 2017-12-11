@@ -66,7 +66,7 @@ const LinkedIn = {
       .catch((err) => {
         console.log("Failure from publishing to LinkedIn:");
         console.log(err.response.data || err);
-        return reject(err.response.data || err)
+        return reject(LinkedIn.handleError(err))
       })
     })
   },
@@ -124,15 +124,43 @@ const LinkedIn = {
       .catch((err) => {
         console.log("Error getting ", channelType);
         console.log(err.response);
-        if (Helpers.safeDataPath(err, "response.data.message", false) === "Member is restricted") {
-          console.log("User's account is restricted");
-        }
-        return reject(Helpers.safeDataPath(err, "response.data", err))
+        return reject(LinkedIn.handleError(err))
       })
     })
   },
 
+  //https://developer.linkedin.com/docs/guide/v2/error-handling
+  handleError: (err, code = false) => {
 
+    code = code || Helpers.safeDataPath(err, `response.data.status`, false)
+
+    //this will be returned to the front end, which will handle depending on the code
+    let ret = {code: "", originalError: err}
+
+    switch (code) {
+      case 401:
+        // they removed permissions, or access token expired
+        // this shouldn't publish
+        ret.code = 'require-reauthorization'
+        break
+      case 403:
+        // they never gave us this scope...
+        // should never get here, but here it is
+        // this shouldn't publish
+        ret.code = 'insufficient-permissions'
+        break
+      case 429:
+        // rate limit reached
+        // this shouldn't publish
+        ret.code = 'rate-limit-reached'
+        break
+      default:
+        ret.code = 'unknown-error-while-publishing'
+        break
+    }
+
+    return ret
+  },
 //TODO set to group...
 //LinkedIn deprecated this
 //https://www.linkedin.com/help/linkedin/answer/81635/groups-api-no-longer-available?lang=en

@@ -80,7 +80,10 @@ module.exports = {
       }
 
       //only get active with values
-      let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].filter((type) => (post[type] && post[type].active && post[type].value))
+      let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].filter((type) => (
+        post[type] && post[type].active && post[type].active !== "false" && post[type].value
+      ))
+
       //turn into parameters
       utmList = utmList.map((type) => {
         if (type === "customUtm") {
@@ -116,7 +119,8 @@ console.log("UTMS", utms);
     return new Promise((resolve, reject) => {
       let account = post.providerAccountId
       let channel = post.channelId
-      let updatedPost
+      //set a separate variable each step along the way, so I know how far we got.
+      let postWithUrl, publishedButNotUpdatedPost, publishedPost
 
       if (!accessTokenData) {
         //TODO will have to retrieve. Should never happen for as longas posts are being published through campaigns. When published independently...deal with that later
@@ -124,29 +128,84 @@ console.log("UTMS", utms);
 
       Posts.shortenUrl(post)
       .then((u) => {
-        updatedPost = u
+        postWithUrl = u
         //api will be the api for the social network
         let api = providerApiWrappers[account.provider]
 
         //publishes post on social network
-        return api.createPost(account, updatedPost, channel, accessTokenData)
+        return api.createPost(account, postWithUrl, channel, accessTokenData)
       })
       .then((result) => {
-        //some providers only have url or key, not both
-        return Posts.update({id: updatedPost.id}, {
+        publishedButNotUpdatedPost = {
           publishedAt: moment.utc().format(),
           postUrl: result.postUrl || "",
           postKey: result.postKey || "",
-        })
+        }
+
+        //some providers only have url or key, not both
+        return Posts.update({id: postWithUrl.id}, publishedButNotUpdatedPost)
       })
       .then((p) => {
         //only updating and returning one post
-        return resolve(p[0])
+        publishedPost = p[0]
+        return resolve(publishedPost)
       })
       .catch((err) => {
+        //TODO send us an email or something
         console.log("Failure posting to social network");
-        console.log(err);
-        return reject(err)
+        //IMPORTANT: still resolving no matter what, so other posts that do get posted are updated etc correctly
+        let ret
+
+        //originalError will be from the provider hopefully, unless our api just failed
+        //working from getting the farthest to barely starting:
+
+        if (publishedButNotUpdatedPost) {
+          //if this happens...all our fault. But still, have to deal with
+          console.log("*****************");
+          console.log("SHOULD_NEVER_GET_HERE:");
+          console.log(err);
+          console.log("*****************");
+          ret = Object.assign({}, publishedButNotUpdatedPost, {
+            error: {
+              code: "published-but-failed-to-save",
+              originalError: err.originalError || err,
+            }
+          })
+
+        } else if (postWithUrl) {
+          console.log("*****************");
+          console.log("FAILED_TO_PUBLISH_TO_PROVIDER:");
+          console.log(err);
+          console.log("*****************");
+          ret = Object.assign({}, postWithUrl, {
+            //ideally, set the specific code for why failed in the provider api wrapper
+            error: {
+              code: err.code || "failed-to-publish-unknown",
+              originalError: err.originalError || err,
+            }
+          })
+
+        } else if (post) {
+          console.log("*****************");
+          console.log("FAILED_TO_PUBLISH_OR_UPDATE_SHORT_LINK:");
+          console.log(err);
+          console.log("*****************");
+          ret = Object.assign({}, post, {
+            error: {
+              code: err.code || "failed-to-shorten-link",
+              originalError: err.originalError || err
+            }
+          })
+
+        } else {
+
+          //failed to even pass in a post...just reject all at this point
+          //Hopefully all will fail
+          return resolve({error: {code: "no-post", originalError: err}})
+        }
+
+        //returning post object with as much updating as happened, and
+        return resolve(ret)
       })
     })
   },
