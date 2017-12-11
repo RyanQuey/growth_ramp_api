@@ -162,7 +162,7 @@ module.exports = {
         //can return unchanged
         return resolve(providerAccountData)
       } else {
-        return providerApiWrappers[provider].handleOauthData(providerAccountData)
+        return resolve(providerApiWrappers[provider].handleOauthData(providerAccountData))
       }
     })
   },
@@ -227,7 +227,7 @@ module.exports = {
         //should be in array [user, provider]
         //NOTE: if logging in for the first time, `user` is an object with two properties: {user, plans: userPlans}
         // TODO: can use the provider information to give a success message in the browser
-        if (!results || results.length === 0) {throw {message: "didn't retrieve provider or user correctly."}}
+        if (!userRecord || !providerRecord) {throw {message: "didn't retrieve provider or user correctly."}}
 
         const ret = {
           user: userRecord,

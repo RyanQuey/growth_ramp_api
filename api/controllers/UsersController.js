@@ -64,9 +64,9 @@ module.exports = {
 
     ProviderAccounts.handleOauthData(providerAccountData)
     .then((data) => {
-      ProviderAccounts.loginWithProvider(currentUser, providerAccountData)
+      //data should either be regular providerAccountData OR transformed data
+      return ProviderAccounts.loginWithProvider(currentUser, data)
     })
-
     .then((userAndAccount) => {
       //TODO don't send refresh and access tokens
       //eventually need to build up the provider information with this
