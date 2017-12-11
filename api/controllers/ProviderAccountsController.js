@@ -8,10 +8,8 @@
 module.exports = {
   refreshChannelType: (req, res) => {
     const accountId = req.params.accountId;
-console.log(req.body.channelType, accountId);
 
     const channelType = req.body.channelType;
-console.log(channelType);
 
     ProviderAccounts.findOne(accountId)//.populate('channels')
     .then((account) => {

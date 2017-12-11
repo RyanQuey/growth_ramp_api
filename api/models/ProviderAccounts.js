@@ -16,7 +16,7 @@ const TOKEN_ENCRYPTION_KEY = process.env.TOKEN_ENCRYPTION_KEY || sails.config.en
 const IV_LENGTH = 16 // For AES, this is always 16
 
 import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
-const providerWrappers = {
+const providerApiWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
   LINKEDIN: LinkedIn,
@@ -148,7 +148,26 @@ module.exports = {
     return token
   },
 
-  loginWithProvider(req) {
+  //runs before loginWithProvider
+  //trades tokens or whatever that needs to be done.
+  //The extra roundtrips that haven't happened yet.
+  //so far, only FB needs it
+  handleOauthData: (providerAccountData) => {
+    return new Promise((resolve, reject) => {
+      const provider = providerAccountData.provider
+      if (!provider) {return reject("no provider defined")}
+
+      //if don't have to do anything
+      if (!providerApiWrappers[provider].handleOauthData) {
+        //can return unchanged
+        return resolve(providerAccountData)
+      } else {
+        return providerApiWrappers[provider].handleOauthData(providerAccountData)
+      }
+    })
+  },
+
+  loginWithProvider: (user, providerAccountData) => {
 
     //0) confirm / extract user information from provider
     //1) find user (if already has an account and is logged in) and account
@@ -156,40 +175,22 @@ module.exports = {
     //create or update account information including the account tokens
     //.1) return user info, along with plans and campaigns and API token, to the client server
 
-    const getUser = (() => {
-      //1)
-      //if account data is sent with apiToken, will update this users provider account
-      if (req.user) {
-        return req.user
+    return new Promise((resolve, reject) => {
+      //0)
+      if (!providerAccountData.provider) {return reject("no provider defined")}
 
-      //} else if (){
-      } else {
-        //if no API token provided, check if this provider information matches another user
-        //if there is a match, ...not validating the provider data for now, but maybe should?
-        //return Users.findOrCreate({accounts: }, {})
-        return false //
-      }
-    })
-
-    const getProviderAccount = (accountData) => {
-      return ProviderAccounts.findOne({provider: accountData.provider, providerUserId: accountData.providerUserId})
+      //1) get Provider Account
       //cannot just updateOrCreate, because you have to check if something is amiss (see `else if (provider && user)` conditional below)
       //return ProviderAccounts.updateOrCreate({userId: user.id, name: providerAccountData.name}, providerAccountData)
       //might create security hole ...? too tired to think about right now
-    }
-
-    return new Promise((resolve, reject) => {
-      //0)
-      let providerAccountData = req.body
-      if (!providerAccountData.provider) {return reject("no provider defined")}
-
-      //1)
-      //TODO Promise.join is easier and more performant
-      Promise.all([ getUser(), getProviderAccount(providerAccountData) ])
-      .then((results) => {
+      ProviderAccounts.findOne({
+        provider: providerAccountData.provider,
+        providerUserId: providerAccountData.providerUserId
+      })
+      .then((account) => {
         //handling the different situations here
-        const [user, account] = results
         let promises
+
         if (account && !user) {
           //logging in with a provider
           //TODO only update the relevant part of the provider data, eg not the user ID, etc.
@@ -222,13 +223,16 @@ module.exports = {
 
         }
       })
-      .then((results) => {
+      .spread((userRecord, providerRecord) => {
         //should be in array [user, provider]
         //NOTE: if logging in for the first time, `user` is an object with two properties: {user, plans: userPlans}
         // TODO: can use the provider information to give a success message in the browser
         if (!results || results.length === 0) {throw {message: "didn't retrieve provider or user correctly."}}
 
-        const ret = {user: results[0], provider: results[1]}
+        const ret = {
+          user: userRecord,
+          provider: providerRecord
+        }
         return resolve(ret)
       })
       .catch((err) => {
@@ -414,7 +418,7 @@ console.log("response from trying to refresh access token");
       let results
 
       //api will be the api for the social network
-      let api = providerWrappers[account.provider]
+      let api = providerApiWrappers[account.provider]
       let pagination = {} //TODO probably have to set this... see LI for example of what I need; fb doesn't seem to need
 
       //publishes post on social network

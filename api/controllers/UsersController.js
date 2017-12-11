@@ -59,7 +59,14 @@ module.exports = {
   },
 
 	loginWithProvider: ((req, res) => {
-    ProviderAccounts.loginWithProvider(req)
+    const providerAccountData = req.body
+    const currentUser = req.user
+
+    ProviderAccounts.handleOauthData(providerAccountData)
+    .then((data) => {
+      ProviderAccounts.loginWithProvider(currentUser, providerAccountData)
+    })
+
     .then((userAndAccount) => {
       //TODO don't send refresh and access tokens
       //eventually need to build up the provider information with this
