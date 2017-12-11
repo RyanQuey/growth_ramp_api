@@ -1,5 +1,5 @@
 const FB = require('fb')
-const appId = process.env.CLIENT_FACEBOOK_KEY || sails.config.env.CLIENT_FACEBOOK_KEY
+const appId = process.env.CLIENT_FACEBOOK_ID || sails.config.env.CLIENT_FACEBOOK_ID
 const appSecret = process.env.CLIENT_FACEBOOK_SECRET || sails.config.env.CLIENT_FACEBOOK_SECRET
 
 //NOTE don't get accessToken from account record; that is encrypted still
@@ -234,32 +234,38 @@ const Facebook = {
   //passport explicitly doesn't do this
   //https://github.com/jaredhanson/passport-facebook/issues/98
   handleOauthData: (oauthData) => {
-    const shortLivedAccessToken = oauthData.accessToken
-    //should never happen. But if it does, let the caller handle it.
-    if (!shortLivedAccessToken) {return Promise.resolve(oauthData)}
-
-    FB.api('oauth/access_token', {
-      client_id: appId,
-      client_secret: appSecret,
-      grant_type: 'fb_exchange_token',
-      fb_exchange_token: shortLivedAccessToken
-    })
-    .then((data) => {
-      const longLivedAccessToken = data.access_token
-
-      //their current default...but let's just hope they return it
-      //but not the end of the world if we estimate wrong anyways
-      const accessTokenExpires = data.expires || moment.utc().add(60, "days").format()
-
-      const ret = Object.assign({}, oauthData, {
-        accessToken: longLivedAccessToken,
-        accessTokenExpires,
+    return new Promise((resolve, reject) => {
+      const shortLivedAccessToken = oauthData.accessToken
+      //should never happen. But if it does, let the caller handle it.
+      if (!shortLivedAccessToken) {return resolve(oauthData)}
+console.log(appId, appSecret);
+      FB.api('oauth/access_token', {
+        client_id: appId,
+        client_secret: appSecret,
+        grant_type: 'fb_exchange_token',
+        fb_exchange_token: shortLivedAccessToken
       })
-      return resolve(data)
-    })
-    .catch((err) => {
-      console.log(err);
-      return reject(err)
+      .then((data) => {
+        const longLivedAccessToken = data.access_token
+
+        //their current default...but let's just hope they return it
+        //but not the end of the world if we estimate wrong anyways
+        const accessTokenExpires = data.expires || moment.utc().add(60, "days").format()
+
+        const ret = Object.assign({}, oauthData, {
+          accessToken: longLivedAccessToken,
+          accessTokenExpires,
+        })
+console.log("getting longer token", data);
+console.log(ret);
+        return resolve(ret)
+      })
+      .catch((err) => {
+        console.log("FAILURE_HANDLING_DATA", err);
+        console.log("Just sending short lived access token back");
+        //just pass through the old data
+        return resolve(oauthData)
+      })
     })
   },
 
