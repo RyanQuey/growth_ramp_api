@@ -1,6 +1,10 @@
 //just doing rest for LinkedIn, SDK doesn't support mobile and no library looks good enough to have another dependency
 //this also gives me greater flexibility
 //node-linkedin would be the one though if I did use one
+
+//NOTE: Doesn't allow refreshing access tokens; must prompt relogin
+//https://developer.linkedin.com/docs/oauth2
+
 const LIApi = "https://api.linkedin.com"
 //NOTE don't get accessToken from account record; that is encrypted still
 const _setup = (account, accessToken) => {
