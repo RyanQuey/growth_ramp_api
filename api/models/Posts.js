@@ -6,7 +6,7 @@
  */
 
 
-import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES } from "../constants"
+import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, ALL_POSTING_AS_TYPES } from "../constants"
 const providerApiWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
@@ -38,6 +38,7 @@ module.exports = {
     publishedAt: { type: 'datetime', defaultsTo: null },
     //user set time. Stays same even if not successful on first attempt
     delayedUntil: { type: 'datetime' },
+    postingAs: { type: 'string', defaultsTo: "SELF", enum: ALL_POSTING_AS_TYPES}, //could also be "PAGE" etc. depending on the channelType
 
     campaignUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     mediumUtm: { type: 'json', defaultsTo: {active: true, value: ''} },

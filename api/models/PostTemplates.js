@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, POST_TEMPLATE_STATUSES } from "../constants"
+import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, POST_TEMPLATE_STATUSES, ALL_POSTING_AS_TYPES } from "../constants"
 
 module.exports = {
   tableName: "postTemplates",
@@ -19,6 +19,7 @@ module.exports = {
       required: true,
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
+    postingAs: { type: 'string', defaultsTo: "SELF", enum: ALL_POSTING_AS_TYPES}, //could also be "PAGE" etc. depending on the channelType
 
     campaignUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
     mediumUtm: { type: 'json', defaultsTo: {active: true, value: ''} },
