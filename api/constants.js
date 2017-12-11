@@ -85,6 +85,14 @@ module.exports = {
     },
   },
 
+  ALL_CHANNEL_TYPES: [
+    "PERSONAL_POST",
+    "PRIVATE_MESSAGE",
+    "GROUP_POST",
+    "PAGE_POST",
+    "DARK_POST",
+    "BUSINESS_MESSAGE",
+  ],
 
   UTM_TYPES: {
     campaignUtm: "utm_campaign",
