@@ -6,7 +6,7 @@
  */
 
 
-import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, ALL_POSTING_AS_TYPES } from "../constants"
+import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, ALL_POSTING_AS_TYPES } from "../constants"
 const providerApiWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
@@ -71,24 +71,6 @@ module.exports = {
   // TODO might add??
   autoCreatedAt: false,
   autoUpdatedAt: false,
-
-  extractUtmString: (post) => {
-    //only get active with values
-    let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].filter((type) => (
-      post[type] && post[type].active && post[type].active !== "false" && post[type].value
-    ))
-    //turn into parameters
-    utmList = utmList.map((type) => {
-      if (type === "customUtm") {
-        return `${post[type].key}=${post[type].value}`
-      } else {
-        return `${UTM_TYPES[type]}=${post[type].value}`
-      }
-    })
-
-    const utmString = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
-    return utmString
-  },
 
   /* NO LONGER USING; just shortening with campaign, to make sure identical links share shortened url
   shortenUrl: (post) => {

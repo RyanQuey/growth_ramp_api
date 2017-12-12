@@ -249,8 +249,10 @@ console.log("now updated", posts.length);
         //not throwing though, just let it all go through
         // NOTE: really should not have to check !post.publishedAt...but thjis just adds some fool proofing
         const failedPosts = postResults.filter((post) => post.error || !post.publishedAt)
-
+console.log("filled posts", failedPosts);
+console.log("post results", postResults);
         if (failedPosts.length === 0) {
+          console.log("should update to published");
           return Campaigns.update({id: campaign.id}, {
             publishedAt: moment.utc().format(),
             status: "PUBLISHED",
@@ -271,6 +273,8 @@ console.log("now updated", posts.length);
       .then((c) => {
         console.log("updated campaign");
         let updatedCampaign = Object.assign({}, c[0])
+console.log(updatedCampaign, c);
+console.log("current campaign", campaign);
         updatedCampaign.posts = postResults //DO NOT POPULATE! Need to have error prop on the posts, as is returned here
 
         //so will return updated campaign object, just as regular Campaigns.update would, but with populated posts
@@ -285,24 +289,28 @@ console.log("now updated", posts.length);
 
 	getAnalytics: (campaign) => {
     let posts
-    return Posts.find({campaignId: campaign.id}).populate("channelId")
-    .then((ps) => {
-      posts = ps
+    return new Promise((resolve, reject) => {
+      return Posts.find({campaignId: campaign.id}).populate("channelId")
+      .then((ps) => {
+        posts = ps
 
-      //get analytics for each link
-      const promises = posts.map((post) => Google.getUrlAnalytics(post.shortUrl, {alwaysResolve: true}))
-      return Promise.all(promises)
-    })
-    .then((results) => {
-      //will be returned in the same order as the posts, so:
-      for (let i = 0; i < posts.length; i++) {
-        posts[i].analytics = results[i].analytics || results[i] //if error, won't be any analytics prop, but will still return data
-      }
-      return posts
-    })
-    .catch((err) => {
-      console.log("Failed to get analytics for ", shortUrl);
-      return err
+        //get analytics for each link
+        const promises = posts.map((post) => Google.getUrlAnalytics(post.shortUrl, {alwaysResolve: true}))
+        return Promise.all(promises)
+      })
+      .then((results) => {
+        //will be returned in the same order as the posts, so:
+        for (let i = 0; i < posts.length; i++) {
+          posts[i].analytics = results[i].analytics || results[i]//if error, won't be any analytics prop, but will still return data
+          posts[i].analytics.longUrl = results[i].longUrl
+        }
+        return resolve(posts)
+      })
+      .catch((err) => {
+        console.log(err);
+        return reject(err)
+      })
+
     })
   },
 
@@ -329,7 +337,7 @@ console.log("now updated", posts.length);
 
       for (let i = 0; i < posts.length; i++) {
         let post = posts[i]
-        let utmString = Posts.extractUtmString(post)
+        let utmString = Helpers.extractUtmString(post, campaign)
 
         if (currentSets[utmString]) {
           !currentSets[utmString].posts.includes(post.id) && currentSets[utmString].posts.push(post.id)
@@ -392,7 +400,8 @@ console.log("now updated", posts.length);
           utmSets: combinedUtmSets,
         })
       })
-      .then((updatedCampaign) => {
+      .then((results) => {
+        const updatedCampaign = results[0]
         return {
           updatedCampaign,
           updatedPosts,
