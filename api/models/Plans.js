@@ -53,13 +53,14 @@ module.exports = {
   createFromCampaign: (campaign, planParams) => {
     return new Promise((resolve, reject) => {
       let newPlan
+      let lastParams
 
       //NOTE: didn't like passing in array of postTemplateParams as an attribute of the planParams for some reason
       //this should be fine though
       Plans.create(planParams)
       .then((result) => {
         newPlan = result
-        console.log(newPlan);
+        console.log("newly created plan", newPlan);
         const newPostTemplates = campaign.posts.map((post) => {
           let params = _.pick(post, [
             "channelId",
@@ -74,8 +75,10 @@ module.exports = {
             "termUtm",
             "customUtm",
           ])
-
+          if (params.channelId === "") {delete params.channelId}
           params.planId = newPlan.id
+          //strictly troubleshooting
+          lastParams = params
 
           return params
         })
@@ -94,6 +97,7 @@ module.exports = {
         return resolve({newPlan, updatedCampaign, updatedPosts})
       })
       .catch((err) => {
+        console.log("failing Params:", lastParams);
         return reject(err)
       })
     })
