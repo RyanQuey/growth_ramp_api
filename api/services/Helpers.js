@@ -1,5 +1,6 @@
 const sanitize_sqlstring = require('sqlstring');
 const daysOfTheWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, ALL_POSTING_AS_TYPES } from "../constants"
 
 export default {
 
@@ -304,7 +305,6 @@ export default {
     let ret = [...arrayOne]
     for (let updatedRecord of arrayTwo) {
       let originalRecord = ret.find((r) => r.id === updatedRecord.id)
-console.log("record found:", originalRecord);
 
       if (originalRecord && originalRecord !== -1) {
         for (let attr of updatedValues) {
@@ -315,7 +315,34 @@ console.log("record found:", originalRecord);
         ret.push(updatedRecord)
       }
     }
-console.log(ret);
+
     return ret
-  }
+  },
+
+  //takes utm sset and converts to final string
+  extractUtmString: (post, campaign) => {
+    //only get active with values
+    let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].filter((type) => (
+      post[type] && post[type].active && post[type].active !== "false" && post[type].value
+    ))
+
+    const campaignName = campaign.name.replace(/\s+/g, "-")
+
+    //turn into parameters
+    utmList = utmList.map((type) => {
+      let campaignNameRegex = /{{campaign.name}}/g
+      let campaignIdRegex = /{{campaign.id}}/g
+      let computedValue = post[type].value.replace(campaignNameRegex, campaignName).replace(campaignIdRegex, campaign.id)
+
+      if (type === "customUtm") {
+        return `${post[type].key}=${computedValue}`
+      } else {
+        return `${UTM_TYPES[type]}=${computedValue}`
+      }
+    })
+
+    const utmString = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
+    return utmString
+  },
+
 }

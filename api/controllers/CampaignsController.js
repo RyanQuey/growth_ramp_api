@@ -51,7 +51,8 @@ module.exports = {
       return res.ok(campaign)
     })
     .catch((err) => {
-      console.log("Failed to get analytics for ", shortUrl);
+      console.log(err);
+      console.log("Failed to get analytics for ", campaign.name);
       return res.negotiate(err)
     })
   },

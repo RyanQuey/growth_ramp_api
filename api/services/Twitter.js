@@ -116,8 +116,8 @@ const Twitter = {
       .then((result) => {
          //Twitter actually sends back a ton of data, might want to save more?
          //full user object, created at, who it responds to, hashtags, etc
-  console.log("result from Twitter");
-  console.log(result.data);
+         console.log("result from Twitter");
+         console.log(result.data);
 
         //this is how Twitter/Twit returns errors
         if (result.data.errors) {
