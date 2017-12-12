@@ -137,6 +137,7 @@ const LinkedIn = {
     //this will be returned to the front end, which will handle depending on the code
     let ret = {code: "", originalError: err}
 
+  //TODO test
     switch (code) {
       case 401:
         // they removed permissions, or access token expired

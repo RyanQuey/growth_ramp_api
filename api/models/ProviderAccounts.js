@@ -117,7 +117,8 @@ module.exports = {
     if (values.accessTokenSecret) {
       values.accessTokenSecret = ProviderAccounts.encryptToken(values.accessTokenSecret)
     }
-
+console.log("before validating");
+console.log(values);
     cb()
   },
 
@@ -262,7 +263,7 @@ module.exports = {
     })
   },
 
-  //sorts accounts, group  according to provider
+  //sorts accounts, grouping according to provider
   sortAccounts: (accounts) => {
     const providerNames = Object.keys(PROVIDERS)
     const sorted = accounts.reduce((acc, account) => {

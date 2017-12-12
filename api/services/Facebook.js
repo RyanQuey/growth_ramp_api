@@ -255,7 +255,8 @@ const Facebook = {
   handleOauthData: (oauthData) => {
     return new Promise((resolve, reject) => {
       const shortLivedAccessToken = oauthData.accessToken
-      //should never happen. But if it does, let the caller handle it.
+      if (shortLivedAccessToken === null) {}
+      //should never happen unles purposely removing access token. But if it does, let the caller handle it.
       if (!shortLivedAccessToken) {return resolve(oauthData)}
 
       FB.api('oauth/access_token', {

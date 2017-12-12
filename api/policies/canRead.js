@@ -51,6 +51,11 @@ module.exports = function canRead (req, res, next) {
       //check the possible variables in the same order that sails will to determine target resource
       //otherwise, an attacker could set params to match their own userid, the final user using the req.body
       //using req.params for now, which searches all three.
+      if (action === "populate") {
+        //might want to set id as parentit for other models when populating as well
+        id = req.param("parentid")
+      }
+
       if (id == req.user.id) {
         pass();
       } else {
