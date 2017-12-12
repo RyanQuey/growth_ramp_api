@@ -82,6 +82,7 @@ module.exports.policies = {
   },
   ProviderAccountsController: {
     refreshChannelType: ['userTokenAuth'],
+    find: ['userTokenAuth', 'canRead'],
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],

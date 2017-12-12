@@ -93,7 +93,6 @@ module.exports = {
         }
       })
       let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
-console.log("UTMS", utms);
 
       let updatedPost
 
@@ -210,19 +209,22 @@ console.log("UTMS", utms);
 
         //update our records real quick if possible
         if (['require-reauthorization', 'insufficient-permissions'].includes(err.code)) {
-console.log("now updating PROVIDER ", post.providerAccountId);
+console.log("now updating PROVIDER ", post.providerAccountId.id);
+          let accountId = post.providerAccountId.id || post.providerAccountId
           if (post.channelType === "PERSONAL_POST") {
-            ProviderAccounts.update({id: post.providerAccountId}, {
+            ProviderAccounts.update({id: accountId}, {
               accessToken: null,
               accessTokenSecret: null,
               accessTokenExpires: null,
               refreshToken: null,
               refreshTokenExpires: null,
             })
+            .then((a) => {console.log(a);})
+
           } else {
             //at least invalidate the scope
             //blank out channel accessToken, in case it has one too
-            ProviderAccounts.update({id: post.providerAccountId}, {
+            ProviderAccounts.update({id: accountId}, {
               accessToken: null,
               accessTokenSecret: null,
               accessTokenExpires: null,
@@ -230,11 +232,13 @@ console.log("now updating PROVIDER ", post.providerAccountId);
               refreshTokenExpires: null,
               scopes: {}, //TODO probably actually want to set each current one to "declined" rather than "granted"...but that's for later. Also, only block out the ones that are breaking here. will have to retrieve the record and everything
             })
+            .then((a) => {console.log(a);})
 
             post.channelId && Channels.update({id: post.channelId}, {
               accessToken: null,
               accessTokenExpires: null,
             })
+            .then((a) => {console.log(a);})
           }
             //personal credentials are messed up
           //access token, refresh token, secret, expires, scopes are all off. Need it again
