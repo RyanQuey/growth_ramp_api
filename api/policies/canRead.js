@@ -1,5 +1,6 @@
 module.exports = function canRead (req, res, next) {
   const modelIdentity = req.options.controller
+  const modelAttributes = Object.keys(sails.models[modelIdentity].attributes)
   const action = req.options.action
   let fail = (message) => {
     // still going onto next, but with no user set
