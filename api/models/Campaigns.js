@@ -43,8 +43,12 @@ module.exports = {
   autoUpdatedAt: true,
 
   afterUpdate: (updatedRecord, cb) => {
-    Posts.update({campaignId: updatedRecord.id}, {contentUrl: updatedRecord.contentUrl})
+console.log("now and call back", updatedRecord);
+    Posts.update({campaignId: updatedRecord.id}, {
+      contentUrl: updatedRecord.contentUrl
+    })
     .then((posts) => {
+console.log("now updated", posts.length);
       cb()
     })
     .catch((err) => {
@@ -58,7 +62,7 @@ module.exports = {
     return new Promise((resolve, reject) => {
 
       let plan, currentCampaignRecord
-      //Front end should already block, but this makes sure
+      //Front end should already block if has posts, but this makes sure
       Campaigns.findOne(params.id).populate('posts')
       .then((c) => {
         currentCampaignRecord = c
@@ -87,6 +91,9 @@ module.exports = {
         if (plan.userId !== currentCampaignRecord.userId) {
           throw "Forbidden: this is not your plan"
         }
+
+        //make sure params have first priority, since they will be used to update campaign in a second
+        let currentContentUrl = params.contentUrl || currentCampaignRecord.contentUrl
         const newPosts = plan.postTemplates.map((template) => {
           let post = _.pick(template, [
             "channelType",
@@ -105,6 +112,8 @@ module.exports = {
 
           post.postTemplateId = template.id
           post.campaignId = currentCampaignRecord.id
+
+          if (currentContentUrl) {post.contentUrl = currentContentUrl}
 
           return post
         })
@@ -171,7 +180,7 @@ module.exports = {
       })
       .then((results) => {
         //getUserToken also try to refresh, so at this point they just need to reauthenticate
-        const accountsMissingTokens = results.filter((r) => r.code === "no-token-retrieved")
+        const accountsMissingTokens = results.filter((r) => r.code === "no-token-retrieved") || []
 
         //objects with accessToken and accessTokenSecret (if applicable)
         //organized by accountId
@@ -193,7 +202,6 @@ module.exports = {
         if (campaign.contentUrl && posts.some((post) => !post.contentUrl || post.contentUrl !== campaign.contentUrl)) {
           return Posts.update({
             campaignId: campaign.id,
-            contentUrl: "",
           }, {
             contentUrl: campaign.contentUrl
           })
@@ -206,7 +214,8 @@ module.exports = {
         //in case an update happened
         if (results) {
           //each will be returned as an array with one entry, the one post that got updated
-          posts = results.map((result) => result[0])
+          let updatedPosts = results.map((result) => result[0]).filter((p) => !p)
+          posts = Helpers.combineArraysOfRecords(posts, updatedPosts, ["contentUrl"])
         }
 
         return Campaigns._handleCampaignShortUrls(campaign, posts)
@@ -233,6 +242,7 @@ module.exports = {
         return Promise.all(promises)
       })
       .then((r) => {
+        console.log("made it back after publishing");
         postResults = r
         //results will be a mixture of successes and failures
         //failures should have a message and code property, and status 500 on the object
@@ -241,7 +251,7 @@ module.exports = {
         const failedPosts = postResults.filter((post) => post.error || !post.publishedAt)
 
         if (failedPosts.length === 0) {
-          return Campaigns.update(campaign.id, {
+          return Campaigns.update({id: campaign.id}, {
             publishedAt: moment.utc().format(),
             status: "PUBLISHED",
           })
@@ -251,7 +261,7 @@ module.exports = {
           return [campaign] //faking what campaigns.update returns
 
         } else if (failedPosts.length !== postResults.length) {
-          return Campaigns.update(campaign.id, {
+          return Campaigns.update({id: campaign.id}, {
             //can use updatedAt to see when it was
             status: "PARTIALLY_PUBLISHED",
           })
@@ -259,6 +269,7 @@ module.exports = {
         }
       })
       .then((c) => {
+        console.log("updated campaign");
         let updatedCampaign = Object.assign({}, c[0])
         updatedCampaign.posts = postResults //DO NOT POPULATE! Need to have error prop on the posts, as is returned here
 
@@ -295,7 +306,10 @@ module.exports = {
     })
   },
 
-  //for use when publishing
+  //for use when publishing:
+  //gets all the new short urls we need, but uses the ones we already have too, if relevant
+  //updates posts with short urls
+  //updates campaign to keep track of what happened so far
   _handleCampaignShortUrls: (campaign, posts) => {
     if (campaign.contentUrl) {
       let updatedPosts, updatedCampaign
@@ -318,7 +332,7 @@ module.exports = {
         let utmString = Posts.extractUtmString(post)
 
         if (currentSets[utmString]) {
-          currentSets[utmString].posts.push(post.id)
+          !currentSets[utmString].posts.includes(post.id) && currentSets[utmString].posts.push(post.id)
 
         } else if (newSets[utmString]) {
           newSets[utmString].posts.push(post.id)
@@ -338,7 +352,6 @@ module.exports = {
         .then((shortUrl) => {
           newSets[str].shortUrl = shortUrl
           let postsToUpdate = newSets[str].posts || []
-console.log("post to update ", postsToUpdate);
           return Posts.update({id: postsToUpdate}, {shortUrl: shortUrl})
         })
       }
@@ -354,7 +367,6 @@ console.log("post to update ", postsToUpdate);
       //for all already existing shortLinks, KEEP short link and update post
       for (let str of currentUtmStrings) {
         let postsToUpdate = currentSets[str].posts || []
-console.log("post to update", postsToUpdate);
         promises.push(
           Posts.update({id: postsToUpdate}, {
             shortUrl: currentSets[str].shortUrl
@@ -369,8 +381,6 @@ console.log("post to update", postsToUpdate);
         //flatten the remaining promises results before setting
         updatedPosts = [].concat.apply([], results)
         //merge records, so channel and provideraccount id are still populated
-console.log("updated post sample");
-console.log(updatedPosts[0]);
 
         updatedPosts = Helpers.combineArraysOfRecords(posts, updatedPosts, ["shortUrl"])
 
@@ -378,7 +388,6 @@ console.log(updatedPosts[0]);
         //set to campaign, for future reference and if need to publish its other posts later
         const combinedUtmSets = Object.assign({}, currentSets, newSets)
 
-  console.log("updating campaign", combinedUtmSets);
         return Campaigns.update({id: campaign.id}, {
           utmSets: combinedUtmSets,
         })

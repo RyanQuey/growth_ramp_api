@@ -237,6 +237,10 @@ console.log("now updating PROVIDER ", post.providerAccountId.id);
         }
 
         //returning post object with as much updating as happened, and
+
+        console.log("__________________________________________________");
+        console.log("returning anyway, to allow other posts to continue");
+        console.log("__________________________________________________");
         return resolve(ret)
       })
     })

@@ -64,9 +64,9 @@ const LinkedIn = {
         return resolve({postUrl: updateUrl, postKey: updateKey})
       })
       .catch((err) => {
-        console.log("Failure from publishing to LinkedIn:");
+        console.log("Failure publishing to LinkedIn:");
         console.log(err.response.data || err);
-        return reject(LinkedIn.handleError(err))
+        return reject(LinkedIn.handleError(err, null, body))
       })
     })
   },
@@ -130,7 +130,7 @@ const LinkedIn = {
   },
 
   //https://developer.linkedin.com/docs/guide/v2/error-handling
-  handleError: (err, code = false) => {
+  handleError: (err, code = false, body) => {
 
     code = code || Helpers.safeDataPath(err, `response.data.status`, false)
 
@@ -139,6 +139,10 @@ const LinkedIn = {
 
   //TODO test
     switch (code) {
+      case 400: //bad request; probably malformed syntax in url or body
+        console.log("Failing params for linked in", body );
+        ret.code = 'bad-request'
+        break
       case 401:
         // they removed permissions, or access token expired
         // this shouldn't publish

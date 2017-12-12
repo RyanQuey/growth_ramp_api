@@ -168,6 +168,11 @@ const Twitter = {
         // this shouldn't publish
         ret.code = 'rate-limit-reached'
         break
+      case 187: //duplicate
+        // rate limit reached
+        // this shouldn't publish
+        ret.code = 'duplicate-post'
+        break
       default:
         ret.code = 'unknown-error-while-publishing'
         break
