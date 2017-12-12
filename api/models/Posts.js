@@ -72,6 +72,25 @@ module.exports = {
   autoCreatedAt: false,
   autoUpdatedAt: false,
 
+  extractUtmString: (post) => {
+    //only get active with values
+    let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].filter((type) => (
+      post[type] && post[type].active && post[type].active !== "false" && post[type].value
+    ))
+    //turn into parameters
+    utmList = utmList.map((type) => {
+      if (type === "customUtm") {
+        return `${post[type].key}=${post[type].value}`
+      } else {
+        return `${UTM_TYPES[type]}=${post[type].value}`
+      }
+    })
+
+    const utmString = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
+    return utmString
+  },
+
+  /* NO LONGER USING; just shortening with campaign, to make sure identical links share shortened url
   shortenUrl: (post) => {
     return new Promise((resolve, reject) => {
       if (!post.contentUrl) {
@@ -79,24 +98,11 @@ module.exports = {
         return resolve(post)
       }
 
-      //only get active with values
-      let utmList = ['campaignUtm', 'contentUtm', 'mediumUtm', 'sourceUtm', 'termUtm', 'customUtm'].filter((type) => (
-        post[type] && post[type].active && post[type].active !== "false" && post[type].value
-      ))
-
-      //turn into parameters
-      utmList = utmList.map((type) => {
-        if (type === "customUtm") {
-          return `${post[type].key}=${post[type].value}`
-        } else {
-          return `${UTM_TYPES[type]}=${post[type].value}`
-        }
-      })
-      let utms = utmList.join("&") //might use querystring to make sure there are no extra characters slipping in
+      const utmString = Posts.extractUtmString(post)
 
       let updatedPost
 
-      Google.shortenUrl(`${post.contentUrl}?${utms}`)
+      Google.shortenUrl(`${post.contentUrl}?${utmString}`)
       .then((shortUrl) => {
         return Posts.update(post.id, {shortUrl: shortUrl})
       })
@@ -110,6 +116,7 @@ module.exports = {
     })
 
   },
+  */
 
   //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
   //do not call without doing all fo the checks done in Campaigns.publishCampaign
@@ -119,7 +126,7 @@ module.exports = {
       let account = post.providerAccountId
       let channel = post.channelId
       //set a separate variable each step along the way, so I know how far we got.
-      let postWithUrl, publishedButNotUpdatedPost, publishedPost
+      let publishedButNotUpdatedPost, publishedPost
 
       if (!accessTokenData) {
         //should already have been retrieved. If this is the case, it's too late.
@@ -129,15 +136,11 @@ module.exports = {
         }
       }
 
-      Posts.shortenUrl(post)
-      .then((u) => {
-        postWithUrl = u
-        //api will be the api for the social network
-        let api = providerApiWrappers[account.provider]
+      //api will be the api for the social network
+      let api = providerApiWrappers[account.provider]
 
-        //publishes post on social network
-        return api.createPost(account, postWithUrl, channel, accessTokenData)
-      })
+      //publishes post on social network
+      return api.createPost(account, post, channel, accessTokenData)
       .then((result) => {
         publishedButNotUpdatedPost = {
           publishedAt: moment.utc().format(),
@@ -146,7 +149,7 @@ module.exports = {
         }
 
         //some providers only have url or key, not both
-        return Posts.update({id: postWithUrl.id}, publishedButNotUpdatedPost)
+        return Posts.update({id: post.id}, publishedButNotUpdatedPost)
       })
       .then((p) => {
         //only updating and returning one post
@@ -175,28 +178,16 @@ module.exports = {
             }
           })
 
-        } else if (postWithUrl) {
+        } else if (post) {
           console.log("*****************");
           console.log("FAILED_TO_PUBLISH_TO_PROVIDER:");
           console.log(err);
           console.log("*****************");
-          ret = Object.assign({}, postWithUrl, {
+          ret = Object.assign({}, post, {
             //ideally, set the specific code for why failed in the provider api wrapper
             error: {
               code: err.code || "failed-to-publish-unknown",
               originalError: err.originalError || err,
-            }
-          })
-
-        } else if (post) {
-          console.log("*****************");
-          console.log("FAILED_TO_PUBLISH_OR_UPDATE_SHORT_LINK:");
-          console.log(err);
-          console.log("*****************");
-          ret = Object.assign({}, post, {
-            error: {
-              code: err.code || "failed-to-shorten-link",
-              originalError: err.originalError || err
             }
           })
 
