@@ -295,4 +295,27 @@ export default {
     return ret
   },
 
+  combineArraysOfRecords: (arrayOne, arrayTwo, updatedValues) => {
+    //basically, starts with arrayOne.
+    //iterate over arrayTwo, if a record in arrayTwo matches the id of one in arrayOne, merge updatedValues of record from Two into One
+    //helpful if arrayOne is populated and arrayTwo is not, but has updated attributes
+    //only updating updatedValues makes sure you don't overwrite the populated columns!!
+
+    let ret = [...arrayOne]
+    for (let updatedRecord of arrayTwo) {
+      let originalRecord = ret.find((r) => r.id === updatedRecord.id)
+console.log("record found:", originalRecord);
+
+      if (originalRecord && originalRecord !== -1) {
+        for (let attr of updatedValues) {
+          //keeping the reference to same obj, so old record really is updated
+          originalRecord[attr] = updatedRecord[attr]
+        }
+      } else {
+        ret.push(updatedRecord)
+      }
+    }
+console.log(ret);
+    return ret
+  }
 }

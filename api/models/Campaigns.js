@@ -19,6 +19,10 @@ module.exports = {
     contentUrl: { type: 'string'},// (of what is being shared...LI has it as field) TODO regex to make sure real url
     //promotedContent: { type: 'json', defaultsTo: {url: ''} }, already did migration for this, but might not need it
 
+    //object with all utms for this campaign, paired with corresponding shortLink. at least of published posts (will generate for unpublished posts when they get published)
+    //this way, shortLinks are reusable
+    utmSets: { type: 'json', defaultsTo: {} },
+
     //Associations
     userId: { model: 'users', required: true },
     posts: {
@@ -141,7 +145,12 @@ module.exports = {
       .then((p) => {
         //check access tokens
         //hopefully the API has given this all along, but not there yet, and good to check anyways
-        posts = p
+
+        //Only send posts that aren't delayed or the delay has passed
+        posts = p.filter(post => (
+          !post.delayedUntil ||
+          moment.utc().isAfter(moment.utc(post.delayedUntil))
+        ))
 
         let allAccounts = posts.reduce((acc, post) => {
           //remove duplicate accounts
@@ -161,7 +170,6 @@ module.exports = {
         return Promise.all(getTokenPromises)
       })
       .then((results) => {
-//console.log(results);
         //getUserToken also try to refresh, so at this point they just need to reauthenticate
         const accountsMissingTokens = results.filter((r) => r.code === "no-token-retrieved")
 
@@ -169,13 +177,12 @@ module.exports = {
         //organized by accountId
         allAccessTokenData = results.reduce((acc, r) => {
           if (!r.code || r.code !== "no-token-retrieved") {
-
             acc[r.accountId] = r
           }
           return acc
         }, {})
-console.log("all tokens", allAccessTokenData);
-        //these accounts don't have tokens, and couldn't even refresh. Should just
+
+        //these accounts don't have tokens, and couldn't even refresh. Should never have allowed them to press the publish button
         if (accountsMissingTokens.length ) {
           //also an array, so still works
           throw new Error(`Could not get tokens for: ${accountsMissingTokens.join(", ")}`)
@@ -202,13 +209,22 @@ console.log("all tokens", allAccessTokenData);
           posts = results.map((result) => result[0])
         }
 
+        return Campaigns._handleCampaignShortUrls(campaign, posts)
+      })
+      .then((updatedRecords) => {
+        //if !updatedRecords, didn't need to update
+        if (updatedRecords) {
+          //update the current vars
+          //nothing populated; just update
+          campaign = updatedRecords.updatedCampaign
+        }
+
+        //now publish all in a new promise all
         const promises = []
         //not using FB's batch post sending for now
 
         for (let i = 0; i < posts.length; i++) {
           let post = posts[i]
-console.log("POSTS", posts);
-console.log("post", post);
           //whether or not provider account is populated
           let accessTokenData = allAccessTokenData[post.providerAccountId.id || post.providerAccountId]
           promises.push(Posts.publishPost(post, accessTokenData))
@@ -255,6 +271,7 @@ console.log("post", post);
       })
     })
   },
+
 	getAnalytics: (campaign) => {
     let posts
     return Posts.find({campaignId: campaign.id}).populate("channelId")
@@ -277,5 +294,107 @@ console.log("post", post);
       return err
     })
   },
+
+  //for use when publishing
+  _handleCampaignShortUrls: (campaign, posts) => {
+    if (campaign.contentUrl) {
+      let updatedPosts, updatedCampaign
+
+      //get all the unique short urls we'll need for published posts
+      let newSets = {}
+      let currentSets = campaign.utmSets || {}
+      //make a new object with same strings, but also list of posts to update
+      let currentUtmStrings = Object.keys(currentSets)
+      let postsForCurrentSets = {}
+
+      for (let str of currentUtmStrings) {
+        postsForCurrentSets[str] = {posts: []}
+      }
+
+      const promises = []
+
+      for (let i = 0; i < posts.length; i++) {
+        let post = posts[i]
+        let utmString = Posts.extractUtmString(post)
+
+        if (currentSets[utmString]) {
+          currentSets[utmString].posts.push(post.id)
+
+        } else if (newSets[utmString]) {
+          newSets[utmString].posts.push(post.id)
+
+        } else {
+          newSets[utmString] = {
+            posts: [post.id],
+          }
+        }
+      }
+
+      //shorten all links and update all corresponding posts
+      let newUtmStrings = Object.keys(newSets)
+
+      const shortenAndUpdate = (str) => {
+        return Google.shortenUrl(`${campaign.contentUrl}?${str}`)
+        .then((shortUrl) => {
+          newSets[str].shortUrl = shortUrl
+          let postsToUpdate = newSets[str].posts || []
+console.log("post to update ", postsToUpdate);
+          return Posts.update({id: postsToUpdate}, {shortUrl: shortUrl})
+        })
+      }
+
+      //////////////////
+      //RUNNING IT!!!!//
+      //////////////////
+      //for all new shortLinks, get new short link and update post
+      for (let str of newUtmStrings) {
+        promises.push(shortenAndUpdate(str))
+      }
+
+      //for all already existing shortLinks, KEEP short link and update post
+      for (let str of currentUtmStrings) {
+        let postsToUpdate = currentSets[str].posts || []
+console.log("post to update", postsToUpdate);
+        promises.push(
+          Posts.update({id: postsToUpdate}, {
+            shortUrl: currentSets[str].shortUrl
+          })
+        )
+      }
+
+      //returning a bunch of promises, first one is set of arrays with posts inside, last one
+      return Promise.all(promises)
+      .then((results) => {
+
+        //flatten the remaining promises results before setting
+        updatedPosts = [].concat.apply([], results)
+        //merge records, so channel and provideraccount id are still populated
+console.log("updated post sample");
+console.log(updatedPosts[0]);
+
+        updatedPosts = Helpers.combineArraysOfRecords(posts, updatedPosts, ["shortUrl"])
+
+        //only update campaign after all these finish, lest there are errors updating the posts and some posts never get a shortUrl, because forever stuck in "currentSets"
+        //set to campaign, for future reference and if need to publish its other posts later
+        const combinedUtmSets = Object.assign({}, currentSets, newSets)
+
+  console.log("updating campaign", combinedUtmSets);
+        return Campaigns.update({id: campaign.id}, {
+          utmSets: combinedUtmSets,
+        })
+      })
+      .then((updatedCampaign) => {
+        return {
+          updatedCampaign,
+          updatedPosts,
+        }
+      })
+
+    } else {
+      //return message, to cue that didn't need to update stuff
+      return Promise.resolve("no-updates")
+    }
+
+  }
 };
 

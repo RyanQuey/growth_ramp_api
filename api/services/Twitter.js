@@ -42,8 +42,8 @@ const Twitter = {
         console.log("SUCCESSFUL post to Twitter");
         console.log(data);
 
-        //id should work, just an integer version. ORM should convert
-        return {postKey: data.id_str || data.id}
+        //already getting post key when creating hte post
+        return resolve(data)
       })
       .catch((err) => {
         console.log(err);
@@ -127,7 +127,8 @@ const Twitter = {
           return reject(Twitter.handleError(result.data.errors[0]))
 
         } else {
-          let postKey = Helpers.safeDataPath(result, "data.id_str", "")  //could grab integer here; id is only numbers, but am saving as string, so whatver
+          //could grab integer here; id is only numbers, but am saving as string, so whatver
+          let postKey = Helpers.safeDataPath(result, "data.id_str", "")
           return resolve({postKey})
 
         }
