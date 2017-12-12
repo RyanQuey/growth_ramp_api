@@ -101,6 +101,7 @@ module.exports.policies = {
     findOne: ['userTokenAuth', 'canRead'],
     loginWithProvider: ['userTokenAuth', 'checkProviderData'],
     initialUserData: ['userTokenAuth', 'canRead'],
+    populate: ['userTokenAuth', 'canRead'],
     getCampaigns: ['userTokenAuth', 'canRead'],
     resetPassword: true,
     signOut: ['userTokenAuth'],

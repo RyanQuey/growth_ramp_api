@@ -123,7 +123,11 @@ console.log("UTMS", utms);
       let postWithUrl, publishedButNotUpdatedPost, publishedPost
 
       if (!accessTokenData) {
-        //TODO will have to retrieve. Should never happen for as longas posts are being published through campaigns. When published independently...deal with that later
+        //should already have been retrieved. If this is the case, it's too late.
+        // see the catch at the bottom for what I'm doing here
+        throw {
+          code: 'require-reauthorization'
+        }
       }
 
       Posts.shortenUrl(post)
@@ -199,9 +203,42 @@ console.log("UTMS", utms);
 
         } else {
 
-          //failed to even pass in a post...just reject all at this point
+          //failed to even pass in a post...
           //Hopefully all will fail
           return resolve({error: {code: "no-post", originalError: err}})
+        }
+
+        //update our records real quick if possible
+        if (['require-reauthorization', 'insufficient-permissions'].includes(err.code)) {
+console.log("now updating PROVIDER ", post.providerAccountId);
+          if (post.channelType === "PERSONAL_POST") {
+            ProviderAccounts.update({id: post.providerAccountId}, {
+              accessToken: null,
+              accessTokenSecret: null,
+              accessTokenExpires: null,
+              refreshToken: null,
+              refreshTokenExpires: null,
+            })
+          } else {
+            //at least invalidate the scope
+            //blank out channel accessToken, in case it has one too
+            ProviderAccounts.update({id: post.providerAccountId}, {
+              accessToken: null,
+              accessTokenSecret: null,
+              accessTokenExpires: null,
+              refreshToken: null,
+              refreshTokenExpires: null,
+              scopes: {}, //TODO probably actually want to set each current one to "declined" rather than "granted"...but that's for later. Also, only block out the ones that are breaking here. will have to retrieve the record and everything
+            })
+
+            post.channelId && Channels.update({id: post.channelId}, {
+              accessToken: null,
+              accessTokenExpires: null,
+            })
+          }
+            //personal credentials are messed up
+          //access token, refresh token, secret, expires, scopes are all off. Need it again
+
         }
 
         //returning post object with as much updating as happened, and

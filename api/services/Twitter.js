@@ -142,6 +142,8 @@ const Twitter = {
       return reject("no channels available to get for twitter")
     })
   },
+
+  //TODO test
   handleError: (err, code = false) => {
     code = code || err.code
 
