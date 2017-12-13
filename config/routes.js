@@ -44,6 +44,12 @@ module.exports.routes = {
   //plans
   //
 
+  //gets all relevant data for one plan
+  'get /plans/fetchPopulatedPlan/:id': {
+    controller: 'PlansController',
+    action: 'fetchPopulatedPlan'
+  },
+
   'post /plans/createFromCampaign': {
     controller: 'PlansController',
     action: 'createFromCampaign'
