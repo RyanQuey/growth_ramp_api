@@ -301,17 +301,23 @@ export default {
     //iterate over arrayTwo, if a record in arrayTwo matches the id of one in arrayOne, merge updatedValues of record from Two into One
     //helpful if arrayOne is populated and arrayTwo is not, but has updated attributes
     //only updating updatedValues makes sure you don't overwrite the populated columns!!
-
     let ret = [...arrayOne]
     for (let updatedRecord of arrayTwo) {
-      let originalRecord = ret.find((r) => r.id === updatedRecord.id)
-
+      //be sure not to use vanilla js find...might call something in sails
+      let originalRecord = _.find(ret, (r) => r.id == updatedRecord.id)
+console.log(originalRecord);
+      //if a match is found
       if (originalRecord && originalRecord !== -1) {
+console.log("original record", originalRecord);
+console.log("updated record", updatedRecord);
         for (let attr of updatedValues) {
           //keeping the reference to same obj, so old record really is updated
           originalRecord[attr] = updatedRecord[attr]
         }
+console.log("updated original record", originalRecord);
       } else {
+        //if arrayTwo has unique item, add the whole record
+        console.log("NOW_PUSHING");
         ret.push(updatedRecord)
       }
     }

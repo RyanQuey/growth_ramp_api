@@ -150,6 +150,8 @@ console.log("now updated", posts.length);
       let posts, postResults, allAccessTokenData
       //if null publishedAt, is not published yet
 
+      //need channel record to get access token at the end
+      //need account record to get other access token, if making
       Posts.find({campaignId: campaign.id, publishedAt: null}).populate('providerAccountId').populate('channelId')
       .then((p) => {
         //check access tokens
@@ -211,13 +213,14 @@ console.log("now updated", posts.length);
         }
       })
       .then((results) => {
-        //in case an update happened
+        //if update happened
         if (results) {
           //each will be returned as an array with one entry, the one post that got updated
           let updatedPosts = results.map((result) => result[0]).filter((p) => !p)
           posts = Helpers.combineArraysOfRecords(posts, updatedPosts, ["contentUrl"])
         }
 
+        //get / set short urls
         return Campaigns._handleCampaignShortUrls(campaign, posts)
       })
       .then((updatedRecords) => {
@@ -226,6 +229,15 @@ console.log("now updated", posts.length);
           //update the current vars
           //nothing populated; just update
           campaign = updatedRecords.updatedCampaign
+        }
+
+        //final check: Make sure every post has short url if it has content url. Is our fault, API error, probably because link was made, but we didn't set it right.
+        if (campaign.contentUrl && posts.some((p) => !p.shortUrl)) {
+          throw {
+            message: "GR failed to set ShortUrl for some reason",
+            code: "api-short-url-failure",
+            status: 500,
+          }
         }
 
         //now publish all in a new promise all
@@ -249,8 +261,7 @@ console.log("now updated", posts.length);
         //not throwing though, just let it all go through
         // NOTE: really should not have to check !post.publishedAt...but thjis just adds some fool proofing
         const failedPosts = postResults.filter((post) => post.error || !post.publishedAt)
-console.log("filled posts", failedPosts);
-console.log("post results", postResults);
+
         if (failedPosts.length === 0) {
           console.log("should update to published");
           return Campaigns.update({id: campaign.id}, {
@@ -273,8 +284,6 @@ console.log("post results", postResults);
       .then((c) => {
         console.log("updated campaign");
         let updatedCampaign = Object.assign({}, c[0])
-console.log(updatedCampaign, c);
-console.log("current campaign", campaign);
         updatedCampaign.posts = postResults //DO NOT POPULATE! Need to have error prop on the posts, as is returned here
 
         //so will return updated campaign object, just as regular Campaigns.update would, but with populated posts
@@ -385,11 +394,11 @@ console.log("current campaign", campaign);
       //returning a bunch of promises, first one is set of arrays with posts inside, last one
       return Promise.all(promises)
       .then((results) => {
-
         //flatten the remaining promises results before setting
         updatedPosts = [].concat.apply([], results)
         //merge records, so channel and provideraccount id are still populated
 
+console.log("posts", posts);
         updatedPosts = Helpers.combineArraysOfRecords(posts, updatedPosts, ["shortUrl"])
 
         //only update campaign after all these finish, lest there are errors updating the posts and some posts never get a shortUrl, because forever stuck in "currentSets"

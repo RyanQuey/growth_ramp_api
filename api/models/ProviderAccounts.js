@@ -203,8 +203,13 @@ console.log(values);
           return Promise.all(promises)
 
         } else if (!account && !user) {
-          //creating an account with social login
-          return ProviderAccounts.createUserWithProvider(providerAccountData)
+          // creating an account with social login
+          // **********************************************
+          // not allowing for now
+          // TODO reenable this, if can figure out way to make sure they don't create multiple accounts accidentally, and then not be able to use our app.
+          // maybe prompt them or something
+          // This works though once uncommented
+          throw {message: "Not allowing signup with provider", code: 'no-sign-up-with-oauth'}//ProviderAccounts.createUserWithProvider(providerAccountData)
 
         } else if (account && user) {
           //is updating the provider information (particularly the tokens)
@@ -237,7 +242,6 @@ console.log(values);
         return resolve(ret)
       })
       .catch((err) => {
-        console.log("error when logging in with provider:")
         return reject(err)
       })
     })
