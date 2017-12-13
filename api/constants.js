@@ -6,7 +6,7 @@ const callbackUrl = domain + callbackPath
 module.exports = {
   POST_TEMPLATE_STATUSES: [
     "ACTIVE",
-    "DISABLED",
+    "ARCHIVED"
   ],
   PLAN_STATUSES: [
     //"DRAFT", //not sure when it would be a draft...or what difference it would make?

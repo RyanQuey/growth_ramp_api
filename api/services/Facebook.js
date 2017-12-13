@@ -20,7 +20,7 @@ const Facebook = {
   createPost: (account, post, channel, accessTokenData, options = {}) => {
     return new Promise((resolve, reject) => {
       let accessTokenToUse
-console.log("post", post);
+
       if (post.postingAs === "PAGE") {
         accessTokenToUse = channel.accessToken
 
