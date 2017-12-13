@@ -73,7 +73,11 @@ module.exports = {
       return res.ok(userAndAccount)
     })
     .catch((err) => {
+      console.log("error when logging in with provider:")
       console.log(err);
+      if (err.code === "no-sign-up-with-oauth") {
+        return res.send(403, err)
+      }
       return res.negotiate(err)
     })
   }),

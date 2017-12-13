@@ -163,6 +163,12 @@ module.exports = {
     termUtm: "utm_term",
     customUtm: "utm_custom",
   },
+
+  ALLOWED_EMAILS: [
+    "***REMOVED***",
+    "***REMOVED***",
+    "***REMOVED***",
+  ],
 }
       //keep this in sync with the frontend constants
 
