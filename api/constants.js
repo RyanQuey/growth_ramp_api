@@ -168,6 +168,7 @@ module.exports = {
     "rlquey2@gmail.com",
     "rlquey2+test@gmail.com",
     "jdquey@gmail.com",
+    "rlquey2+new-test@gmail.com",
   ],
 }
       //keep this in sync with the frontend constants
