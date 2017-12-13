@@ -77,6 +77,8 @@ module.exports = {
       console.log(err);
       if (err.code === "no-sign-up-with-oauth") {
         return res.send(403, err)
+      } if (err.code === "unregistered-email") {
+        return res.send(403, err)
       }
       return res.negotiate(err)
     })
