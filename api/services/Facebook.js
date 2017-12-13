@@ -20,6 +20,7 @@ const Facebook = {
   createPost: (account, post, channel, accessTokenData, options = {}) => {
     return new Promise((resolve, reject) => {
       let accessTokenToUse
+console.log("post", post);
       if (post.postingAs === "PAGE") {
         accessTokenToUse = channel.accessToken
 
@@ -29,7 +30,7 @@ const Facebook = {
       const fb = _setup(account, accessTokenToUse)
 //      const body =
       const body = {
-        message: `${post.text} ${post.shortUrl}`,
+        message: `${post.text ? post.text + " " : ""}${post.shortUrl || ""}`,
         link: post.shortUrl,
       }
 
@@ -115,13 +116,11 @@ const Facebook = {
     })
   },
 
-//TODO set to page...
   PAGE_POST: (post, body, channel, fb, uploadsData) => {
     return new Promise((resolve, reject) => {
       let params = {
         message: body.message,
         link: body.link,
-        //channel.access_token, unneeded for just making posts
       }
       if (uploadsData) {
         for (let i = 0; i < uploadsData.length; i++) {
