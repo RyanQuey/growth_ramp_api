@@ -7,6 +7,8 @@
 
 var bcrypt = require('bcrypt');
 import crypto from 'crypto'
+import {ALLOWED_EMAILS} from '../constants'
+
 module.exports = {
 
   attributes: {
@@ -100,12 +102,22 @@ module.exports = {
       }
     }*/
 
+
     values = Users.transform(values);
     cb();
   },
 
   //create token for them
   beforeCreate: (user, cb) => {
+    if (!user.email || !ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
+      //currently how we are handling payments
+      return cb({
+        code: "unregistered-email",
+        message: "Please contact Growth Ramp at jdquey@gmail.com for help signing up.", //not displaying this; just pick something in frontend
+        status: 403
+      })
+    }
+
     let tokenInfo = Users.createApiToken();
     user.apiToken = tokenInfo.token;
     user.apiTokenExpires = tokenInfo.expires;
