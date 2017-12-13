@@ -254,7 +254,6 @@ console.log("now updated", posts.length);
         return Promise.all(promises)
       })
       .then((r) => {
-        console.log("made it back after publishing");
         postResults = r
         //results will be a mixture of successes and failures
         //failures should have a message and code property, and status 500 on the object
@@ -263,7 +262,6 @@ console.log("now updated", posts.length);
         const failedPosts = postResults.filter((post) => post.error || !post.publishedAt)
 
         if (failedPosts.length === 0) {
-          console.log("should update to published");
           return Campaigns.update({id: campaign.id}, {
             publishedAt: moment.utc().format(),
             status: "PUBLISHED",
@@ -398,7 +396,6 @@ console.log("now updated", posts.length);
         updatedPosts = [].concat.apply([], results)
         //merge records, so channel and provideraccount id are still populated
 
-console.log("posts", posts);
         updatedPosts = Helpers.combineArraysOfRecords(posts, updatedPosts, ["shortUrl"])
 
         //only update campaign after all these finish, lest there are errors updating the posts and some posts never get a shortUrl, because forever stuck in "currentSets"

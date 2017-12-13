@@ -57,6 +57,7 @@ module.exports.policies = {
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
     find: ['userTokenAuth', 'canRead'],
     findOne: ['userTokenAuth', 'canRead'],
+    fetchPopulatedPlan: ['userTokenAuth', 'canRead'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['userTokenAuth', 'canChangePermissions'],
   },
