@@ -8,6 +8,7 @@
 const LIApi = "https://api.linkedin.com"
 //NOTE don't get accessToken from account record; that is encrypted still
 const _setup = (account, accessToken) => {
+console.log("access token", accessToken);
   const axiosLI = axios.create({
       headers: {
         'x-li-format': 'json',
@@ -84,46 +85,82 @@ const LinkedIn = {
   },
 
   //channelType should be PAGE_POST or GROUP_POST
-  getChannels: (account, channelType, pagination) => {
+  getChannels: (account, channelType, pagination, accessTokenData) => {
     return new Promise((resolve, reject) => {
-      const axiosLI = _setup(account)
+      const axiosLI = _setup(account, accessTokenData.accessToken)
 
       let path
-      //gets converted to query string in axios
-      let params = {
-        start: pagination.start || 0,
-        count: pagination.count || 25, //maximum to return
-        //format: "json"
-      }
 
-      //currently is the only channelType...
-      if (channelType === "PAGE_POST") {
-        path = "companies" //Facebook pages this person is admin for
-        //leave this off to get all pages they are a part of?
-        params["is-company-admin"] = "true"
+      //total found so far
+      let total = 0
+      //where last search started from
+      let lastSearchStart
+      //where the next search will start from
+      let start = pagination.start || 0
+      //what the next search's results count should be (what we're asking for
+      let count = pagination.count || 100 //maximum to return. Their docs say max is 100
+      //will hold all the accumulated channels
+      let totalChannelsForType = []
+      let keepSearching = true
 
-      }
+      //will be called multiple times if they have many channels
+      const doIt = () => {
+        return new Promise((resolve, reject) => {
 
-
-      axiosLI(`${LIApi}/v1/${path}?format=json`, {params} )
-      .then((result) => {
-        console.log(result.data);
-        const total = result.data._total
-        const pages = result.data.values || []//in case no hits are found, return empty array
-        //prepare to be persisted
-        const channelsForType = pages.map((channel) => (
-          {
-            providerChannelId: channel.id,
-            name: channel.name,
-            sharingAllowed: true, //li might return this; might want to get it from them
+          //gets converted to query string in axios
+          let params = {
+            start: start,
+            count: count,
+            //format: "json"
           }
-        ));
 
-        return resolve(channelsForType)
+          //currently is the only channelType...
+          if (channelType === "PAGE_POST") {
+            path = "companies" //Facebook pages this person is admin for
+            //leave this off to get all pages they are a part of?
+            params["is-company-admin"] = "true"
+          }
+
+          return axiosLI(`${LIApi}/v1/${path}?format=json`, {params} )
+          .then((result) => {
+            console.log(result && result.data || result || "No results returned");
+            const channelsData = result.data.values || []//in case no hits are found, return empty array
+            const channelsFound = channelsData.map((channel) => (
+              {
+                providerChannelId: channel.id,
+                name: channel.name,
+                sharingAllowed: true, //li might return this; might want to get it from them
+              }
+            ));
+            //prepare to be persisted
+            totalChannelsForType.concat(channelsFound)
+
+            //prepare for requesting next page
+            total = result.data._total
+            start = totalChannelsForType.length - 1//maybe use result.data._count?? Note though, first record is start 0
+
+            //if didn't return any OR current found is same as total, stop looping. Hopefully the last conditions are unnecessary (?) (if total is less than where we would start searching, OR if didn't get anywhere
+            if (!result.data._count || total === start || total < start || lastSearchStart === start) {
+              return resolve()
+
+            } else {
+              return doIt()
+            }
+          })
+          .catch((err) => {
+            return reject(err)
+          })
+        })
+      }
+
+
+      doIt()
+      .then(() => {
+        return resolve(totalChannelsForType)
       })
       .catch((err) => {
         console.log("Error getting ", channelType);
-        console.log(err.response);
+        console.log(err && err.response && err.response);
         return reject(LinkedIn.handleError(err))
       })
     })
@@ -135,7 +172,8 @@ const LinkedIn = {
     code = code || Helpers.safeDataPath(err, `response.data.status`, false)
 
     //this will be returned to the front end, which will handle depending on the code
-    let ret = {code: "", originalError: err}
+    //there will be response.data unless error is...our fault..
+    let ret = {code: "", originalError: Helpers.safeDataPath(err, "response.data", err)}
 
   //TODO test
     switch (code) {

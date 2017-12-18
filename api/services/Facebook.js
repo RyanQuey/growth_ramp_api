@@ -202,9 +202,9 @@ const Facebook = {
   */
 
   //channelType should be PAGE_POST or GROUP_POST
-  getChannels: (account, channelType, pagination) => {
+  getChannels: (account, channelType, pagination, accessTokenData) => {
     return new Promise((resolve, reject) => {
-      const fb = _setup(account)
+      const fb = _setup(account, accessTokenData.accessToken)
 
       let path
       let params = {}

@@ -362,9 +362,6 @@ console.log(values);
           }
         }
 
-console.log("decrypted");
-console.log(result.accessToken);
-console.log(result);
         result.accountId = account.id
         result.provider = account.provider
 
@@ -398,6 +395,7 @@ console.log("response from trying to refresh access token");
     })
   },
 
+  //seems like no one has one?
   handleNewRefreshToken: function(refreshToken) {
 
   },
@@ -426,8 +424,13 @@ console.log("response from trying to refresh access token");
       let api = providerApiWrappers[account.provider]
       let pagination = {} //TODO probably have to set this... see LI for example of what I need; fb doesn't seem to need
 
+
+
       //publishes post on social network
-      api.getChannels(account, channelType, pagination)
+      ProviderAccounts.getUserToken(account, "access")
+      .then((accessTokenData) => {
+        return api.getChannels(account, channelType, pagination, accessTokenData)
+      })
       .then((r) => {
         results = r
 
