@@ -146,7 +146,7 @@ module.exports = {
 
       Users.findOne({email: userData})
       .then((user) => {
-        if (user.authenticate(password)) {
+        if (user && user.authenticate(password)) {
           return resolve(user)
         } else {
           return reject({ error: 'invalid password' });
