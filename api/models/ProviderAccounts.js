@@ -441,19 +441,19 @@ console.log("response from trying to refresh access token");
           channel.userId = account.userId
           channel.type = channelType
 
-          return Channels.updateOrCreate({
+          //if don't have a channel with this provider and of this type with this id, make a new one
+          return Channels.findOrCreate({
             providerChannelId: channel.providerChannelId,
-            provider: channel.provider
+            provider: channel.provider,
+            type: channel.type,
           }, channel)
         })
 
-        //replace the channels list for that channelType
-        let updatedChannels = Object.assign({}, account.channels)
 
         return Promise.all(promises)
       })
-      .then((p) => {
-        return resolve(results)
+      .then((updatedRecords) => {
+        return resolve(updatedRecords)
       })
       .catch((err) => {
         console.log("Failure refreshing channel type");
