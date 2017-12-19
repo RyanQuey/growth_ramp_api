@@ -61,33 +61,52 @@ module.exports = {
 
   processToken: function(tokenString, currentUser) {
     return new Promise((resolve, reject) => {
-      let tokenRecord
+      let tokenRecord, tokenType
       Tokens.findOne({token: tokenString})
       .then((t) => {
         tokenRecord = t
+console.log(tokenRecord);
+        let code
+        tokenType = tokenRecord.action
+
         if (!tokenRecord) {
-          return
+          return "no-token-found"//will continue as if nothing happened...
+
         } else if (tokenRecord.expires < moment.utc().format()) {
           //TODO token has expired
+          return "expired-token"
+
         } else if (!tokenRecord.valid){
           //TODO this token has been invalidated (maybe a later one for same action, maybe already used, etc)
+          return "invalid-token"
 
         } else {
+          //token is good and ready to be used
           switch (tokenRecord.action){
             case "confirmation":
               return Tokens.checkConfirmationToken(tokenRecord, currentUser)
             case "login":
-              return Users.login({id: currentUser.id}, {emailConfirmed: true})
+              return Users.login({id: tokenRecord.userId}, {emailConfirmed: true}) //login token to log you in and confirm email (?)
+            //actually, also just logs them in. They have no password, so will be prompted to make a new one
+            case "resetPassword":
+              return Users.login({id: tokenRecord.userId})
 
             default:
               console.log("should never get here");
-              return "broken token"
+              return "broken-token"
           }
         }
       })
-      .then((result) => {
+      .then((user, token) => {
+        //successful, so invalidating
+        Tokens.invalidate(tokenRecord)
+
         //result will either be an object with a message
-        return resolve({result, token: tokenRecord.token})
+        return resolve({
+          user,
+          token: tokenRecord.token,
+          tokenType: tokenType
+        })
       })
       .catch((err) => {
         return reject(err)
@@ -115,10 +134,9 @@ module.exports = {
         })
       })
       .then((result) => {
-        //if result is an updated user, it is successful, so invalidate token
-        if (result.id) {Tokens.invalidate(token)}
 
-        return resolve(result)
+        //returning current user first no matter what; this will help other tokens work right
+        return resolve(currentUser, token)
       })
       .catch((err) => {
         console.log(err);
