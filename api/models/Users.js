@@ -164,6 +164,7 @@ module.exports = {
       let apiToken = apiTokenObj.token;
       let expiration = apiTokenObj.expires;
       let user
+
       Users.update({ id: userData.id }, { apiToken: apiToken, apiTokenExpires: expiration })
       .then((result) => {
         user = result[0]
