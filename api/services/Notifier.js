@@ -1,5 +1,5 @@
 var templates = require('../templates/');
-var from = 'Growth Ramp <support@growthramp.io>';
+var from = 'Growth Ramp <hello@growthramp.io>';
 
 //creates a record in the notifications table, which the background job will eventually pick up and send
 module.exports = {
@@ -23,7 +23,7 @@ module.exports = {
         identifier: 'signup-confirmation',
         userId: info.user.id,
         addresses: [info.user.email],
-        from: "support@growthramp.io",
+        from,
       };
       return Notifications.create(emailNotification)
     })
@@ -54,7 +54,7 @@ module.exports = {
         identifier: 'send-login-token',
         userId: info.user.id,
         addresses: [info.user.email],
-        from:  "support@growthramp.io",
+        from,
       };
 
       Notifications.create(emailNotification)
@@ -72,7 +72,7 @@ module.exports = {
 				subject: template.email.subject,
 				body: template.email.body,
 				addresses: [ info.email ],
-				from:  "support@growthramp.io"
+        from,
 			};
 
 			sails.log.debug(emailNotification);
