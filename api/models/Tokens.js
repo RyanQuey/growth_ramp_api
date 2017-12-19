@@ -65,7 +65,6 @@ module.exports = {
       Tokens.findOne({token: tokenString})
       .then((t) => {
         tokenRecord = t
-console.log(tokenRecord);
         let code
         tokenType = tokenRecord.action
 

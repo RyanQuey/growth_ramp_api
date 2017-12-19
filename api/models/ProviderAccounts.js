@@ -441,8 +441,8 @@ console.log("response from trying to refresh access token");
           channel.userId = account.userId
           channel.type = channelType
 
-          //if don't have a channel with this provider and of this type with this id, make a new one
-          return Channels.findOrCreate({
+          //if don't have a channel with this provider and of this type with this id, make a new one. Otherwise, update with new values
+          return Channels.updateOrCreate({
             providerChannelId: channel.providerChannelId,
             provider: channel.provider,
             type: channel.type,
