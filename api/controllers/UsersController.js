@@ -126,7 +126,9 @@ module.exports = {
 			}
 
 			user = u;
-
+      return Users.update({id: user.id}, {password: ""})
+    })
+    .then((updatedUser) => {
       //destroy any previous if they exist
 			return Tokens.destroy({ userId: user.id, action: 'resetPassword' });
 		})
