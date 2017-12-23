@@ -1,6 +1,6 @@
 var Job = require('./job');
 var moment = require('moment');
-const mailgun = require('mailgun-js')({apiKey: "key-d8198d22adf5397bb73ef672482166c6", domain: 'www.growthramp.io'})
+const mailgun = require('mailgun-js')({apiKey: "key-d8198d22adf5397bb73ef672482166c6", domain: 'mail.growthramp.io'})
 
 //sends any unsent notifications
 module.exports = class SendNotifications extends Job {
