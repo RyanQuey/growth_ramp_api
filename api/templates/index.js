@@ -16,13 +16,31 @@ function inlineCss (mail) {
       sails.error(err);
 
       sails.log.error('sending along non-inlined version');
+      //TODO maybe have to do mail.body = mail.plainTextMessage ?
       resolve(mail);
-
     });
   });
 };
 
 module.exports = {
+  contactUs: function (info) {
+    let toReturn = {
+      //sms: {},
+      email: {}
+    };
+
+    return new Promise((resolve, reject) => {
+      email.contactUs(info)
+      .then((stuff) => {
+        toReturn.email = stuff;
+        resolve(toReturn);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+    });
+  },
+
   signupConfirmation: function (info) {
     let toReturn = {
       //sms: {},

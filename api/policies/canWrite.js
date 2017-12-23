@@ -4,7 +4,7 @@ module.exports = function canRead (req, res, next) {
   const action = req.options.action
   let fail = (message) => {
     // still going onto next, but with no user set
-    console.log("forbidden request for ", action, "on", modelIdentity)
+    console.log("forbidden request for ", action, "on model ", modelIdentity)
     console.log(message);
     console.log("failing data: ", req.params, req.body);
     res.status(400).json("Insufficient permissions")
@@ -60,7 +60,7 @@ console.log("matching record", record);
       //still is ok for reading (sinec will only find resources with that userid hopefully??), but not writing
       if (
         //can create anything if it's for yourself!
-        ["create", "createfromcampaign"].includes(action)
+        ["create", "createfromcampaign", "contactus"].includes(action)
 
         //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
         //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself
@@ -68,10 +68,11 @@ console.log("matching record", record);
         /*userId && modelAttributes.includes('userId') ||
         ownerId && modelAttributes.includes('ownerId')*/
       ) {
+console.log(req.user.id, userId, ownerId);
         if ([userId, ownerId].includes(req.user.id)) {
           pass();
         } else {
-          fail(`these userids are not the same: ${userId} and ${req.user.id}`);
+          fail(`these userids are not the same: ${userId} and ${req.user.id || req.user}`);
         }
 
       } else {
@@ -82,6 +83,8 @@ console.log("matching record", record);
           if (!record) {
             fail(`Record not found of ${modelIdentity} with ID ${id}`)
 
+          } else if (!req.user) {
+            fail("no user!!")
           } else if ([record.userId, record.ownerId].includes(req.user.id)) {
             pass(record)
           } else {
