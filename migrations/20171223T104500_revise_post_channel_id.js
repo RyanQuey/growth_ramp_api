@@ -9,12 +9,14 @@ exports.up = function(knex, Promise) {
     })
   ])
   .then(() => {
-    knex.schema.table('postTemplates', function (t) {
-      t.integer('channelId').references('id').inTable('channels');
-    }),
-    knex.schema.table('posts', function (t) {
-      t.integer('channelId').references('id').inTable('channels');
-    })
+    return Promise.all([
+      knex.schema.table('postTemplates', function (t) {
+        t.integer('channelId').references('id').inTable('channels');
+      }),
+      knex.schema.table('posts', function (t) {
+        t.integer('channelId').references('id').inTable('channels');
+      })
+    ])
   })
 };
 
@@ -28,11 +30,15 @@ exports.down = function(knex, Promise) {
     })
   ])
   .then(() => {
-    knex.schema.table('postTemplates', function (t) {
-      t.integer('channelId');
-    }),
-    knex.schema.table('posts', function (t) {
-      t.integer('channelId');
-    })
+    return Promise.all([
+      knex.schema.table('postTemplates', function (t) {
+        t.integer('channelId');
+        t.integer('channelId').references('id').inTable('channels');
+      }),
+      knex.schema.table('posts', function (t) {
+        t.integer('channelId');
+        t.integer('channelId').references('id').inTable('channels');
+      })
+    ])
   })
 };
