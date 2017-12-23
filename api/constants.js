@@ -169,6 +169,17 @@ module.exports = {
     "rlquey2+test@gmail.com",
     "jdquey@gmail.com",
     "rlquey2+new-test@gmail.com",
+    "ajconnell1@googlemail.com",
+    "dave@ninjaoutreach.com",
+    "ed@midasmedia.co.uk",
+    "hi@tomaslau.com",
+    "inbillsmind@gmail.com",
+    "jmcmillen89@gmail.com",
+    "content@mirasee.com",
+    "nathan@trysourcify.com",
+    "sp4387@gmail.com",
+    "william@elumynt.com",
+    "tylerbasu@gmail.com",
   ],
 }
       //keep this in sync with the frontend constants

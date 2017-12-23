@@ -297,10 +297,11 @@ console.log("now updated", posts.length);
 	getAnalytics: (campaign) => {
     let posts
     return new Promise((resolve, reject) => {
+console.log(campaign.id, typeof campaign.id)
       return Posts.find({campaignId: campaign.id}).populate("channelId")
       .then((ps) => {
         posts = ps
-
+console.log("found the posts");
         //get analytics for each link
         const promises = posts.map((post) => Google.getUrlAnalytics(post.shortUrl, {alwaysResolve: true}))
         return Promise.all(promises)
@@ -314,7 +315,6 @@ console.log("now updated", posts.length);
         return resolve(posts)
       })
       .catch((err) => {
-        console.log(err);
         return reject(err)
       })
 
