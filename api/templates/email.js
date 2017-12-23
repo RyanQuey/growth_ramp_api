@@ -34,6 +34,17 @@ for (let file of layoutFiles) {
 }
 
 module.exports = {
+  contactUs: function (info) {
+    info.template = 'contact-us';
+
+    return new Promise((resolve, reject) => {
+      resolve({
+        body: layouts['html-layout'](info),
+        subject: "Message from customer"
+      });
+    });
+  },
+
   signupConfirmation: function (info) {
     info.template = 'signup-confirmation';
 

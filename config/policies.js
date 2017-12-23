@@ -50,6 +50,10 @@ module.exports.policies = {
     //changePermissions: ['canChangePermissions'],
     getAnalytics: ['userTokenAuth', 'canRead'],
   },
+  NotificationsController: {
+    //they need user id for this to work
+    contactUs: ['userTokenAuth', 'canWrite'],
+  },
   PlansController: {
     create: ['userTokenAuth', 'canWrite'],
     createFromCampaign: ['userTokenAuth', 'canWrite'],

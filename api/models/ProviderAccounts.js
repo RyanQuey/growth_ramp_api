@@ -424,8 +424,6 @@ console.log("response from trying to refresh access token");
       let api = providerApiWrappers[account.provider]
       let pagination = {} //TODO probably have to set this... see LI for example of what I need; fb doesn't seem to need
 
-
-
       //publishes post on social network
       ProviderAccounts.getUserToken(account, "access")
       .then((accessTokenData) => {
@@ -449,10 +447,11 @@ console.log("response from trying to refresh access token");
           }, channel)
         })
 
-
         return Promise.all(promises)
       })
-      .then((updatedRecords) => {
+      .then((results) => {
+        //only updating one channel each time, so only return first
+        const updatedRecords = results.map((r) => r[0])
         return resolve(updatedRecords)
       })
       .catch((err) => {
