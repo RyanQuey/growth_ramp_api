@@ -3,7 +3,7 @@ exports.up = function(knex, Promise) {
   return Promise.all([
     knex.schema.createTable('channels', function (t) {
       t.increments('id').primary() //auto incrementing IDs
-      t.text('providerChannelId');
+      t.text('providerChannelId'); //given by provider; so should be string. Not internal index
       t.text('name');
       t.text('provider'); //should be identical to the providerAccount provider
       t.text('accessToken');
