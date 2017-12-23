@@ -41,6 +41,16 @@ module.exports.routes = {
   },
 
   ////////////////////////////////////////////////////////////////
+  //notifications
+  //
+
+  'post /notifications/contactUs': {
+    controller: 'NotificationsController',
+    action: 'contactUs'
+  },
+
+
+  ////////////////////////////////////////////////////////////////
   //plans
   //
 
