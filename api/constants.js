@@ -168,6 +168,7 @@ module.exports = {
     "rlquey2@gmail.com",
     "rlquey2+test@gmail.com",
     "jdquey@gmail.com",
+    "jasonquey2@gmail.com",
     "rlquey2+new-test@gmail.com",
     "ajconnell1@googlemail.com",
     "dave@ninjaoutreach.com",
