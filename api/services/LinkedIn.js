@@ -133,7 +133,7 @@ const LinkedIn = {
               }
             ));
             //prepare to be persisted
-            totalChannelsForType.concat(channelsFound)
+            totalChannelsForType = totalChannelsForType.concat(channelsFound)
 
             //prepare for requesting next page
             total = result.data._total
