@@ -451,7 +451,7 @@ console.log("response from trying to refresh access token");
       })
       .then((results) => {
         //only updating one channel each time, so only return first
-        const updatedRecords = results.map((r) => r[0])
+        const updatedRecords = results.map((r) => r && r[0])
         return resolve(updatedRecords)
       })
       .catch((err) => {
