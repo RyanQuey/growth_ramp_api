@@ -225,7 +225,7 @@ console.log("now updated", posts.length);
       })
       .then((updatedRecords) => {
         //if !updatedRecords, didn't need to update
-        if (updatedRecords) {
+        if (updatedRecords && updatedRecords !== "no-updates") {
           //update the current vars
           //nothing populated; just update
           campaign = updatedRecords.updatedCampaign
