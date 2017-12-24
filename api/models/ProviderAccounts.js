@@ -431,7 +431,6 @@ console.log("response from trying to refresh access token");
       })
       .then((r) => {
         results = r
-
         //by the time data is here, results should be ready to persist into the db
         const promises = results.map((channel) => {
           channel.providerAccountId = account.id
@@ -451,7 +450,8 @@ console.log("response from trying to refresh access token");
       })
       .then((results) => {
         //only updating one channel each time, so only return first
-        const updatedRecords = results.map((r) => r && r[0])
+        //but if creating, not an array, so just returns record (r)
+        const updatedRecords = results.map((r) => r && r[0] || r)
         return resolve(updatedRecords)
       })
       .catch((err) => {
