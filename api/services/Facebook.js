@@ -48,8 +48,8 @@ const Facebook = {
       // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
       // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
       const uploads = post.uploadedContent.map((c) => c.url)
-      const channelId = channel && channel.providerChannelId || "me"
-      const promises = uploads.map((url) => Facebook._upload(url, channel.providerChannelId, fb))
+      const fbChannelId = channel && channel.providerChannelId || "me"
+      const promises = uploads.map((url) => Facebook._upload(url, fbChannelId, fb))
 
       Promise.all(promises)
       //these are successful uploads
@@ -61,11 +61,11 @@ const Facebook = {
   },
 
   //upload a file
-  _upload: (url, channelId = "me", fb, options = {}) => {
+  _upload: (url, fbChannelId = "me", fb, options = {}) => {
     return new Promise((resolve, reject) => {
-      // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained
-      // // control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
-      let channelPath = channelId//can be groupId, eventId, pageId instead. Or "me" === fb UserId
+      // Note: You can also do this yourself manually using T.post() calls if you want more fine-grained control over the streaming. Example: https://github.com/ttezel/twit/blob/master/tests/rest_chunked_upload.js#L20
+
+      let channelPath = fbChannelId //can be groupId, eventId, pageId instead. Or "me" === fb UserId
 
       // VIDEOS would be at `me/videos` or whatever the channelType is
       fb.api(`${channelPath}/photos`, 'post', {
@@ -287,6 +287,7 @@ const Facebook = {
   },
 
   handleError: (err, code = false) => {
+    console.log("Error while contacting FB: ", err);
     code = code || Helpers.safeDataPath(err, `response.error.code`, false)
 
     //this will be returned to the front end, which will handle depending on the code
