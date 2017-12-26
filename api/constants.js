@@ -170,6 +170,7 @@ module.exports = {
     "jdquey@gmail.com",
     "jasonquey2@gmail.com",
     "rlquey2+new-test@gmail.com",
+    "hello@growthramp.io",
     "ajconnell1@googlemail.com",
     "dave@ninjaoutreach.com",
     "ed@midasmedia.co.uk",
