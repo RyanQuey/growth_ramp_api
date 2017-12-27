@@ -4,7 +4,7 @@
  * @description :: TODO: You might write a short summary of how this model works and what it represents here.
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
-import { PLAN_STATUSES } from "../constants"
+import { PLAN_STATUSES, TEMPLATE_PROPERTIES } from "../constants"
 
 module.exports = {
 
@@ -61,44 +61,110 @@ module.exports = {
       .then((result) => {
         newPlan = result
         console.log("newly created plan", newPlan);
-        const newPostTemplates = campaign.posts.map((post) => {
-          let params = _.pick(post, [
-            "channelId",
-            "channelType",
-            "providerAccountId",
-            "provider",
-            "userId",
-            "campaignUtm",
-            "mediumUtm",
-            "sourceUtm",
-            "contentUtm",
-            "termUtm",
-            "customUtm",
-          ])
-          if (params.channelId === "") {delete params.channelId}
-          params.planId = newPlan.id
-          //strictly troubleshooting
-          lastParams = params
-
-          return params
-        })
 
         const promises = []
-        promises.push(PostTemplates.create(newPostTemplates))
+
+        for (let post of campaign.posts) {
+          promises.push(PostTemplates.createFromPost(post, newPlan))
+        }
         promises.push(Campaigns.update(campaign.id, {planId: newPlan.id}))
-        promises.push(Posts.update({campaignId: campaign.id}, {planId: newPlan.id}))
 
         return Promise.all(promises)
       })
-      .spread((postTemplates, updatedCampaigns, updatedPosts) => {
-        let updatedCampaign = updatedCampaigns[0]
-        newPlan.postTemplates = postTemplates
+      .then((results) => {
+        let updatedCampaign = results.pop()[0]
+        const templates = results.map((r) => r.newTemplate)
+        const updatedPosts = results.map((r) => r.updatedPost)
+
+        newPlan.postTemplates = templates
 
         return resolve({newPlan, updatedCampaign, updatedPosts})
       })
       .catch((err) => {
-        console.log("failing Params:", lastParams);
+        sails.log.error("failing Params:", lastParams);
         return reject(err)
+      })
+    })
+  },
+
+  _matchTemplateToPost: (template, post) => {
+    return new Promise((resolve, reject) => {
+      //hopefully saves some db calls
+      if (
+        template.status === "ACTIVE" &&
+        _.isEqual(
+          _.pick(post, TEMPLATE_PROPERTIES),
+          _.pick(template, TEMPLATE_PROPERTIES),
+        )
+      ) {
+
+        //don't do anything, but return what update would
+        return resolve(template)
+
+      } else {
+        const params = _.pick(post, TEMPLATE_PROPERTIES)
+
+        return PostTemplates.update({id: template.id}, params)
+        .then((result) => {
+          const updatedTemplate = result[0]
+          return resolve(updatedTemplate)
+        })
+        .catch((err) => {
+          sails.log.error("ERROR updating template: ", err);
+        })
+      }
+    })
+  },
+
+  updateFromCampaign: (campaign, plan) => {
+    return new Promise((resolve, reject) => {
+      //find any posts from campaign that have a postTemplateId, and just update those (if anything) rather than archiving and recreating, enabing continuity between the postTemplate
+      const posts = campaign.posts
+      const postsWithTemplate = posts.filter((p) => p.postTemplateId)
+      const postsWithoutTemplate = posts.filter((p) => !p.postTemplateId)
+
+      const promises = []
+      let currentPostTemplates
+
+      PostTemplates.find({planId: plan.id})
+      .then((results) => {
+        currentPostTemplates = results
+
+        for (let post of postsWithTemplate) {
+          console.log(typeof results, typeof post.postTemplateId);
+          let templateIndex = currentPostTemplates.findIndex((template) => template.id == post.postTemplateId)
+          //retrieves and removes from list
+          let associatedTemplate = currentPostTemplates.splice(templateIndex, 1)[0]
+          promises.push(Plans._matchTemplateToPost(associatedTemplate, post))
+        }
+
+        for (let post of postsWithoutTemplate) {
+          promises.push(PostTemplates.createFromPost(post, plan))
+        }
+
+        //any current templates still in list have since been deleted from campaign
+        const idsToArchive = currentPostTemplates.map((t) => t.id)
+        promises.push(PostTemplates.update({id: idsToArchive}, {status: "ARCHIVED"}))
+
+        return Promise.all(promises)
+      })
+      .then((results) => {
+        const templates = [], updatedPosts = []
+        for (let result of results) {
+          if (result.newTemplate && result.updatedPost) {
+            //just created the template
+            templates.push(result.newTemplate)
+            updatedPosts.push(result.updatedPosts)
+          } else if (result.status !== "ARCHIVED") {
+            //just updated the template
+            updatedPosts.push(result)
+          }
+        }
+        plan.postTemplates = templates
+        return resolve({plan, updatedPosts})
+      })
+      .catch((err) => {
+        sails.log.error("ERROR updating plan to match campaign: ", err);
       })
     })
   },

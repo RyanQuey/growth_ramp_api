@@ -57,6 +57,7 @@ module.exports.policies = {
   PlansController: {
     create: ['userTokenAuth', 'canWrite'],
     createFromCampaign: ['userTokenAuth', 'canWrite'],
+    updateFromCampaign: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
     //some say you cannot do a policy with findOne (?), though others disagree. if this is true, just apply canRead to the rest of the actions
     find: ['userTokenAuth', 'canRead'],
