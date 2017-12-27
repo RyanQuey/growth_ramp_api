@@ -8,12 +8,11 @@
 const LIApi = "https://api.linkedin.com"
 //NOTE don't get accessToken from account record; that is encrypted still
 const _setup = (account, accessToken) => {
-console.log("access token", accessToken);
   const axiosLI = axios.create({
-      headers: {
-        'x-li-format': 'json',
-        'Authorization': `Bearer ${accessToken}`
-      }
+    headers: {
+      'x-li-format': 'json',
+      'Authorization': `Bearer ${accessToken}`
+    }
   })
 
   return axiosLI
@@ -50,10 +49,28 @@ const LinkedIn = {
       }
 
       //if a property but blank, LI raises error
-      if (post.shortUrl || imageUrl) {
+      if (post.shortUrl) {
         body.content = {}
-        if (post.shortUrl) body.content["submitted-url"] = post.shortUrl //other urls can be in the comment, but LI will only analyze the first one for content to share
-        if (imageUrl) body.content["submitted-image-url"] = imageUrl //other urls can be in the comment, but LI will only analyze the first one for content to share
+        body.content["submitted-url"] = post.shortUrl //other urls can be in the comment, but LI will only analyze the first one of the comment for content to share
+        if (imageUrl) body.content["submitted-image-url"] = imageUrl
+
+      } else if (!post.shortUrl && imageUrl) {
+        //LI has problems with this...
+        // https://stackoverflow.com/questions/22340483/publishing-an-image-without-a-related-url-via-the-linkedin-api
+        body.content = {
+          "submitted-url": imageUrl, //note: sending image link as the content url
+          title: body.comment || "",
+          description: "", //else will say the url in gray here...
+        }
+        body.comment = "" //placing it in title instead
+
+        //LI refuses this
+        /*body.content = {
+          "submitted-image-url": imageUrl, //note: sending image link as the content url
+          title: "",
+          "submitted-url": "",
+          "media-key": "",
+        }*/
       }
 
       LinkedIn[post.channelType](post, body, channel, axiosLI)
