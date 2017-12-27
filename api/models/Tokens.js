@@ -129,7 +129,7 @@ module.exports = {
       Tokens.checkUser(token, currentUser, () => {
         return Users.update({id: currentUser.id}, {
           emailConfirmed: true,
-          emailConfirmedAt: moment().format(), //might want to do timezone...should standardize this eventually for the backend
+          emailConfirmedAt: moment.utc().toDate(), //might want to do timezone...should standardize this eventually for the backend
         })
       })
       .then((result) => {

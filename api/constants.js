@@ -182,6 +182,9 @@ module.exports = {
     "***REMOVED***",
     "***REMOVED***",
     "***REMOVED***",
+    "***REMOVED***",
+    "***REMOVED***",
+    "***REMOVED***",
   ],
 }
       //keep this in sync with the frontend constants
