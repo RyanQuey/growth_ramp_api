@@ -63,7 +63,8 @@ module.exports = {
     planId: { model: 'plans'},
     //only if post was created from a plan, not if plan was created from a post
     //I don't know if use case for the latter, so that's why. ALready have planId too
-    //seems mostly helpful if still drafting... (?)... if at all.
+    //seems mostly helpful if still drafting... (?)... if at all. But also currently using when updating plan's postTemplates
+    //maybe also analytics somehow?
     postTemplateId: { model: 'postTemplates'},
   },
 

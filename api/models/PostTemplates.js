@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, POST_TEMPLATE_STATUSES, ALL_POSTING_AS_TYPES } from "../constants"
+import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, POST_TEMPLATE_STATUSES, ALL_POSTING_AS_TYPES, TEMPLATE_PROPERTIES } from "../constants"
 
 module.exports = {
   tableName: "postTemplates",
@@ -50,4 +50,32 @@ module.exports = {
       via: 'postTemplateId',
     },
   },
+
+  //called when matching plan to campaign
+  createFromPost: (post, plan) => {
+console.log("creating from post");
+    return new Promise((resolve, reject) => {
+      let params = _.pick(post, TEMPLATE_PROPERTIES)
+      if (params.channelId === "") {delete params.channelId}
+      params.planId = plan.id
+      //strictly troubleshooting
+      //lastParams = params
+      let newTemplate
+
+      return PostTemplates.create(params)
+      .then((t) => {
+        newTemplate = t
+        //might not need to update the plan, if plan is not being created, but only updated. But this makes it easy :)
+        return Posts.update({id: post.id}, {postTemplateId: newTemplate.id, planId: plan.id})
+      })
+      .then((result) => {
+        const updatedPost = result
+console.log("finished creating from post");
+        return resolve({updatedPost, newTemplate})
+      })
+      .catch((err) => {
+        sails.log.error(err)
+      })
+    })
+  }
 }

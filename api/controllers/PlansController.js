@@ -22,23 +22,47 @@ module.exports = {
       return res.ok(result)
     })
     .catch((err) => {
-      console.log("failure to return populated plan:");
-      console.log(err);
+      sails.log.error("failure to return populated plan:");
+      sails.log.error(err);
       return res.badRequest(err)
     })
   },
-  createFromCampaign: (req, res) => {
-    const planParams = req.body
-    const campaign = req.body.associatedCampaign
-    delete planParams.associatedCampaign
-
-    Plans.createFromCampaign(campaign, planParams)
-    .then((planWithTemplates) => {
-      return res.created(planWithTemplates)
+  //doesn't update campaign at all; same plan Id
+  //posts might get a new postTemplateId though
+  updateFromCampaign: (req, res) => {
+    const plan = req.matchingRecord
+    const campaignId = req.body.associatedCampaign.id
+    delete req.body.associatedCampaign
+    Campaigns.findOne({id: campaignId, userId: req.user.id}).populate("posts")
+    .then((campaign) => {
+      return Plans.updateFromCampaign(campaign, plan)
+    })
+    .then((planWithTemplatesAndPosts) => {
+      return res.ok(planWithTemplatesAndPosts)
     })
     .catch((err) => {
-      console.log("failure to create from campaign:");
-      console.log(err);
+      sails.log.error("Failure to update from campaign:");
+      sails.log.error(err);
+      return res.badRequest(err)
+    })
+  },
+
+  //NOTE does not set posts to have a given postTemplateId...though it should
+  createFromCampaign: (req, res) => {
+    const planParams = req.body
+    const campaignId = req.body.associatedCampaign.id
+    delete planParams.associatedCampaign
+
+    Campaigns.findOne({id: campaignId, userId: req.user.id}).populate("posts")
+    .then((campaign) => {
+      return Plans.createFromCampaign(campaign, planParams)
+    })
+    .then((planWithTemplatesCampaignAndPosts) => {
+      return res.created(planWithTemplatesCampaignAndPosts)
+    })
+    .catch((err) => {
+      sails.log.error("failure to create from campaign:");
+      sails.log.error(err);
       return res.badRequest(err)
     })
   },

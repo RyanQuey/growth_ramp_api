@@ -65,6 +65,11 @@ module.exports.routes = {
     action: 'createFromCampaign'
   },
 
+  'post /plans/updateFromCampaign': {
+    controller: 'PlansController',
+    action: 'updateFromCampaign'
+  },
+
   ////////////////////////////////////////////////////////////////
   //posts
   //
