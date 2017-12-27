@@ -25,6 +25,7 @@ module.exports = {
     apiToken: { type: 'string' },
     apiTokenExpires: {  type: 'string' },
     emailConfirmed: { type: 'boolean', defaultsTo: false },
+    emailConfirmedAt: { type: "datetime", defaultsTo: null },
 
     //associations
     providerAccounts: {
