@@ -155,13 +155,28 @@ module.exports = {
     "PAGE",
   ],
 
+  //all properties shared by a post and its template
+  TEMPLATE_PROPERTIES: [
+    "channelId",
+    "channelType",
+    "providerAccountId",
+    "provider",
+    "userId",
+    "campaignUtm",
+    "mediumUtm",
+    "sourceUtm",
+    "contentUtm",
+    "termUtm",
+    //"customUtm",
+  ],
+
   UTM_TYPES: {
     campaignUtm: "utm_campaign",
     mediumUtm: "utm_medium",
     sourceUtm: "utm_source",
     contentUtm: "utm_content",
     termUtm: "utm_term",
-    customUtm: "utm_custom",
+    //customUtm: "utm_custom",
   },
 
   ALLOWED_EMAILS: [
