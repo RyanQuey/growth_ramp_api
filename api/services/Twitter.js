@@ -104,7 +104,8 @@ const Twitter = {
   //createStatusUpdate:
   PERSONAL_POST: (post, Twit, uploadsData) => {
     return new Promise((resolve, reject) => {
-      const params = {status: `${post.text} ${post.shortUrl}`}
+      const link = post.shortUrl ? ` ${post.shortUrl}` : ""
+      const params = {status: `${post.text}${link}`}
       if (uploadsData) {
         //should be array of responses from uploading media
         const mediaIds = uploadsData.map((u) => u.mediaId)
