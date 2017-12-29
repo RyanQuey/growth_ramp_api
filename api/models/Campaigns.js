@@ -43,12 +43,12 @@ module.exports = {
   autoUpdatedAt: true,
 
   afterUpdate: (updatedRecord, cb) => {
-console.log("now and call back", updatedRecord);
+console.log("now in afterUpdate hook", updatedRecord);
     Posts.update({campaignId: updatedRecord.id}, {
       contentUrl: updatedRecord.contentUrl
     })
     .then((posts) => {
-console.log("now updated", posts.length);
+console.log("now updated ", posts.length, "posts");
       cb()
     })
     .catch((err) => {
