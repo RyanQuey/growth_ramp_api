@@ -68,13 +68,13 @@ module.exports = {
           maxImages: 4,
           maxCharacters: 63206 ,
           //only putting this prop in constant if there's more than one type for now
-          //postingAsTypes: {
+          postingAsTypes: {
             /*SELF: { //Jason said we'd never use this
               label: "Yourself",
               requirements: { //
                 "NO_PHOTO": true,
               }
-            },
+            },*/
             PAGE: {
               label: "Page",
               requirements: { //
@@ -83,7 +83,7 @@ module.exports = {
                 ]
               }
             },
-          }*/
+          }
         },
       },
     },
