@@ -57,6 +57,10 @@ const Facebook = {
 
         return resolve(Facebook[post.channelType](post, body, channel, fb, uploadsData ))
       })
+      //both the upload and the post should use Facebook.handleError already, so don't do it here, just pass it along
+      .catch((err) => {
+        return reject(err)
+      })
     })
   },
 
