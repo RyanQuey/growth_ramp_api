@@ -293,6 +293,7 @@ const Facebook = {
   handleError: (err, code = false) => {
     console.log("Error while contacting FB: ", err);
     code = code || Helpers.safeDataPath(err, `response.error.code`, false)
+    message = Helpers.safeDataPath(err, `response.error.message`, "")
 
     //this will be returned to the front end, which will handle depending on the code
     let ret = {code: "", originalError: err}
@@ -303,7 +304,12 @@ const Facebook = {
         // this shouldn't publish
         ret.code = 'require-reauthorization'
         break
-      case (code > 199 && code < 300):
+      case (code === 200 && message.includes("Insufficient permission to post to target on behalf of the viewer")):
+        //weird fb thing where they have to go into settings and allow
+        // https://stackoverflow.com/questions/23477079/posting-to-facebook-page-with-fb-api-insufficient-permission-to-post-to-target
+        ret.code = 'change-facebook-app-visibility-settings'
+        break
+      case (code > 200 && code < 300):
         // this is for failed scopes
         // this shouldn't publish
         ret.code = 'insufficient-permissions'
