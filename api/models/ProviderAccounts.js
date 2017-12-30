@@ -192,6 +192,9 @@ console.log(values);
         //handling the different situations here
         let promises
 
+        //assume scopes are being added only, can't take away at this stage! So merge them, using new data to override (esp for LI, else you lose scopes if you don't specify all every time)
+        providerAccount.scopes = Object.assign({}, accountData.scopes, providerAccount.scopes)
+
         if (account && !user) {
           //logging in with a provider
           //TODO only update the relevant part of the provider data, eg not the user ID, etc.
@@ -317,19 +320,16 @@ console.log(values);
           //NOTE twitter tokens never expire
         ) {
           //token is found and valid
-          console.log("token is found and is valid");
           return {
             [`${tokenType}Token`]: providerAccount[`${tokenType}Token`]
           }
 
         } else if (tokenType === "access") {
           //try to refresh
-          console.log("trying to refresh");
           return ProviderAccounts.getAccessTokenFromProvider(account.refreshTokaccount.provider, account)
 
         } else {
           //just return it to be handled by parent function
-          console.log("token cannot be retrieved");
           return {
             message: `${tokenType} token expired and cannot be retrieve; prompt user to reauthenticate for account ${providerAccount.id}`,
             code: "no-token-retrieved",
