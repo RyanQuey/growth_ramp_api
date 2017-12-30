@@ -96,17 +96,8 @@ const Facebook = {
 
   PERSONAL_POST: (post, body, channel, fb, uploadsData) => {
     return new Promise((resolve, reject) => {
-      let params = {
-        message: body.message,
-        link: body.link,
-      }
-      if (uploadsData) {
-        for (let i = 0; i < uploadsData.length; i++) {
-          let upload = uploadsData[i]
-          let key = `attached_media[${i}]`
-          params[key] = JSON.stringify({media_fbid: upload.mediaId})
-        }
-      }
+      const params = Facebook._getParams(body, uploadsData)
+
       fb.api('me/feed', 'post', params)
       .then((data) => {
         console.log("result from Facebook");
@@ -122,18 +113,7 @@ const Facebook = {
 
   PAGE_POST: (post, body, channel, fb, uploadsData) => {
     return new Promise((resolve, reject) => {
-      let params = {
-        message: body.message,
-        link: body.link,
-      }
-      if (uploadsData) {
-        for (let i = 0; i < uploadsData.length; i++) {
-          let upload = uploadsData[i]
-          let key = `attached_media[${i}]`
-          params[key] = JSON.stringify({media_fbid: upload.mediaId})
-        }
-      }
-
+      const params = Facebook._getParams(body, uploadsData)
       //could make this a promise, but no need
       const postIt = () => {
         if (post.postingAs === "PAGE") {
@@ -159,17 +139,7 @@ const Facebook = {
 //TODO set to group...
   GROUP_POST: (post, body, channel, fb, uploadsData) => {
     return new Promise((resolve, reject) => {
-      let params = {
-        message: body.message,
-        link: body.link,
-      }
-      if (uploadsData) {
-        for (let i = 0; i < uploadsData.length; i++) {
-          let upload = uploadsData[i]
-          let key = `attached_media[${i}]`
-          params[key] = JSON.stringify({media_fbid: upload.mediaId})
-        }
-      }
+      const params = Facebook._getParams(body, uploadsData)
 
       fb.api(`${channel.providerChannelId}/feed`, 'post', params)
       .then((data) => {
@@ -182,6 +152,26 @@ const Facebook = {
         return reject(Facebook.handleError(err))
       })
     })
+  },
+
+  _getParams: (body, uploadsData) => {
+      let params = {
+        message: body.message,
+      }
+      if (uploadsData && uploadsData.length) {
+        //for fb, links will override the picture unless link is part of message instead
+        params.message += ` ${body.link}`
+
+        for (let i = 0; i < uploadsData.length; i++) {
+          let upload = uploadsData[i]
+          let key = `attached_media[${i}]`
+          params[key] = JSON.stringify({media_fbid: upload.mediaId})
+        }
+      } else {
+        params.link = body.link
+      }
+
+      return params
   },
 
   //all the posts for one user account
