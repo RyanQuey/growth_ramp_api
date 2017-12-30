@@ -160,13 +160,14 @@ const Facebook = {
       message: body.message,
     }
     if (uploadsData && uploadsData.length) {
-      //for fb, links will override the picture unless link is part of message instead
-      params.message += ` ${body.link}`
       for (let i = 0; i < uploadsData.length; i++) {
         let upload = uploadsData[i]
         let key = `attached_media[${i}]`
         params[key] = JSON.stringify({media_fbid: upload.mediaId})
       }
+    } else {
+      //for fb, links will override the picture unless link is part of message instead. So, only set link if no photos
+      params.link = body.link
     }
 
     return params
