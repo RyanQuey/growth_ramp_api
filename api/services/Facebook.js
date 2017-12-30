@@ -27,8 +27,9 @@ const Facebook = {
       } else {
         accessTokenToUse = accessTokenData.accessToken
       }
+
       const fb = _setup(account, accessTokenToUse)
-//      const body =
+
       const body = {
         message: `${post.text ? post.text + " " : ""}${post.shortUrl || ""}`,
         link: post.shortUrl,
@@ -155,23 +156,20 @@ const Facebook = {
   },
 
   _getParams: (body, uploadsData) => {
-      let params = {
-        message: body.message,
+    let params = {
+      message: body.message,
+    }
+    if (uploadsData && uploadsData.length) {
+      //for fb, links will override the picture unless link is part of message instead
+      params.message += ` ${body.link}`
+      for (let i = 0; i < uploadsData.length; i++) {
+        let upload = uploadsData[i]
+        let key = `attached_media[${i}]`
+        params[key] = JSON.stringify({media_fbid: upload.mediaId})
       }
-      if (uploadsData && uploadsData.length) {
-        //for fb, links will override the picture unless link is part of message instead
-        params.message += ` ${body.link}`
+    }
 
-        for (let i = 0; i < uploadsData.length; i++) {
-          let upload = uploadsData[i]
-          let key = `attached_media[${i}]`
-          params[key] = JSON.stringify({media_fbid: upload.mediaId})
-        }
-      } else {
-        params.link = body.link
-      }
-
-      return params
+    return params
   },
 
   //all the posts for one user account
