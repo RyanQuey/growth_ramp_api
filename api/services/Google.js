@@ -59,7 +59,7 @@ const Google = {
   getUrlAnalytics: (url, options = {}) => {
     return new Promise((resolve, reject) => {
       if (!url) {
-        console.log("no url provided; skip sending");
+        console.log("no url provided; skip sending url Analytics");
         return resolve({})
       }
 
