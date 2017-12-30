@@ -281,7 +281,7 @@ const Facebook = {
   handleError: (err, code = false) => {
     console.log("Error while contacting FB: ", err);
     code = code || Helpers.safeDataPath(err, `response.error.code`, false)
-    message = Helpers.safeDataPath(err, `response.error.message`, "")
+    const message = Helpers.safeDataPath(err, `response.error.message`, "")
 
     //this will be returned to the front end, which will handle depending on the code
     let ret = {code: "", originalError: err}
