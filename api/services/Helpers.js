@@ -128,9 +128,9 @@ export default {
     return {}
   },
 
-  //flattens array of arrays one level:q
+  //flattens array of arrays one level
   flatten: (array) => {
-    [].concat.apply([], array)
+    return [].concat.apply([], array)
   },
 
   overwriteTimezone: function (date, timezone) {
