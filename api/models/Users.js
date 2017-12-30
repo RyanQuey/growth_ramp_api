@@ -159,14 +159,26 @@ module.exports = {
       })
     })
 	},
+
   login: function (userData) {
     return new Promise((resolve, reject) => {
-      let apiTokenObj = Users.createApiToken();
-      let apiToken = apiTokenObj.token;
-      let expiration = apiTokenObj.expires;
       let user
+      Users.findOne(userData.id)
+      .then((u) => {
+        user = u
+        //not always updating token, which allows for multiple browsers to stay loggedin
+        if (!user.apiToken || !user.apiTokenExpires || moment.utc().isAfter(moment(user.apiTokenExpires))) {
+          let apiTokenObj = Users.createApiToken();
+          let apiToken = apiTokenObj.token;
+          let expiration = apiTokenObj.expires;
 
-      Users.update({ id: userData.id }, { apiToken: apiToken, apiTokenExpires: expiration })
+          return Users.update({ id: userData.id }, { apiToken: apiToken, apiTokenExpires: expiration })
+        } else {
+          //faking the update
+          return [user]
+        }
+
+      })
       .then((result) => {
         user = result[0]
 
@@ -175,6 +187,8 @@ module.exports = {
       .catch((err) => {
         return reject(err);
       });
+
+
     });
   },
 
