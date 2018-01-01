@@ -193,7 +193,10 @@ console.log(values);
         let promises
 
         //assume scopes are being added only, can't take away at this stage! So merge them, using new data to override (esp for LI, else you lose scopes if you don't specify all every time)
-        account.scopes = Object.assign({}, providerAccountData.scopes, account.scopes)
+        if (account) {
+          console.log(account.scopes, providerAccountData.scopes);
+          providerAccountData.scopes = Object.assign({}, account.scopes, providerAccountData.scopes)
+        }
 
         if (account && !user) {
           //logging in with a provider
