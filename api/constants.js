@@ -191,6 +191,7 @@ module.exports = {
     "hello@growthramp.io",
     "henry@ignitemycompany.com",
     "jason@cofounderswithclass.com",
+    "rebekahjypark@gmail.com",
 
     "ajconnell1@googlemail.com",
     "dave@ninjaoutreach.com",
