@@ -195,6 +195,7 @@ module.exports = {
 
     "ajconnell1@googlemail.com",
     "dave@ninjaoutreach.com",
+    "aris@ninjaoutreach.com",
     "ed@midasmedia.co.uk",
     "hi@tomaslau.com",
     "inbillsmind@gmail.com",
