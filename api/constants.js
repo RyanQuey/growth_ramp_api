@@ -194,7 +194,7 @@ module.exports = {
     "rebekahjypark@gmail.com",
 
     "ajconnell1@googlemail.com",
-    "dave@ninjaoutreach.com",
+    //"dave@ninjaoutreach.com", aris was added to replace him
     "aris@ninjaoutreach.com",
     "ed@midasmedia.co.uk",
     "hi@tomaslau.com",
