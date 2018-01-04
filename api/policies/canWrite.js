@@ -68,11 +68,11 @@ console.log("matching record", record);
         /*userId && modelAttributes.includes('userId') ||
         ownerId && modelAttributes.includes('ownerId')*/
       ) {
-console.log(req.user.id, userId, ownerId);
+console.log(req.user.id, userId, ownerId, req.params);
         if ([userId, ownerId].includes(req.user.id)) {
           pass();
         } else {
-          fail(`these userids are not the same: ${userId} and ${req.user.id || req.user}`);
+          fail(`these userids are not the same: ${userId || ownerId} and ${req.user.id || req.user}`);
         }
 
       } else {

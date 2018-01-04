@@ -68,29 +68,53 @@ module.exports = {
     })
   },
 
-  //change their credit card etc
-  updateStripeCustomer: (accountSubscription, data) => {
+  //1) attarch create card to customer in stripe; 2) make default card
+  handleCreditCardUpdate: (accountSubscription, data, user) => {
     return new Promise((resolve, reject) => {
-      const {sourceId} = data //source should be token or source's  (ie, payment source's) id
+      const {source} = data //source is source obj created in client  (ie, payment source's) id.
 
-      //set params, defaulting to what currently is
-      const params = {
-        default_source: sourceId || accountSubscription.defaultSourceId, //only ever really need to have one, so just set the source to default_source
-      }
+      if (!source || !source.id) {return reject(new Error("no source id provided in ", data))}
 
-      stripe.customers.update(accountSubscription.stripeCustomerId, params, (err, customer) => {
+      //attach card to customer
+      stripe.customers.createSource(accountSubscription.stripeCustomerId, {source: source.id}, (err, source) => {
         if (err) {
-          sails.log.debug("ERROR creating stripe customer: ", err);
+          sails.log.debug("ERROR creating stripe customer: ");
           return reject(err)
         }
 
-        const params = AccountSubscriptions._translateFromStripe(customer, "customer")
-        AccountSubscriptions.update({id: accountSubscription.id}, params)
-        .then(([accountSub]) => {
-          return resolve(accountSub)
-        })
-        .catch((err2) => {
-          return reject(err2)
+        //will update our records with these params
+        let params = AccountSubscriptions._translateFromStripe(source, "source")
+        if (source.currency) {params.currency = source.currency}
+
+        //make default card
+        stripe.customers.update(accountSubscription.stripeCustomerId, {default_source: source.id}, (err2, customer) => {
+          if (err2) {
+            sails.log.debug("ERROR making this default payment for stripe customer: ");
+            return reject(err2)
+          }
+
+          params = Object.assign({}, params, AccountSubscriptions._translateFromStripe(customer, "customer"))
+
+          //update account record
+          return AccountSubscriptions.update({id: accountSubscription.id}, params)
+          .then(([updatedAccountSubscription]) => {
+            console.log(updatedAccountSubscription);
+
+            if (!updatedAccountSubscription.stripeSubscriptionId) {
+              //create the stripe subscription
+              return AccountSubscriptions.createStripeSubscription(updatedAccountSubscription, user)
+            } else {
+              return updatedAccountSubscription
+            }
+          })
+          .then((readyAccountSub) => {
+            //sub is now ready to be billed
+
+            return resolve(readyAccountSub)
+          })
+          .catch((err3) => {
+            return reject(err3)
+          })
         })
       })
     })
@@ -102,6 +126,7 @@ module.exports = {
   createStripeSubscription: (accountSubscription, user) => {
     return new Promise((resolve, reject) => {
       //validation to make sure no one sneaks in a request for a free account
+      //payment plan will often be set separately from creating subscription, or even before credit card info is set. So, first derived from the record
       let paymentPlan = accountSubscription.paymentPlan || "basic-monthly"
 
       // currently manually overriding requests for free plan that shouldn't be, for security reasons.
@@ -114,9 +139,10 @@ module.exports = {
       }, (err, stripeSubscription) => {
         if (err) {
           sails.log.debug("ERROR creating stripe customer: ", err);
-          throw err
+          return reject(err)
         }
-        return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription))
+
+        return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
       })
     })
   },
@@ -143,7 +169,7 @@ module.exports = {
             sails.log.debug("ERROR creating stripe subscription: ", err);
             return reject2(err)
           }
-          return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription))
+          return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
         })
       })
       .catch((err) => {
@@ -164,13 +190,16 @@ module.exports = {
   },
 
   //when receive stripe subscription, this func handles it
-  _syncAPIWithStripeSub: (stripeSubscription) => {
+  _syncAPIWithStripeSub: (stripeSubscription, accountSubscription) => {
     return new Promise((resolve, reject) => {
-      if (stripeSubscription.plan !== accountSubscription.paymentPlan) {
+
+      const params = AccountSubscriptions._translateFromStripe(stripeSubscription, "subscription")
+
+      if (accountSubscription.paymentPlan && (stripeSubscription.plan && stripeSubscription.plan.id) !== accountSubscription.paymentPlan) {
         // maybe raise an error later, but for now, just make sure we see it
-        sails.log.debug("ERROR: User's plan in stripe doesn't match our record for some reason!!! Did they hack us?");
+        sails.log.debug("ERROR: User's plan in stripe doesn't match our record for some reason!!! Did they hack us?", accountSubscription.paymentPlan, stripeSubscription.plan );
       }
-      const params = AccountSubscriptions._translateFromStripe(customer, "subscription")
+console.log("now updating to get plan");
       return AccountSubscriptions.update({
         id: accountSubscription.id,
       }, params)
@@ -207,6 +236,15 @@ module.exports = {
         cancelledAt: moment.unix(stripeSubscription.canceled_at).format(),
         endedAt: moment.unix(stripeSubscription.ended_at).format(),
         subscriptionStatus: stripeSubscription.status,
+        paymentPlan: stripeSubscription.plan && stripeSubscription.plan.id, //often these should already be kthe same. But if not, stripe's records are the source of truth
+        stripeSubscriptionId: stripeSubscription.id,
+      }
+
+    } else if (stripeResourceType === "source") {
+      const source = data
+      params = {
+        currency: source.currency,
+        defaultSourceId: source.id,
       }
     }
 
