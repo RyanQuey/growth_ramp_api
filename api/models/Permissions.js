@@ -13,7 +13,7 @@ module.exports = {
 
   attributes: {
     access:       { type: "string", required: true, defaultsTo: "READ" }, //can also be "WRITE" or "ADMIN" (which can manage some things, add other users, etc...but ultimately, a resource has only one user EVER, who cannot lose ownership unless grant that. They are the owner, and they can give and take permission no matter what)
-		active:			{ type: "boolean", defaultsTo: true },
+		active:			{ type: "boolean", defaultsTo: true }, //TODO use status string instead, to be consistent across tables
     autoCreatedAt: true,
     autoUpdatedAt: true,
 

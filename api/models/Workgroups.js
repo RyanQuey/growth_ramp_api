@@ -14,6 +14,7 @@ module.exports = {
 
     //associations
     ownerId: { model: 'users', type: "integer", required: true },
+    accountSubscriptionId: { model: 'accountSubscriptions', type: "integer", dominant: true },
     permissions: {
       collection: 'permissions',
       via: 'workgroupId'

@@ -39,6 +39,10 @@ module.exports.policies = {
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
   },*/
+  AccountSubscriptionsController: {
+    initializeForStripe: ['userTokenAuth', 'canWrite'],
+    handleCreditCardInfo: ['userTokenAuth', 'canWrite'],
+  },
   CampaignsController: {
     create: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
