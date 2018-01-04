@@ -36,7 +36,7 @@ module.exports = {
 
     AccountSubscriptions.checkStatus(req.user.id)
     .then((sub) => {
-      if (!ALLOWED_EMAILS.includes(req.user.email) && ["past_due", "canceled", "unpaid"].includes(sub.subscriptionStatus)) {
+      if (!ALLOWED_EMAILS.includes(req.user.email) && (!sub || ["past_due", "canceled", "unpaid"].includes(sub.subscriptionStatus))) {
         return new Error({message: "Payment is required before user can publish", code: "delinquent-payment"})
       }
 
