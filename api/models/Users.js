@@ -64,6 +64,7 @@ module.exports = {
       collection: 'workgroups',
       via: 'ownerId'
     },
+    accountSubscriptionId: { model: 'accountSubscriptions', type: "integer", dominant: true },
 
     // Override the default toJSON method, which is called before returning data back to the client
     toJSON: function() {
@@ -207,14 +208,14 @@ module.exports = {
         promises.push(Users.findOne(userData))
       }
 
-//TODO do not want to population here, unless groups are reasonable amount
-//otherwise, populate only when necessary, to increase speed of initial load
-      promises.unshift(ProviderAccounts.find({userId}).populate('channels')) //will be results[0] Will eventually
-      promises.unshift(Plans.find({userId, status: "ACTIVE"})) //will be results[1]
-//TODO use .spread instead
+      //TODO do not want to population here, unless groups are reasonable amount
+      //otherwise, populate only when necessary, to increase speed of initial load
+      promises.unshift(ProviderAccounts.find({userId}).populate('channels'))
+      promises.unshift(Plans.find({userId, status: "ACTIVE"}))
+      promises.unshift(AccountSubscriptions.findOne({userId})) //makes sure this data is up to date
+
       return Promise.all(promises)
-      .then((results) => {
-        const [plans, accounts, user] = results
+      .then(([accountSubscription, plans, accounts, user]) => {
         const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
         const sortedPlans = Helpers.sortRecordsById(plans)
 
@@ -230,6 +231,7 @@ module.exports = {
           user: userRecord,
           plans: sortedPlans,
           providerAccounts: sortedAccounts,
+          accountSubscription,
         });
       })
     })

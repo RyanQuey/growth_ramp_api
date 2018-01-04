@@ -43,15 +43,17 @@ module.exports = {
   autoUpdatedAt: true,
 
   afterUpdate: (updatedRecord, cb) => {
-console.log("now in afterUpdate hook", updatedRecord);
+console.log("now in campaign afterUpdate hook", updatedRecord);
     Posts.update({campaignId: updatedRecord.id}, {
       contentUrl: updatedRecord.contentUrl
     })
     .then((posts) => {
-console.log("now updated ", posts.length, "posts");
+console.log("now updated ", posts.length, "posts after updating campaign");
       cb()
     })
     .catch((err) => {
+      sails.log.debug("error in after updating campaign hook: ", err);
+      sails.log.debug("Still continuing though");
       cb()
     })
 

@@ -5,6 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+const {ALLOWED_EMAILS} = require('../constants')
 module.exports = {
   update: (req, res) => {
     new Promise((resolve, reject) => {
@@ -30,11 +31,17 @@ module.exports = {
     })
   },
 
-
   publish: (req, res) => {
     const campaign = req.matchingRecord
 
-    Campaigns.publishCampaign(campaign)
+    AccountSubscriptions.checkStatus(req.user.id)
+    .then((sub) => {
+      if (ALLOWED_EMAILS.includes(req.user.email) || ["past_due", "canceled", "unpaid"].includes(sub.subscriptionStatus)) {
+        return new Error({message: "Payment is required before user can publish", code: "delinquent-payment"})
+      }
+
+      return Campaigns.publishCampaign(campaign)
+    })
     .then((results) => {
       //should be campaign (with posts attached to it, each with analytics to attach to them)
       res.ok(results)
