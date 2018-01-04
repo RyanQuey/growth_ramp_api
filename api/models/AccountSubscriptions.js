@@ -163,12 +163,16 @@ module.exports = {
       AccountSubscriptions.findOne({userId: userId})
       .then((accountSub) => {
         accountSubscription = accountSub
+        if (!accountSubscription.stripeSubscriptionId) {
+          //there is no subscription in stripe yet
+          return resolve(null)
+        }
 
         stripe.subscriptions.retrieve(accountSubscription.stripeCustomerId,
         (err, stripeSubscription) => {
           if (err) {
-            sails.log.debug("ERROR creating stripe subscription: ", err);
-            return reject2(err)
+            sails.log.debug("ERROR retrieving stripe subscription: ", err);
+            return reject(err)
           }
           return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
         })
