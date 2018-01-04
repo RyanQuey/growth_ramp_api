@@ -34,9 +34,10 @@ module.exports.routes = {
     controller: 'AccountSubscriptionsController',
     action: 'initializeForStripe',
   },
-  'post /accountSubscriptions/handleCreditCardInfo/:userId': {
+
+  'post /accountSubscriptions/handleCreditCardUpdate/:userId': {
     controller: 'AccountSubscriptionsController',
-    action: 'handleCreditCardInfo',
+    action: 'handleCreditCardUpdate',
   },
 
 

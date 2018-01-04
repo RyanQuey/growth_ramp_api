@@ -62,20 +62,11 @@ module.exports = {
       }
     })
     .then((accountSubscription) => {
-      return AccountSubscriptions.updateStripeCustomer(accountSubscription, req.body)
+      return AccountSubscriptions.handleCreditCardUpdate(accountSubscription, req.body, req.user)
     })
-    .then((updatedSub) => {
-      if (!updatedSub) {
-        throw new Error("for some reason didn't find account subscription")
-      }
+    .then((updatedSubRecord) => {
 
-      if (!updatedSub.stripeSubscriptionId) {
-        //create the stripe subscription
-        return AccountSubscriptions.createStripeSubscription(accountSubscription, req.body.paymentPlan, req.user)
-      } else {
-
-      }
-      return res.ok(updatedSub)
+      return res.ok(updatedSubRecord)
     })
     .catch((err) => {
       return res.negotiate(err)
