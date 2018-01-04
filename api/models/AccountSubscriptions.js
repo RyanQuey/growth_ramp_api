@@ -18,6 +18,7 @@ module.exports = {
     paymentPlan:       {type: "string"}, //stripe's subscription plan ID for their plan
     currency:          {type: "string"}, //not sure if we'll use it, but international so maybe?
     defaultSourceId:     {type: "string"}, //their credit card's source id in stripe's db
+    defaultSourceLastFour:     {type: "string"}, //their credit card's last 4
     currentPeriodEnd:  {type: "datetime"},// basically when next payment is due
     currentPeriodStart:{type: "datetime"},// basically when last Payment was made
     cancelAtPeriodEnd:  {type: "boolean"},//whether or not they are set to renew or are not paying anymore at date of nextPaymentDue
@@ -240,11 +241,13 @@ console.log("now updating to get plan");
         stripeSubscriptionId: stripeSubscription.id,
       }
 
+    // assumes source is credit card
     } else if (stripeResourceType === "source") {
       const source = data
       params = {
         currency: source.currency,
         defaultSourceId: source.id,
+        defaultSourceLastFour: source.card && source.card.last4,
       }
     }
 
