@@ -68,7 +68,7 @@ console.log("matching record", record);
         /*userId && modelAttributes.includes('userId') ||
         ownerId && modelAttributes.includes('ownerId')*/
       ) {
-console.log(req.user.id, userId, ownerId, req.params);
+console.log(req.user.id, userId, ownerId);
         if ([userId, ownerId].includes(req.user.id)) {
           pass();
         } else {
