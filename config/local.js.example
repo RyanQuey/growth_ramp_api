@@ -18,6 +18,7 @@ module.exports.env = {
   //for developers console
   GOOGLE_API_KEY: '***REMOVED***',
   TOKEN_ENCRYPTION_KEY: '', //should be 32 characters
+  STRIPE_SECRET_KEY: "sk_test_qmIgEP13FMTO3UKmo4DcS9Hn", //this one is the test one; live one overrides it in heroku
 
   PG_PASSWORD: '',
   PG_USER: '',

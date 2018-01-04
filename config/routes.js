@@ -27,6 +27,20 @@ module.exports.routes = {
   },
 
   ////////////////////////////////////////////////////////////////
+  //accountSubscriptions
+  //
+
+  'post /accountSubscriptions/initializeForStripe/:userId': {
+    controller: 'AccountSubscriptionsController',
+    action: 'initializeForStripe',
+  },
+  'post /accountSubscriptions/handleCreditCardInfo/:userId': {
+    controller: 'AccountSubscriptionsController',
+    action: 'handleCreditCardInfo',
+  },
+
+
+  ////////////////////////////////////////////////////////////////
   //campaigns
   //
 

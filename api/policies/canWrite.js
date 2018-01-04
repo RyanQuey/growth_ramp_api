@@ -60,7 +60,7 @@ console.log("matching record", record);
       //still is ok for reading (sinec will only find resources with that userid hopefully??), but not writing
       if (
         //can create anything if it's for yourself!
-        ["create", "createfromcampaign", "contactus"].includes(action)
+        ["create", "createfromcampaign", "contactus"].includes(action) || modelIdentity === "accountsubscriptions"
 
         //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
         //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself

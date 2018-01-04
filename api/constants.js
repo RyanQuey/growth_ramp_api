@@ -4,6 +4,10 @@ const callbackPath = process.env.PROVIDER_CALLBACK_PATH || '/provider_redirect'
 const callbackUrl = domain + callbackPath
 
 module.exports = {
+  ACCOUNT_SUBSCRIPTION_STATUSES: [
+    "ACTIVE",
+    "ARCHIVED"
+  ],
   POST_TEMPLATE_STATUSES: [
     "ACTIVE",
     "ARCHIVED"
@@ -179,6 +183,8 @@ module.exports = {
     //customUtm: "utm_custom",
   },
 
+//TODO when change it here, must change it in frontend!!
+//currently, just allows them to continue use even when they have no plan. then when their time is over, when they login they'll be prompted to add data, and b/c backend knows it too, no more campaigns can get published
   ALLOWED_EMAILS: [
     "***REMOVED***",
     "***REMOVED***",
@@ -197,7 +203,7 @@ module.exports = {
     //"***REMOVED***", ***REMOVED*** was added to replace him
     "***REMOVED***",
     "***REMOVED***",
-    "***REMOVED***",
+    "***REMOVED***", //this guy is only doing for 3 months so far
     "***REMOVED***",
     "***REMOVED***",
     "***REMOVED***",

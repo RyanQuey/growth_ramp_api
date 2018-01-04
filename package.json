@@ -54,6 +54,7 @@
     "sails-postgresql": "^0.12.2",
     "serve-favicon": "~2.4.2",
     "sqlstring": "^2.2.0",
+    "stripe": "^5.4.0",
     "styliner": "^1.0.3",
     "twit": "^2.2.9",
     "uuid": "^3.1.0"
