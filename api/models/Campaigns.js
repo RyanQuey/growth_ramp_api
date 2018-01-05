@@ -413,12 +413,31 @@ console.log("now updated ", posts.length, "posts after updating campaign");
           updatedPosts,
         }
       })
+      .catch((err) => {
+        throw err
+      })
 
     } else {
       //return message, to cue that didn't need to update stuff
       return Promise.resolve("no-updates")
     }
 
-  }
+  },
+
+  //does not necessarily create stripe sub though, if no payment info yet. But prepares the customer and creates our db record
+  findOrInitializeSubscription: (user) => {
+    return AccountSubscriptions.findOne({userId: user.id})
+    .then((sub) => {
+      if (!sub) {
+        return AccountSubscriptions.initializeForStripe(req.user)
+      } else {
+        // just return it!
+        return sub
+      }
+    })
+    .catch((err) => {
+      throw err
+    })
+  },
 };
 

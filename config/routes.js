@@ -29,6 +29,10 @@ module.exports.routes = {
   ////////////////////////////////////////////////////////////////
   //accountSubscriptions
   //
+  'get /accountSubscriptions/checkStripeStatus/:userId': {
+    controller: 'AccountSubscriptionsController',
+    action: 'checkStripeStatus',
+  },
 
   'post /accountSubscriptions/initializeForStripe/:userId': {
     controller: 'AccountSubscriptionsController',
