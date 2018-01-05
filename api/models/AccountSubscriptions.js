@@ -168,7 +168,7 @@ module.exports = {
           return resolve(null)
         }
 
-        stripe.subscriptions.retrieve(accountSubscription.stripeCustomerId,
+        stripe.subscriptions.retrieve(accountSubscription.stripeSubscriptionId,
         (err, stripeSubscription) => {
           if (err) {
             sails.log.debug("ERROR retrieving stripe subscription: ", err);
