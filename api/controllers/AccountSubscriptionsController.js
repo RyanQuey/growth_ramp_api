@@ -30,16 +30,24 @@ module.exports = {
     })
   },
 
-	updatePaymentInfo: (req, res) => {
-    //first, make sure user doesn't already have a customer related to them
-    return AccountSubscriptions.findOne({userId: req.user.id})
-    .then((sub) => {
-      if (!sub) {
-        return AccountSubscriptions.initializeForStripe(req.user)
-      } else {
-        // just return it!
-        return sub
-      }
+  //check's stripe subscription and payment status, refreshes our record
+  checkStripeStatus: (req, res) => {
+    return AccountSubscriptions.checkStripeStatus(req.user.id)
+    .then((result) => {
+      return res.ok(result)
+    })
+    .catch((err) => {
+      sails.log.debug("Error checking stripe status for : ", req.user.email, err);
+      return res.badRequest(err)
+    })
+  },
+
+  //coupons, payment plan etc
+  //keeps our record in sync with stripe
+	updateSubscription: (req, res) => {
+    return AccountSubscriptions.findOrInitializeSubscription(req.user)
+    .then((accountSubscription) => {
+      return AccountSubscriptions.updateSubscription(accountSubscription, req.body, req.user)
     })
     .then((accountSubscription) => {
       return res.created(accountSubscription)
@@ -51,18 +59,12 @@ module.exports = {
   },
 
   //handle and payment CC info, whether creating or updating customer, and whether updating or creating subscription
+  //use this rather than other paths of updating stripe subscription to make sure it goes well (b/c handling source obj)
   handleCreditCardUpdate: (req, res) => {
-    return AccountSubscriptions.findOne({userId: req.user.id})
-    .then((sub) => {
-      if (!sub) {
-        return AccountSubscriptions.initializeForStripe(req.user)
-      } else {
-        // just return it!
-        return sub
-      }
-    })
+    return AccountSubscriptions.findOrInitializeSubscription(req.user)
     .then((accountSubscription) => {
-      return AccountSubscriptions.handleCreditCardUpdate(accountSubscription, req.body, req.user)
+      const sourceObj = req.body
+      return AccountSubscriptions.handleCreditCardUpdate(accountSubscription, source, req.user)
     })
     .then((updatedSubRecord) => {
 
