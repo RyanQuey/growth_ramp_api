@@ -188,7 +188,7 @@ module.exports = {
   ALLOWED_EMAILS: [
     "rlquey2@gmail.com",
     "rlquey2+test@gmail.com",
-    "rlquey2+test2@gmail.com",
+    //"rlquey2+test2@gmail.com",
     "rlquey2+test3@gmail.com",
     "rlquey2+test4@gmail.com",
     "jdquey@gmail.com",
