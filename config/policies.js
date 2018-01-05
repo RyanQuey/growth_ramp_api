@@ -41,8 +41,10 @@ module.exports.policies = {
   },*/
   AccountSubscriptionsController: {
     initializeForStripe: ['userTokenAuth', 'canWrite'],
+    checkStripeStatus: ['userTokenAuth', 'canRead'],
     handleCreditCardUpdate: ['userTokenAuth', 'canWrite'],
   },
+
   CampaignsController: {
     create: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
