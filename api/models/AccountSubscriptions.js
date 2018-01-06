@@ -198,7 +198,7 @@ console.log("params", stripeParams);
       AccountSubscriptions.findOne({userId: userId, status: "ACTIVE"})
       .then((accountSub) => {
         accountSubscription = accountSub
-        if (!accountSubscription.stripeSubscriptionId) {
+        if (!accountSubscription || !accountSubscription.stripeSubscriptionId) {
           //there is no subscription in stripe yet, just return
           return resolve(accountSubscription)
         }
