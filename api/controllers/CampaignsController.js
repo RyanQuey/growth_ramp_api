@@ -36,7 +36,7 @@ module.exports = {
 
     AccountSubscriptions.checkStripeStatus(req.user.id)
     .then((sub) => {
-      if (!ALLOWED_EMAILS.includes(req.user.email) && (!sub || ["past_due", "canceled", "unpaid"].includes(sub.subscriptionStatus))) {
+      if (!ALLOWED_EMAILS.includes(req.user.email) && (!sub || ["past_due", "canceled", "unpaid", null].includes(sub.subscriptionStatus))) {
         throw {message: "Payment is required before user can publish", code: "delinquent-payment"}
       }
 
