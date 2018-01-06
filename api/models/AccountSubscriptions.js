@@ -7,12 +7,13 @@
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || sails.config.env.STRIPE_SECRET_KEY) //secret key
 import {ALLOWED_EMAILS, ACCOUNT_SUBSCRIPTION_STATUSES} from '../constants'
-
+console.log(ACCOUNT_SUBSCRIPTION_STATUSES);
 module.exports = {
   tableName: "accountSubscriptions",
   attributes: {
-    //status:            {type: "string", enum: ACCOUNT_SUBSCRIPTION_STATUSES, defaultsTo: ACCOUNT_SUBSCRIPTION_STATUSES[0]},  //SHOULD ALWAYS BE ACTIVE, EVERY USER NEEDS ONE OF THESE . HOwever, when we add workgroups, maybe just leave this alone, and user logs into workgroup to post for the group. But maybe will also want company subscription to apply for a single user. In that case, maybe check both subscriptions? or just ignore the user's one or somethign?
+    status:            {type: "string", enum: ACCOUNT_SUBSCRIPTION_STATUSES, defaultsTo: ACCOUNT_SUBSCRIPTION_STATUSES[0], required: true},  //SHOULD ALWAYS BE ACTIVE, EVERY USER NEEDS ONE OF THESE . HOwever, when we add workgroups, maybe just leave this alone, and user logs into workgroup to post for the group. But maybe will also want company subscription to apply for a single user. In that case, maybe check both subscriptions? or just ignore the user's one or somethign?
     subscriptionFor:   {type: "string", enum: ["USER", "WORKGROUP"], defaultsTo: "USER"},
+    subscriptionStatus:   {type: "string"}, //using stripe's statuses
     stripeCustomerId:  {type: "string"},
     stripeSubscriptionId:  {type: "string"},
     paymentPlan:       {type: "string"}, //stripe's subscription plan ID for their plan
@@ -24,6 +25,7 @@ module.exports = {
     cancelAtPeriodEnd:  {type: "boolean"},//whether or not they are set to renew or are not paying anymore at date of nextPaymentDue
     cancelledAt:        {type: "datetime"},
     endedAt:            {type: "datetime"},
+    planItemId:      {type: "string"}, //used for updating stripe plan OR reactivating account
 
     //associations
     //only one userId , as the owner of the subscription
@@ -77,7 +79,7 @@ module.exports = {
       if (!source || !source.id) {return reject(new Error("no source id provided in ", data))}
 
       //attach card to customer
-      /*stripe.customers.createSource(accountSubscription.stripeCustomerId, {source: source.id}, (err, source) => {
+      stripe.customers.createSource(accountSubscription.stripeCustomerId, {source: source.id}, (err, source) => {
         if (err) {
           sails.log.debug("ERROR creating stripe customer: ");
           return reject(err)
@@ -100,50 +102,55 @@ module.exports = {
           .then(([updatedAccountSubscription]) => {
             console.log(updatedAccountSubscription);
 
-*/
-
           //setting source on a subscription, updating or creating, sets it as default card for customer, skipping previous two steps
-          const doIt = () => {
-            if (!accountSubscription.stripeSubscriptionId) {
-              //create the stripe subscription
-              return AccountSubscriptions.createStripeSubscription(accountSubscription, user, source)
-            } else {
-              return AccountSubscriptions.updateStripeSubscription(accountSubscription, user, source)
+          //this was no longer working, so just doing long way again
+          //const params = {source}
+
+            const params = {}
+
+            const doIt = () => {
+              if (!accountSubscription.stripeSubscriptionId) {
+                //create the stripe subscription
+                return AccountSubscriptions.createStripeSubscription(accountSubscription, user, params)
+              } else {
+                return AccountSubscriptions.updateStripeSubscription(accountSubscription, user, params)
+              }
             }
-          }
+            doIt()
+            .then((readyAccountSub) => {
+              //sub is now ready to be billed
 
-          doIt()
-          .then((readyAccountSub) => {
-            //sub is now ready to be billed
-
-            return resolve(readyAccountSub)
+              return resolve(readyAccountSub)
+            })
+            .catch((err3) => {
+              return reject(err3)
+            })
           })
-          .catch((err3) => {
-            return reject(err3)
-          })
- //       })
-//      })
+        })
+      })
     })
   },
 
   //use subscription, in case workgroup admin who is not userId wants to change this eventually
   //get the subscription in the controller
   //NOTE cannot create paid subscription without credit card on file
-  createStripeSubscription: (accountSubscription, user, source) => {
+  //params arg should be ready to be passed directly to stripe
+  createStripeSubscription: (accountSubscription, user, params = {}) => {
     return new Promise((resolve, reject) => {
-
-      let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
-      stripeParams.billing = "charge_automatically"
-      stripeParams.source = source
+      //now setting source before getting here
+      //if (!params || !params.source) {throw new Error("source is required before creating stripe subscription (should be object)")}
 
       //payment plan will often be set separately from creating subscription, or even before credit card info is set. So, first derived from the record
       // currently manually overriding requests for free plan that shouldn't be, for security reasons.
-      stripeParams.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : stripeParams.paymentPlan || "basic-monthly"
+      accountSubscription.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : accountSubscription.paymentPlan || "basic-monthly"
 
+      let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
+      Object.assign(stripeParams, params)
+      stripeParams.billing = "charge_automatically"
 
       stripe.subscriptions.create(stripeParams, (err, stripeSubscription) => {
         if (err) {
-          sails.log.debug("ERROR creating stripe customer: ", err);
+          sails.log.debug("ERROR creating stripe subscription: ", err);
           return reject(err)
         }
 
@@ -154,19 +161,24 @@ module.exports = {
 
   //haven't tested yet
   //change their subscription plan
-  updateStripeSubscription: (accountSubscription, user, params) => {
+  //params arg should be ready to be passed directly to stripe
+  updateStripeSubscription: (accountSubscription, user, params = {}) => {
     return new Promise((resolve, reject) => {
+      // currently manually overriding requests for free plan that shouldn't be, for security reasons.
+      accountSubscription.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : accountSubscription.paymentPlan || "basic-monthly"
+
+      //in case we've updated our record and now need to update stripe, eg, if user has changed payment plan or added coupon, but we haven't updated stripe yet (MUST DO, SINCE EXTERNAL API!!!)
       let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
-      stripeParams.source = source
+      //don't want to update customer
+      delete stripeParams.customer
 
-      //validation to make sure no one sneaks in a request for a free account
-      stripeParams.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : stripeParams.paymentPlan
-
-      stripe.subscriptions.update(accountSubscription.stripeSubscriptionId, {
+      Object.assign(stripeParams, params)
+console.log("params", stripeParams);
+      stripe.subscriptions.update(accountSubscription.stripeSubscriptionId,
         stripeParams
-      }, (err, stripeSubscription) => {
+      , (err, stripeSubscription) => {
         if (err) {
-          sails.log.debug("ERROR creating stripe customer: ", err);
+          sails.log.debug("ERROR updating stripe subscription: ", );
           return reject(err)
         }
 
@@ -176,19 +188,19 @@ module.exports = {
 
   },
 
-  //refresh data with stripe
+  //refresh data with stripe - particularly subscription
+  //for checking the card's status, see checkCreditCardStatus
   //TODO will have to make usable for workgroups in future too maybe
   checkStripeStatus: (userId) => {
     return new Promise((resolve, reject) => {
       let accountSubscription
 
-      AccountSubscriptions.findOne({userId: userId})
+      AccountSubscriptions.findOne({userId: userId, status: "ACTIVE"})
       .then((accountSub) => {
-console.log(accountSub);
         accountSubscription = accountSub
         if (!accountSubscription.stripeSubscriptionId) {
-          //there is no subscription in stripe yet
-          return resolve(null)
+          //there is no subscription in stripe yet, just return
+          return resolve(accountSubscription)
         }
 
         stripe.subscriptions.retrieve(accountSubscription.stripeSubscriptionId,
@@ -197,13 +209,113 @@ console.log(accountSub);
             sails.log.debug("ERROR retrieving stripe subscription: ", err);
             return reject(err)
           }
-console.log("now syncing with our record");
+          console.log("now syncing with our record");
           //returns in sync account record
           return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
         })
       })
       .catch((err) => {
         return reject(err)
+      })
+    })
+  },
+
+  checkCreditCard: (accountSubscription) => {
+    return new Promise((resolve, reject) => {
+      const sourceId = accountSubscription.defaultSourceId
+
+      stripe.sources.retrieve(sourceId, (err, source) => {
+        return resolve(source) //looking especially for source.status === "chargeable"
+
+
+      })
+    })
+  },
+
+  //either canceling at end of next billing period or immediately
+  cancelStripeSubscription: (accountSubscription, data) => {
+    return new Promise((resolve, reject) => {
+      const params = {
+        at_period_end: data && !data.cancelImmediately,
+      }
+
+      stripe.subscriptions.del(accountSubscription.stripeSubscriptionId, params, (err, cancelledStripeSubscription) => {
+        if (err) {
+          sails.log.debug("ERROR cancelling stripe subscription: ", );
+          return reject(err)
+        }
+        console.log("now syncing cancelled stripe record with our record");
+        console.log(cancelledStripeSubscription);
+        //returns in sync account record
+        return resolve(AccountSubscriptions._syncAPIWithStripeSub(cancelledStripeSubscription, accountSubscription))
+      });
+    })
+    .catch((err) => {
+      sails.log.debug("Error cancelling stripe for : ", req.user.email);
+      return res.badRequest(err)
+    })
+  },
+
+  // if account is active but cancelling at period end, stop cancelling at period end.
+  // if account is ended, take source from old stripe sub, and create a new one (only way stripe lets it work), archive user's current record, and create new one for the user
+  reactivateStripeSubscription: (user) => {
+    return new Promise((resolve, reject) => {
+      let accountSubscription
+      AccountSubscriptions.checkStripeStatus(user.id)
+      .then((result) => {
+        accountSubscription = result
+        //only need to check; not update it. Will already be attached to the cutomser in stripe, so is ready to go. Sources never get attached to subscriptions in stripe
+        return AccountSubscriptions.checkCreditCard(accountSubscription)
+      })
+      .then((source) => {
+        if (source.status !== "chargeable") {
+          throw {code: "requires-new-card"}
+        }
+
+        if (accountSubscription.endedAt || !accountSubscription.stripeSubscriptionId) {
+          //create a new one; archive old one for record keeping
+          let newAccountSub
+          return AccountSubscriptions.update({id: accountSubscription.id}, {status: "ARCHIVED"})
+          .then((archivedSub) => {
+            const params = _.pick(archivedSub, ["stripeCustomerId", "currency", "defaultSourceId", "paymentPlan", "currentPeriodEnd"])
+
+            return AccountSubscriptions.create(params)
+          })
+          .then((result) => {
+            newAccountSub =  result
+
+            return resolve(AccountSubscriptions.createStripeSubscription(newAccountSub, user))
+          })
+          .catch((err) => {
+            sails.log.debug("Error reactivating stripe for : ", req.user.email);
+            throw err
+          })
+
+        } else {
+          //if you update and set the payment plan again, automatically reactiavtes plan if it hasn't cancelled yet
+
+          const updateIt = (itemId) => {
+            return AccountSubscriptions.updateStripeSubscription(accountSubscription, user, {items: [{id: itemId, plan: accountSubscription.paymentPlan}]})
+          }
+
+          let itemId
+
+          //if don't have it yet, go and get it
+          if (!accountSubscription.planItemId) {
+            stripe.subscriptions.retrieve(accountSubscription.stripeSubscriptionId, (err, stripeSubscription) => {
+              if (err) {
+                return reject(err)
+              }
+              itemId = stripeSubscription.items.data[0].id
+
+              return resolve(updateIt(itemId))
+            })
+
+          } else {
+            itemId = accountSubscription.planItemId
+            return resolve(updateIt(itemId))
+          }
+        }
       })
     })
   },
@@ -236,12 +348,27 @@ console.log("now syncing with our record");
       }, params)
       .then(([accountSubscription]) => {
         //TODO probably send them an email if it's out of date, etc
-
         return resolve(accountSubscription)
       })
       .catch((err) => {
         return reject(err)
       })
+    })
+  },
+
+  //does not necessarily create stripe sub though, if no payment info yet. But prepares the customer and creates our db record
+  findOrInitializeSubscription: (user) => {
+    return AccountSubscriptions.findOne({userId: user.id, status: "ACTIVE"})
+    .then((sub) => {
+      if (!sub) {
+        return AccountSubscriptions.initializeForStripe(user)
+      } else {
+        // just return it!
+        return sub
+      }
+    })
+    .catch((err) => {
+      throw err
     })
   },
 
@@ -270,6 +397,7 @@ console.log("now syncing with our record");
         subscriptionStatus: stripeSubscription.status,
         paymentPlan: stripeSubscription.plan && stripeSubscription.plan.id || null, //often these should already be kthe same. But if not, stripe's records are the source of truth
         stripeSubscriptionId: stripeSubscription.id,
+        planItemId: Helpers.safeDataPath(stripeSubscription, "items.data.0.id")
       }
 
     // assumes source is credit card
@@ -286,12 +414,12 @@ console.log("now syncing with our record");
   },
 
   //default to empty obj, don't want this erroring out
-  //data will be in form matching the accountSubscription record obj
-  _translateForStripe: (data, stripeResourceType) => {
-    //each pair should be path to param in the data, then path to param in the obj to send to Stripe
+  //if don't want to pass in whole accountSub, just pick the traits you want...or better, don't use this helper
+  _translateForStripe: (accountSubscription, stripeResourceType) => {
+    //each pair should be path to param in the accountSubscription, then path to param in the obj to send to Stripe
     let stripeParams = {}, potentialParams
 
-    if (!data || typeof data !== "object") throw new Error("data to send is not an object" , data)
+    if (!accountSubscription || typeof accountSubscription !== "object") throw new Error("accountSubscription to send is not an object" , accountSubscription)
 
     if (stripeResourceType === "customer") {
       potentialParams = [
@@ -302,15 +430,18 @@ console.log("now syncing with our record");
     } else if (stripeResourceType === "subscription") {
       potentialParams = [
         ["couponCode", "coupon"],
-        ["paymentPlan", `items.0.plan`], //should be string with planId
-        ["stripeCustomerId", "customer"],
+        ["paymentPlan", `items.0.plan`], //should be string with planId. only doing this if creating NOT UPDATING
+        ["planItemId", `items.0.id`], //needs to be there for updating ppayment plan to work.
+        ["stripeCustomerId", "customer"], //esp imp for creating nwe stripe sub
       ]
     }
 
     //all this so don't send a whole bunch of undefined params to stripe, if there's things we are not tryihg to update, they are left untouched. But, if things set to false or null, we can update that.
     for (let paramPair of potentialParams) {
-      if (Helpers.safeDataPath(data, paramPair[0], undefined) !== undefined) {
-        _.set(stripeParams, paramPair[1])
+      let recordData = Helpers.safeDataPath(accountSubscription, paramPair[0], undefined)
+console.log(recordData);
+      if (![undefined, null].includes(recordData)) {
+        _.set(stripeParams, paramPair[1], recordData)
       }
     }
 

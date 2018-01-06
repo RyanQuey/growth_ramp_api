@@ -29,6 +29,8 @@ module.exports.routes = {
   ////////////////////////////////////////////////////////////////
   //accountSubscriptions
   //
+
+//so far not using params.userId except for in policy; just cancels it for the req.user. But might be handy later if add workgroups or something
   'get /accountSubscriptions/checkStripeStatus/:userId': {
     controller: 'AccountSubscriptionsController',
     action: 'checkStripeStatus',
@@ -44,6 +46,15 @@ module.exports.routes = {
     action: 'handleCreditCardUpdate',
   },
 
+  'post /accountSubscriptions/cancelStripeSubscription/:userId': {
+    controller: 'AccountSubscriptionsController',
+    action: 'cancelStripeSubscription',
+  },
+
+  'post /accountSubscriptions/reactivateStripeSubscription/:userId': {
+    controller: 'AccountSubscriptionsController',
+    action: 'reactivateStripeSubscription',
+  },
 
   ////////////////////////////////////////////////////////////////
   //campaigns
