@@ -277,24 +277,32 @@ module.exports = {
 
         const publishedPosts = allPosts.filter(post => post.publishedAt)
         //we're all done
-        if (!failedPosts.length && !delayedPosts.length) {
+        if ((!failedPosts.length && !delayedPosts.length) && campaign.status !== "PUBLISHED") {
           return Campaigns.update({id: campaign.id}, {
             publishedAt: moment.utc().format(),
             status: "PUBLISHED",
           })
 
         //if published any right now OR published some in past
-        } else if (failedPosts.length !== postResults.length || publishedPosts.length) {
+        } else if ((failedPosts.length !== postResults.length || publishedPosts.length) && campaign.status !== "PARTIALLY_PUBLISHED") {
           return Campaigns.update({id: campaign.id}, {
             //can use updatedAt to see when it was
             status: "PARTIALLY_PUBLISHED",
             publishedAt: null, //in case was previously marked as pub'd
           })
+        } else if (!publishedPosts.length && campaign.status !== "DRAFT") {
+          return Campaigns.update({id: campaign.id}, {
+            //can use updatedAt to see when it was
+            status: "DRAFT",
+            publishedAt: null, //in case was previously marked as pub'd
+          })
+        } else {
+          return [campaign]
         }
       })
       .then((c) => {
         console.log("updated campaign");
-        let updatedCampaign = Object.assign({}, c[0])
+        let updatedCampaign = Object.assign({}, c[0]) //don't want the same object here b/c...I'm not sure. Maybe doesn't matter
         updatedCampaign.posts = postResults //DO NOT POPULATE! Need to have error prop on the posts, as is returned here
 
         //so will return updated campaign object, just as regular Campaigns.update would, but with populated posts

@@ -6,7 +6,7 @@ var ALLOWED_EMAILS = require('../api/constants').ALLOWED_EMAILS
 module.exports = class PublishDelayedPosts extends Job {
   constructor (options) {
     super();
-    this.now().every('1 minutes');
+    this.now().every('5 minutes');
 
     this.running = false;
     return this;
@@ -36,7 +36,7 @@ module.exports = class PublishDelayedPosts extends Job {
     .then((results) => {
       postsToPublish = results
       //publish by campaign; that is how the functions are already written, gets the accounts in a systematic way, makes sure to update campaign at the end, etc
-
+console.log("some delayed posts that want to get published: ", postsToPublish.map((p) => `ID: ${p.id} ; delay time: ${p.delayedUntil} ; Published at?: ${p.publishedAt} `));
       if (!postsToPublish || !postsToPublish.length) {
         return []
       }
@@ -64,7 +64,7 @@ console.log("users ", uniqueUserIds);
       return Users.find({id: uniqueUserIds})
     })
     .then((users) => {
-console.log("found users", users);
+console.log("found users", users.map((u) => u.email));
       if (!users || !users.length) {
         return []
       }
@@ -101,18 +101,23 @@ console.log("found users", users);
       return Promise.all(promises)
     })
     .then((results) => {
-console.log("user check results", results)
       results = results || []
-      const approvedUserIds = results.filter((r) => r.status === "accepted" && r.userId)
+console.log("user check results", results)
+      const approvedUserIds = results.filter((r) => r.status === "accepted").map(r => r.userId)
+      console.log('approved user IDs', approvedUserIds);
 
       const campaignIds = Object.keys(campaignsToPublish)
+      console.log("campaigns that have delayed posts to publish: ", campaignIds);
+
       const approvedCampaignIds = campaignIds.filter((id) => {
-        let campaignUserId = campaignsToPublish[id].campaign.userId
+        let campaignUserId = Helpers.safeDataPath(campaignsToPublish, `${id}.campaign.userId`, "")
         return approvedUserIds.includes(campaignUserId)
       })
 
+console.log("approved campaigns: ", approvedCampaignIds);
       const promises2 = approvedCampaignIds.map((id) => {
         const data = campaignsToPublish[id]
+        console.log("publishing this data: ", data);
         return Campaigns.publishCampaign(data.campaign, data.readyPosts)
       })
 
