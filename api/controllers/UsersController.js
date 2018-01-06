@@ -14,6 +14,17 @@ module.exports = {
   //login / authentication stuff
   ///////////////////////////////////////////////////////////
 
+  create: function (req, res) {
+    Users.create(req.body)
+    .then((user) => {
+      res.ok({user})
+    })
+    .catch((err) => {
+      sails.log.debug("ERROR signing up with request ", req.body );
+      res.badRequest(err)
+    })
+  },
+
   authenticate: function (req, res) {
 		let email = req.body.email;
 		let password = req.body.password;
