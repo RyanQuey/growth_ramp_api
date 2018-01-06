@@ -113,6 +113,13 @@ sails.log.debug(postsToPublish, now);
     .then((allResults) => {
       console.log("Finished publishing delayed posts:");
       console.log(allResults);
+
+      // run this after posts are done, so doesn't interrupt them in any way, and keeps code cleaner
+      console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
+       return
+    })
+    .then(() => {
+
       this.running = false;
       return true;
     })
