@@ -25,7 +25,8 @@ module.exports = {
       return res.created(accountSubscription)
     })
     .catch((err) => {
-      sails.log.debug("ERROR creating stripe customer and subscription: ", err);
+      sails.log.debug("ERROR creating stripe customer and subscription: ");
+      sails.log.debug(err);
       return res.negotiate(err)
     })
   },
@@ -37,7 +38,37 @@ module.exports = {
       return res.ok(result)
     })
     .catch((err) => {
-      sails.log.debug("Error checking stripe status for : ", req.user.email, err);
+      sails.log.debug("Error checking stripe status for : ", req.user.email);
+      sails.log.debug(err);
+      return res.badRequest(err)
+    })
+  },
+
+  //either canceling at end of next billing period or immediately
+  cancelStripeSubscription: (req, res) => {
+    return AccountSubscriptions.findOrInitializeSubscription(req.user)
+    .then((accountSubscription) => {
+      return AccountSubscriptions.cancelStripeSubscription(accountSubscription, req.body)
+    })
+    .then((result) => {
+      return res.ok(result)
+    })
+    .catch((err) => {
+      sails.log.debug("Error cancelling stripe status for : ", req.user.email);
+      sails.log.debug(err);
+      return res.badRequest(err)
+    })
+  },
+
+  //reactivates a once active account subscription
+  reactivateStripeSubscription: (req, res) => {
+    return AccountSubscriptions.reactivateStripeSubscription(req.user)
+    .then((result) => {
+      return res.ok(result)
+    })
+    .catch((err) => {
+      sails.log.debug("Error reactivating stripe status for : ", req.user.email);
+      sails.log.debug(err);
       return res.badRequest(err)
     })
   },
@@ -53,7 +84,8 @@ module.exports = {
       return res.created(accountSubscription)
     })
     .catch((err) => {
-      sails.log.debug("ERROR creating stripe customer and subscription: ", err);
+      sails.log.debug("ERROR creating stripe customer and subscription: ");
+      sails.log.debug(err);
       return res.negotiate(err)
     })
   },
@@ -61,16 +93,18 @@ module.exports = {
   //handle and payment CC info, whether creating or updating customer, and whether updating or creating subscription
   //use this rather than other paths of updating stripe subscription to make sure it goes well (b/c handling source obj)
   handleCreditCardUpdate: (req, res) => {
+console.log("saw update");
     return AccountSubscriptions.findOrInitializeSubscription(req.user)
     .then((accountSubscription) => {
       const sourceObj = req.body
-      return AccountSubscriptions.handleCreditCardUpdate(accountSubscription, source, req.user)
+      return AccountSubscriptions.handleCreditCardUpdate(accountSubscription, sourceObj, req.user)
     })
     .then((updatedSubRecord) => {
 
       return res.ok(updatedSubRecord)
     })
     .catch((err) => {
+      sails.log.debug(err);
       return res.negotiate(err)
     })
   },
