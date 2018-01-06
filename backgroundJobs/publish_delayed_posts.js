@@ -1,11 +1,12 @@
 var Job = require('./job');
 var moment = require('moment');
+var ALLOWED_EMAILS = require('../api/constants').ALLOWED_EMAILS
 
 //sends any unsent notifications
 module.exports = class PublishDelayedPosts extends Job {
   constructor (options) {
     super();
-    this.now().every('10 minutes');
+    this.now().every('1 minutes');
 
     this.running = false;
     return this;
@@ -23,6 +24,7 @@ module.exports = class PublishDelayedPosts extends Job {
 
     const campaignsToPublish = {}
     const usersWithFailedPublishes = []
+    let postsToPublish
 
     Posts.find({
       publishedAt: null,
@@ -31,8 +33,8 @@ module.exports = class PublishDelayedPosts extends Job {
         "<=": now,
       },
     }).populate("campaignId").populate('providerAccountId').populate('channelId')
-    .then((postsToPublish) => {
-sails.log.debug(postsToPublish, now);
+    .then((results) => {
+      postsToPublish = results
       //publish by campaign; that is how the functions are already written, gets the accounts in a systematic way, makes sure to update campaign at the end, etc
 
       if (!postsToPublish || !postsToPublish.length) {
@@ -58,28 +60,30 @@ sails.log.debug(postsToPublish, now);
           uniqueUserIds.push(post.userId)
         }
       }
-
+console.log("users ", uniqueUserIds);
       return Users.find({id: uniqueUserIds})
     })
     .then((users) => {
+console.log("found users", users);
       if (!users || !users.length) {
         return []
       }
 
       //copies regular posting flow
       const promises = users.map((user) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve2, reject2) => {
           AccountSubscriptions.checkStripeStatus(user.id)
           .then((sub) => {
             if (!ALLOWED_EMAILS.includes(user.email) && (!sub || ["past_due", "canceled", "unpaid", null].includes(sub.subscriptionStatus))) {
               usersWithFailedPublishes.push({
                 user: user,
                 error: {message: "Payment is required before user can publish", code: "delinquent-payment"},
+                failedPosts: postsToPublish.filter((p) => p.userId === user.id)
               })
 
-              return resolve({userId: user.id, status: "rejected"} )
+              return resolve2({userId: user.id, status: "rejected"} )
             } else {
-              return resolve({userId: user.id, status: "accepted"})
+              return resolve2({userId: user.id, status: "accepted"})
             }
 
           })
@@ -87,14 +91,18 @@ sails.log.debug(postsToPublish, now);
             sails.log.debug("Failure checking stripe while posting delayed post for ", user.email);
             sails.log.debug(err);
 
-            return resolve({userId: user.id, status: "rejected"} )
+            return resolve2({userId: user.id, status: "rejected"} )
           })
 
         })
 
       })
+
+      return Promise.all(promises)
     })
     .then((results) => {
+console.log("user check results", results)
+      results = results || []
       const approvedUserIds = results.filter((r) => r.status === "accepted" && r.userId)
 
       const campaignIds = Object.keys(campaignsToPublish)
@@ -116,7 +124,8 @@ sails.log.debug(postsToPublish, now);
 
       // run this after posts are done, so doesn't interrupt them in any way, and keeps code cleaner
       console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
-       return
+      sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes );
+      return
     })
     .then(() => {
 
