@@ -195,6 +195,7 @@ module.exports = {
 
   //is called when user who has an account starts a session
   //nicely sends everything all at once; saves some trips
+  //does not get run on signup; there just return {user: user} to emulat
   initialUserData: (userData) => {
     return new Promise((resolve, reject) => {
       const promises = []
