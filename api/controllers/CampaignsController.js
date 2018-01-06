@@ -34,6 +34,8 @@ module.exports = {
   publish: (req, res) => {
     const campaign = req.matchingRecord
 
+    //also gets ran in the delayed post background work
+    //if gets more complicated than this, make a helper
     AccountSubscriptions.checkStripeStatus(req.user.id)
     .then((sub) => {
       if (!ALLOWED_EMAILS.includes(req.user.email) && (!sub || ["past_due", "canceled", "unpaid", null].includes(sub.subscriptionStatus))) {
