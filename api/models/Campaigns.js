@@ -143,26 +143,32 @@ console.log("now updated ", posts.length, "posts after updating campaign");
   },
 
   //NOTE: be sure not to name it "publish"; for some reason, gets called by create/update also when you do (?)
-  publishCampaign: (campaign) => {
+  //if postsToPublish is blank, just publish all undelayed unpublished ones (ie, when you hit the publish all button).
+  //if full, is the only posts to publish (ie, when publishing delayed psots)
+  publishCampaign: (campaign, postsToPublish) => {
     // - check each access token, and refresh if necessary
     // - publish each post  (presumably, they would actually already be made when making the campaign draft)
     // - set utms for each (actually, maybe do this while writing draft also)
     // - update campaign status to published
     return new Promise((resolve, reject) => {
-      let posts, postResults, allAccessTokenData
+      let posts, postResults, allAccessTokenData, allPosts
       //if null publishedAt, is not published yet
 
       //need channel record to get access token at the end
       //need account record to get other access token, if making
-      Posts.find({campaignId: campaign.id, publishedAt: null}).populate('providerAccountId').populate('channelId')
+      Posts.find({campaignId: campaign.id}).populate('providerAccountId').populate('channelId')
       .then((p) => {
         //check access tokens
         //hopefully the API has given this all along, but not there yet, and good to check anyways
 
-        //Only send posts that aren't delayed or the delay has passed
-        posts = p.filter(post => (
-          !post.delayedUntil ||
-          moment.utc().isAfter(moment.utc(post.delayedUntil))
+        allPosts = p
+
+        //Only send posts that aren't delayed or the delay has passed, and are not published
+        posts = postsToPublish || allPosts.filter(post => (
+          post.publishedAt === null && (
+            !post.delayedUntil ||
+            moment.utc().isAfter(moment.utc(post.delayedUntil))
+          )
         ))
 
         let allAccounts = posts.reduce((acc, post) => {
@@ -263,22 +269,26 @@ console.log("now updated ", posts.length, "posts after updating campaign");
         // NOTE: really should not have to check !post.publishedAt...but thjis just adds some fool proofing
         const failedPosts = postResults.filter((post) => post.error || !post.publishedAt)
 
-        if (failedPosts.length === 0) {
+        const delayedPosts = allPosts.filter(post => (
+          post.delayedUntil &&
+          !moment.utc().isAfter(moment.utc(post.delayedUntil))
+        ))
+
+        const publishedPosts = allPosts.filter(post => post.publishedAt)
+        //we're all done
+        if (!failedPosts.length && !delayedPosts.length) {
           return Campaigns.update({id: campaign.id}, {
             publishedAt: moment.utc().format(),
             status: "PUBLISHED",
           })
 
-        } else if (failedPosts.length === postResults.length) {
-          //keep it as is; don't do anything
-          return [campaign] //faking what campaigns.update returns
-
-        } else if (failedPosts.length !== postResults.length) {
+        //if published any right now OR published some in past
+        } else if (failedPosts.length !== postResults.length || publishedPosts.length) {
           return Campaigns.update({id: campaign.id}, {
             //can use updatedAt to see when it was
             status: "PARTIALLY_PUBLISHED",
+            publishedAt: null, //in case was previously marked as pub'd
           })
-
         }
       })
       .then((c) => {
