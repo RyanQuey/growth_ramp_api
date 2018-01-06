@@ -424,20 +424,5 @@ console.log("now updated ", posts.length, "posts after updating campaign");
 
   },
 
-  //does not necessarily create stripe sub though, if no payment info yet. But prepares the customer and creates our db record
-  findOrInitializeSubscription: (user) => {
-    return AccountSubscriptions.findOne({userId: user.id})
-    .then((sub) => {
-      if (!sub) {
-        return AccountSubscriptions.initializeForStripe(req.user)
-      } else {
-        // just return it!
-        return sub
-      }
-    })
-    .catch((err) => {
-      throw err
-    })
-  },
 };
 

@@ -26,7 +26,7 @@ module.exports = {
     })
     .catch((err) => {
       console.log("failed to update campaign");
-      console.log(err);
+      sails.log.debug(err);
       return res.negotiate(err)
     })
   },
@@ -46,7 +46,10 @@ module.exports = {
       //should be campaign (with posts attached to it, each with analytics to attach to them)
       res.ok(results)
     })
-    .catch((err) => {res.badRequest(err)})
+    .catch((err) => {
+      sails.log.debug(err);
+      res.badRequest(err)
+    })
   },
 
 	getAnalytics: (req, res) => {
@@ -58,8 +61,8 @@ module.exports = {
       return res.ok(campaign)
     })
     .catch((err) => {
-      console.log(err);
       console.log("Failed to get analytics for ", campaign.name);
+      sails.log.debug(err);
       return res.negotiate(err)
     })
   },
