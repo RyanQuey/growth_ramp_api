@@ -43,12 +43,13 @@ module.exports = {
   autoUpdatedAt: true,
 
   afterUpdate: (updatedRecord, cb) => {
-console.log("now in campaign afterUpdate hook", updatedRecord);
+    console.log("now in campaign afterUpdate hook", updatedRecord);
+    // ideally, would check to see if contentUrl changed, or something else. But...not sure how to do that, unless we customize the update controller or mdoel method
     Posts.update({campaignId: updatedRecord.id}, {
       contentUrl: updatedRecord.contentUrl
     })
     .then((posts) => {
-console.log("now updated ", posts.length, "posts after updating campaign");
+      console.log("now updated ", posts.length, "posts after updating campaign");
       cb()
     })
     .catch((err) => {
