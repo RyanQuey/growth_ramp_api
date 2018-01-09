@@ -36,7 +36,7 @@ module.exports = class PublishDelayedPosts extends Job {
     .then((results) => {
       postsToPublish = results
       //publish by campaign; that is how the functions are already written, gets the accounts in a systematic way, makes sure to update campaign at the end, etc
-console.log("some delayed posts that want to get published: ", postsToPublish.map((p) => `ID: ${p.id} ; delay time: ${p.delayedUntil} ; Published at?: ${p.publishedAt} `));
+      console.log("some delayed posts that want to get published: ", postsToPublish.map((p) => `ID: ${p.id} ; delay time: ${p.delayedUntil} ; Published at?: ${p.publishedAt} `));
       if (!postsToPublish || !postsToPublish.length) {
         return []
       }
@@ -60,11 +60,9 @@ console.log("some delayed posts that want to get published: ", postsToPublish.ma
           uniqueUserIds.push(post.userId)
         }
       }
-console.log("users ", uniqueUserIds);
       return Users.find({id: uniqueUserIds})
     })
     .then((users) => {
-console.log("found users", users.map((u) => u.email));
       if (!users || !users.length) {
         return []
       }
@@ -102,22 +100,19 @@ console.log("found users", users.map((u) => u.email));
     })
     .then((results) => {
       results = results || []
-console.log("user check results", results)
       const approvedUserIds = results.filter((r) => r.status === "accepted").map(r => r.userId)
       console.log('approved user IDs', approvedUserIds);
 
       const campaignIds = Object.keys(campaignsToPublish)
-      console.log("campaigns that have delayed posts to publish: ", campaignIds);
 
       const approvedCampaignIds = campaignIds.filter((id) => {
         let campaignUserId = Helpers.safeDataPath(campaignsToPublish, `${id}.campaign.userId`, "")
         return approvedUserIds.includes(campaignUserId)
       })
 
-console.log("approved campaigns: ", approvedCampaignIds);
+      console.log("approved campaigns: ", approvedCampaignIds);
       const promises2 = approvedCampaignIds.map((id) => {
         const data = campaignsToPublish[id]
-        console.log("publishing this data: ", data);
         return Campaigns.publishCampaign(data.campaign, data.readyPosts)
       })
 
@@ -128,8 +123,11 @@ console.log("approved campaigns: ", approvedCampaignIds);
       console.log(allResults);
 
       // run this after posts are done, so doesn't interrupt them in any way, and keeps code cleaner
-      console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
-      sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes );
+      if (usersWithFailedPublishes && usersWithFailedPublishes.length ) {
+        console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
+        sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes );
+      }
+
       return
     })
     .then(() => {
