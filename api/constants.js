@@ -198,6 +198,9 @@ module.exports = {
     "***REMOVED***",
     "***REMOVED***",
     "***REMOVED***",
+    //fb test users
+    "***REMOVED***",
+    "***REMOVED***",
 
     "***REMOVED***",
     //"***REMOVED***", ***REMOVED*** was added to replace him
