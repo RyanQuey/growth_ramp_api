@@ -198,6 +198,9 @@ module.exports = {
     "henry@ignitemycompany.com",
     "jason@cofounderswithclass.com",
     "rebekahjypark@gmail.com",
+    //fb test users
+    "nsywhthwvr_1515605002@tfbnw.net",
+    "tthoynhsqs_1515605193@tfbnw.net",
 
     "ajconnell1@googlemail.com",
     //"dave@ninjaoutreach.com", aris was added to replace him
