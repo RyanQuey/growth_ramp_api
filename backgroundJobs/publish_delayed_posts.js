@@ -36,7 +36,7 @@ module.exports = class PublishDelayedPosts extends Job {
     .then((results) => {
       postsToPublish = results
       //publish by campaign; that is how the functions are already written, gets the accounts in a systematic way, makes sure to update campaign at the end, etc
-      console.log("some delayed posts that want to get published: ", postsToPublish.map((p) => `ID: ${p.id} ; delay time: ${p.delayedUntil} ; Published at?: ${p.publishedAt} `));
+      //console.log("some delayed posts that want to get published: ", postsToPublish.map((p) => `ID: ${p.id} ; delay time: ${p.delayedUntil} ; Published at?: ${p.publishedAt} `));
       if (!postsToPublish || !postsToPublish.length) {
         return []
       }
@@ -125,7 +125,7 @@ module.exports = class PublishDelayedPosts extends Job {
       // run this after posts are done, so doesn't interrupt them in any way, and keeps code cleaner
       if (usersWithFailedPublishes && usersWithFailedPublishes.length ) {
         console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
-        sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes );
+        sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes.map((data) => Helpers.safeDataPath(data, "user.email", "unknown user") ));
       }
 
       return
