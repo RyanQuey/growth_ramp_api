@@ -120,6 +120,11 @@ module.exports.routes = {
     action: 'refreshChannelType'
   },
 
+  'get /providerAccounts/getUserAccounts/:userId': {
+    controller: 'ProviderAccountsController',
+    action: 'refreshChannelType'
+  },
+
   ////////////////////////////////////////////////////////////////
   //tokens
 

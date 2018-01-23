@@ -6,6 +6,22 @@
  */
 
 module.exports = {
+  //hack because query language not working right
+  getUserAccounts:  (req, res) => {
+    const userId = req.param("userId")
+    if (!userId) {return res.forbidden()}
+
+    ProviderAccounts.find({userId: userId}).populate("channels")
+    .then((accounts) => {
+      return res.ok(accounts)
+    })
+    .catch((err) => {
+      console.log("Error finding user accounts");
+      return res.negotiate(err)
+    })
+
+  },
+
   refreshChannelType: (req, res) => {
     const accountId = req.params.accountId;
 

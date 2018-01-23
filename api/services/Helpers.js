@@ -1,5 +1,6 @@
 const sanitize_sqlstring = require('sqlstring');
 const daysOfTheWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+import _ from 'lodash'
 import { PROVIDER_STATUSES, PROVIDERS, ALL_CHANNEL_TYPES, UTM_TYPES, ALL_POSTING_AS_TYPES } from "../constants"
 
 export default {
