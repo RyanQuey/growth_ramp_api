@@ -96,7 +96,8 @@ module.exports.policies = {
   },
   ProviderAccountsController: {
     refreshChannelType: ['userTokenAuth'],
-    find: ['userTokenAuth', 'canRead'],
+    //find: ['userTokenAuth', 'canRead'], TODO currently returning all accounts!!!
+    getUserAccounts: ['userTokenAuth', 'canRead'],
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],
