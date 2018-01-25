@@ -7,6 +7,7 @@
 
 import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 
+const blueprints = require('../blueprints');
 module.exports = {
   find: (req, res) => {
     return blueprints.find(req, res);

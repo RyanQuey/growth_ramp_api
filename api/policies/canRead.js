@@ -34,7 +34,6 @@ module.exports = function canRead (req, res, next) {
       // pass in query/params into the where clause
       const otherParams = _.omit(req.allParams(), ["where"])
       whereParams = Object.assign({}, whereParams, otherParams)
-console.log("otherparams/whereparams", otherParams, whereParams);
       req.query.where = JSON.stringify(whereParams)
     }
 
@@ -42,7 +41,6 @@ console.log("otherparams/whereparams", otherParams, whereParams);
   }
 
   if (req.user) {
-    console.log("Query: ", req.query);
     //convert id params into integers
     //these are record's attributes, not the user's...unless user is the record, then it's both
     let id = parseInt(req.param("id"))

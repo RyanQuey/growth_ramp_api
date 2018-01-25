@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-var blueprints = require('../blueprints');
+const blueprints = require('../blueprints');
 const {ALLOWED_EMAILS} = require('../constants')
 module.exports = {
   find: (req, res) => {

@@ -19,6 +19,8 @@ var _ = require('lodash');
  * @param {String} callback - default jsonp callback param (i.e. the name of the js function returned)
  */
 
+//needed to override specifically for this issue:
+//https://stackoverflow.com/questions/48409344/sails-blueprints-query-in-url-not-working
 module.exports = function findRecords (req, res) {
 
   // Look up the model
