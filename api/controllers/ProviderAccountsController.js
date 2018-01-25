@@ -6,6 +6,9 @@
  */
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   //hack because query language not working right
   getUserAccounts:  (req, res) => {
     const userId = req.param("userId")
