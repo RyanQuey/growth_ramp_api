@@ -7,6 +7,9 @@
 
 module.exports = {
 
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   //first step of setting up user payments
 	initializeForStripe: (req, res) => {
     //first, make sure user doesn't already have a customer related to them

@@ -8,6 +8,9 @@
 import { PROVIDER_STATUSES, PROVIDERS } from "../constants"
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   //TODO: if the asynchronous stuff gets too complicated, try async lib, which is placed as a global in sails by default
 
   ////////////////////////////////////////////////////////

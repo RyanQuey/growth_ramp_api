@@ -8,6 +8,9 @@
 var templates = require('../templates/');
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   contactUs: (req, res) => {
     let info = {
       type: req.body.type || "", //if bug, or request, etc
