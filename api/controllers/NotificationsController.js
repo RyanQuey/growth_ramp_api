@@ -7,6 +7,7 @@
 
 var templates = require('../templates/');
 
+const blueprints = require('../blueprints');
 module.exports = {
   find: (req, res) => {
     return blueprints.find(req, res);
