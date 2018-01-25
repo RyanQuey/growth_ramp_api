@@ -5,8 +5,12 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+var blueprints = require('../blueprints');
 const {ALLOWED_EMAILS} = require('../constants')
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   update: (req, res) => {
     new Promise((resolve, reject) => {
       const params = req.body

@@ -6,6 +6,9 @@
  */
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   create:  (req, res) => {
     let workgroup
     Workgroups.create({ownerId: req.user.id, name: req.body.name})

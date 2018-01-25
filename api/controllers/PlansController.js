@@ -6,6 +6,9 @@
  */
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   fetchPopulatedPlan: (req, res) => {
     Plans.findOne(req.params.id)
     .populate("campaigns", {

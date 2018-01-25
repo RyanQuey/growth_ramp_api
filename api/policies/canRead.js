@@ -17,31 +17,39 @@ module.exports = function canRead (req, res, next) {
     //only return unarchived if grabbing more than one
     //TODO not tested
     if (!req.param("id")) {
+      let whereParams
       if (req.query.where) {
-        let whereParams = JSON.parse(req.query.where)
+        whereParams = JSON.parse(req.query.where)
         //leave it alone in the offchance it is already set
         whereParams.status = whereParams.status ? whereParams.status : { "!": "ARCHIVED" }
-        req.query.where = JSON.stringify(whereParams)
 
       } else {
-        req.query.where = JSON.stringify({
+        whereParams = {
           status: {
             "!": "ARCHIVED"
           }
-        })
-
+        }
       }
+
+      // pass in query/params into the where clause
+      const otherParams = _.omit(req.allParams(), ["where"])
+      whereParams = Object.assign({}, whereParams, otherParams)
+console.log("otherparams/whereparams", otherParams, whereParams);
+      req.query.where = JSON.stringify(whereParams)
     }
 
     next()
   }
 
   if (req.user) {
+    console.log("Query: ", req.query);
     //convert id params into integers
     //these are record's attributes, not the user's...unless user is the record, then it's both
     let id = parseInt(req.param("id"))
     let ownerId = parseInt(req.param("ownerId"))
     let userId = parseInt(req.param("userId"))
+
+    req.query.userId = userId //test if this works
 
     //accesses the model (eg, Users)
     //ie, users

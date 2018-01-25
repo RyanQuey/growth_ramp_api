@@ -6,5 +6,8 @@
  */
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
 };
 

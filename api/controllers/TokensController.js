@@ -6,6 +6,9 @@
  */
 
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
   //TODO need to go through all of the situations
   useToken: function(req, res){
     Tokens.processToken(req.params.token, req.user)
