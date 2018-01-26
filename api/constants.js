@@ -157,6 +157,21 @@ module.exports = {
         },
       },
     },
+    SLACK: {
+      name: 'Slack',
+      unsupported: true,
+      providerId: 'SLACK',
+      channelTypes: {
+        CHAT_CHANNEL: { //TODO these are fake figures
+          name: "Slack Channel",
+          requiredScopes: [],
+          hasMultiple: true,
+        },
+      },
+      forums: { // for slack, these are workspaces. Other chatrooms have these as subdomains
+        name: "Workspace", //friendly name
+      },
+    },
   },
 
   ALL_CHANNEL_TYPES: [
@@ -166,6 +181,7 @@ module.exports = {
     "PAGE_POST",
     "DARK_POST",
     "BUSINESS_MESSAGE",
+    "CHAT_CHANNEL",
   ],
 
   ALL_POSTING_AS_TYPES: [
