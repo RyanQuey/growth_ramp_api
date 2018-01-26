@@ -10,6 +10,8 @@ module.exports = {
 
   attributes: {
     name: {type: 'string'},
+    forumName: {type: 'string'}, // forums are subdivisions for channels. But is used for the thing that channels are a part of (eg, for slack, workspaces)
+    // add forumId, forumUrl, etc later. Or...move from forum to something else, if there's a use case. Only thing to subdivide channels so far seems to be for chat though, so using forum
     type: {
       type: 'string',
       required: true,
