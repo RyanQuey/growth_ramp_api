@@ -17,6 +17,7 @@ module.exports = {
 
   attributes: {
     //stuff to use to create the posted message
+    pseudopost: { type: 'boolean' }, //if post for unsupported provider...so don't actually post anything
     text: { type: 'string' }, //caption/comment for the post
     channelType: { type: 'string', required: true, enum: ALL_CHANNEL_TYPES },//eg "PERSONAL_POST"
     provider: { //should always match the provider account provider
@@ -48,6 +49,7 @@ module.exports = {
     //migration ran, but not supporting
     //customUtm: { type: 'json', defaultsTo: {active: true, value: '', key: '' } }, //key will be like instead of campaign, it is the key
 
+//TODO add status, so every table has status
 
     //stuff we might get back from the provider
     postUrl: { type: 'string'},// (link they can follow);
@@ -111,6 +113,23 @@ module.exports = {
       //set a separate variable each step along the way, so I know how far we got.
       let publishedButNotUpdatedPost, publishedPost
 
+      //pseudoposts can just be updated :)
+      if (post.pseudopost) {
+        return Posts.update({id: post.id}, {
+          //still worth setting this. If user is accurate on this, is helpful for analytics
+          publishedAt: moment.utc().format(),
+        })
+        .then((results) => {
+          const updatedPseudopost = results[0]
+          return resolve(updatedPseudopost)
+        })
+        .catch((err) => {
+          console.error("Error 'publishing' pseudopost ", err);
+          return reject(err)
+        })
+      }
+
+      // at this point, all posts are real posts (ie, not pseudo) so need access token
       if (!accessTokenData) {
         //should already have been retrieved. If this is the case, it's too late.
         // see the catch at the bottom for what I'm doing here

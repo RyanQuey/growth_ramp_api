@@ -58,6 +58,9 @@ module.exports.policies = {
     //changePermissions: ['canChangePermissions'],
     getAnalytics: ['userTokenAuth', 'canRead'],
   },
+  ChannelsController: {
+    create: ['userTokenAuth', 'canWrite'],
+  },
   NotificationsController: {
     //they need user id for this to work
     contactUs: ['userTokenAuth', 'canWrite'],
@@ -95,6 +98,7 @@ module.exports.policies = {
     //changePermissions: ['canChangePermissions'],
   },
   ProviderAccountsController: {
+    create: ['userTokenAuth', 'canWrite'],
     refreshChannelType: ['userTokenAuth'],
     //find: ['userTokenAuth', 'canRead'], TODO currently returning all accounts!!!
     getUserAccounts: ['userTokenAuth', 'canRead'],

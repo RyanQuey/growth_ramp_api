@@ -14,6 +14,7 @@ module.exports = {
     //might want this; would need migration
     //name: { type: 'string' },//eg "my friendly post",
     channelType: { type: 'string', required: true, enum: ALL_CHANNEL_TYPES },//eg "PERSONAL_POST"
+    pseudopost: { type: 'boolean' },
     provider: { //should always match the provider account provider
       type: 'string',
       required: true,
