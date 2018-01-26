@@ -32,6 +32,7 @@ module.exports = {
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
 
+    unsupportedProvider: { type: 'boolean' },
     //should make a hash of these, to dehash before sending
     providerUserId: { type: 'string' },
     accessToken: { type: 'string' },

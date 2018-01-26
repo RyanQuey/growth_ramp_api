@@ -6,7 +6,7 @@
  */
 
     //!!!!!!!note that a given postTemplate, provider, or plan may change, but that won't actually change the campaign itself, once the campaign has been sent!!!!!!!!
-import { CAMPAIGN_STATUSES, } from "../constants"
+import { CAMPAIGN_STATUSES, TEMPLATE_PROPERTIES} from "../constants"
 
 module.exports = {
 
@@ -44,7 +44,7 @@ module.exports = {
 
   afterUpdate: (updatedRecord, cb) => {
     console.log("now in campaign afterUpdate hook", updatedRecord);
-    // ideally, would check to see if contentUrl changed, or something else. But...not sure how to do that, unless we customize the update controller or mdoel method
+    // ideally, would check to see if contentUrl changed, or something else. Can use BEFORE update, which gets the new params, and check for that TODO
     Posts.update({campaignId: updatedRecord.id}, {
       contentUrl: updatedRecord.contentUrl
     })
@@ -97,21 +97,10 @@ module.exports = {
 
         //make sure params have first priority, since they will be used to update campaign in a second
         let currentContentUrl = params.contentUrl || currentCampaignRecord.contentUrl
-        const newPosts = plan.postTemplates.map((template) => {
-          let post = _.pick(template, [
-            "channelType",
-            "channelId",
-            "campaignUtm",
-            "provider",
-            "mediumUtm",
-            "sourceUtm",
-            "contentUtm",
-            "termUtm",
-            "customUtm",
-            "providerAccountId",
-            "userId",
-            "planId",
-          ])
+        const activePostTemplates = plan.postTemplates.filter((template) => template.status !== "ARCHIVED")
+
+        const newPosts = activePostTemplates.map((template) => {
+          let post = _.pick(template, TEMPLATE_PROPERTIES)
 
           post.postTemplateId = template.id
           post.campaignId = currentCampaignRecord.id
@@ -173,7 +162,9 @@ module.exports = {
         ))
 
         let allAccounts = posts.reduce((acc, post) => {
-          //remove duplicate accounts
+          //remove duplicate accounts AND fake accounts (unsupported accts)
+          if (post.pseudopost) {return acc}
+
           let match = acc.find((account) => account.id === post.providerAccountId.id)
           if (!match || match === -1) {
             acc.push(post.providerAccountId)
@@ -222,7 +213,7 @@ module.exports = {
         }
       })
       .then((results) => {
-        //if update happened
+        //if update happened on posts
         if (results) {
           //each will be returned as an array with one entry, the one post that got updated
           let updatedPosts = results.map((result) => result[0]).filter((p) => !p)

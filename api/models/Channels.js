@@ -19,13 +19,14 @@ module.exports = {
       required: true,
       enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
+    unsupportedChannel: { type: 'boolean' },
     providerChannelId: { type: 'string' }, //given by provider
 
     //should make a hash of these, to dehash before sending
     accessToken: { type: 'string' },
     accessTokenExpires: { type: 'datetime' },//not sure how I get or use this
     sharingAllowed: { type: 'boolean' },
-    userPermissions: { type: 'json', defaultsTo: {} },
+    userPermissions: { type: 'json', defaultsTo: {} }, //permissions that a user has within this channel (ie, is admin, etc (?))
     otherInfo: { type: 'json', defaultsTo: {} }, //this is just a catchall
 
     //**associations**
