@@ -19,7 +19,7 @@ module.exports = {
     provider: { //should always match the provider account provider
       type: 'string',
       required: true,
-      enum: Object.keys(PROVIDERS)
+      //enum: Object.keys(PROVIDERS)now not required; there's fake providers now
     }, //"e.g., FACEBOOK"
     unsupportedChannel: { type: 'boolean' },
     providerChannelId: { type: 'string' }, //given by provider
