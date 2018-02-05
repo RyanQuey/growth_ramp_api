@@ -29,6 +29,7 @@ module.exports = {
     provider: {
       type: 'string',
       required: true,
+      //enum: Object.keys(PROVIDERS)
     }, //"e.g., FACEBOOK"
 
     unsupportedProvider: { type: 'boolean' },

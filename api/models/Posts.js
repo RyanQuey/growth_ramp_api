@@ -19,11 +19,15 @@ module.exports = {
     //stuff to use to create the posted message
     pseudopost: { type: 'boolean' }, //if post for unsupported provider...so don't actually post anything
     text: { type: 'string' }, //caption/comment for the post
-    channelType: { type: 'string', required: true, enum: ALL_CHANNEL_TYPES },//eg "PERSONAL_POST"
+    channelType: {
+      type: 'string',
+      required: true,
+      //enum: ALL_CHANNEL_TYPES
+     },//eg "PERSONAL_POST"
     provider: { //should always match the provider account provider
       type: 'string',
       required: true,
-      enum: Object.keys(PROVIDERS)
+      //enum: Object.keys(PROVIDERS)now not required; there's fake providers now
     }, //"e.g., FACEBOOK"
 
     //[{
