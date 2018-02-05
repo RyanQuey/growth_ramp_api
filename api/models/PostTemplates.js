@@ -13,12 +13,14 @@ module.exports = {
   attributes: {
     //might want this; would need migration
     //name: { type: 'string' },//eg "my friendly post",
-    channelType: { type: 'string', required: true, enum: ALL_CHANNEL_TYPES },//eg "PERSONAL_POST"
+    channelType: { type: 'string', required: true,
+      //enum: ALL_CHANNEL_TYPES
+     },//eg "PERSONAL_POST"
     pseudopost: { type: 'boolean' },
     provider: { //should always match the provider account provider
       type: 'string',
       required: true,
-      enum: Object.keys(PROVIDERS)
+      //enum: Object.keys(PROVIDERS)now not required; there's fake providers now
     }, //"e.g., FACEBOOK"
     postingAs: { type: 'string', defaultsTo: "SELF", enum: ALL_POSTING_AS_TYPES}, //could also be "PAGE" etc. depending on the channelType
 
