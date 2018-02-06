@@ -52,7 +52,7 @@ module.exports = {
 
   //might move eventually, but here for now
   getAllGAAccounts: (req, res) => {
-    ProviderAccounts.getAllGAAccounts(req.user)
+    Analytics.getAllGAAccounts(req.user)
     .then((results) => {
 console.log("GA results", results);
       return res.ok(results)
@@ -61,6 +61,21 @@ console.log("GA results", results);
       console.error("Error getting all GA accounts for user", req.user.id, err);
       return res.negotiate(err)
     })
+  },
+
+  getAnalytics: (req, res) => {
+console.log("starting to get analytics");
+console.log(req.allParams(), req.query);
+    Analytics.getAnalytics(req.user, req.allParams())
+    .then((results) => {
+console.log("GA results", results);
+      return res.ok(results)
+    })
+    .catch((err) => {
+      console.error("Error getting Analytics for user", req.user.id, err);
+      return res.negotiate(err)
+    })
+
   },
 };
 

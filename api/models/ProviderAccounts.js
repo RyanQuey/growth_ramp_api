@@ -466,26 +466,5 @@ console.log("response from trying to refresh access token");
 
   },
 
-  // get info for all google analytics accounts for all Google accounts this user has
-  getAllGAAccounts: (user) => {
-    return new Promise((resolve, reject) => {
-      //get all real Google accounts for user
-      ProviderAccounts.find({
-        userId: user.id,
-        provider: "GOOGLE",
-      })
-      .then((accounts) => {
-        // just manually filtering for now; basically just as fast (can't imagine there will ever be a lot of accounts to filter
-        const promises = accounts.filter((a) => !a.unsupportedProvider).map((account) => {
-          return GoogleAnalytics.getAccountSummaries(account)
-        }) || []
-
-        return resolve(Promise.all(promises))
-      })
-      .catch((err) => {
-        reject(err)
-      })
-    })
-  },
 };
 
