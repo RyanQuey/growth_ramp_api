@@ -64,6 +64,12 @@ module.exports.routes = {
     action: 'getAllGAAccounts'
   },
 
+  //content Id is optional param to specify a single article's id (not a post's id in GR, but in google)
+  'get /analytics/getAnalytics': {
+    controller: 'ProviderAccountsController',
+    action: 'getAnalytics'
+  },
+
   ////////////////////////////////////////////////////////////////
   //campaigns
   //
