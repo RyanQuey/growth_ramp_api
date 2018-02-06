@@ -102,6 +102,7 @@ module.exports.policies = {
     refreshChannelType: ['userTokenAuth'],
     //find: ['userTokenAuth', 'canRead'], TODO currently returning all accounts!!!
     getUserAccounts: ['userTokenAuth', 'canRead'],
+    getAllGAAccounts: ['userTokenAuth', 'canRead'],
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],

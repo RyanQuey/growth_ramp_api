@@ -50,5 +50,17 @@ module.exports = {
     })
   },
 
+  //might move eventually, but here for now
+  getAllGAAccounts: (req, res) => {
+    ProviderAccounts.getAllGAAccounts(req.user)
+    .then((results) => {
+console.log("GA results", results);
+      return res.ok(results)
+    })
+    .catch((err) => {
+      console.error("Error getting all GA accounts for user", req.user.id, err);
+      return res.negotiate(err)
+    })
+  },
 };
 
