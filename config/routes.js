@@ -57,6 +57,14 @@ module.exports.routes = {
   },
 
   ////////////////////////////////////////////////////////////////
+  //analytics
+  //
+  'get /analytics/getAllGAAccounts/:userId': {
+    controller: 'ProviderAccountsController',
+    action: 'getAllGAAccounts'
+  },
+
+  ////////////////////////////////////////////////////////////////
   //campaigns
   //
 
@@ -69,6 +77,9 @@ module.exports.routes = {
     controller: 'CampaignsController',
     action: 'getAnalytics'
   },
+
+
+
 
   ////////////////////////////////////////////////////////////////
   //notifications
@@ -124,6 +135,7 @@ module.exports.routes = {
     controller: 'ProviderAccountsController',
     action: 'getUserAccounts'
   },
+
 
   ////////////////////////////////////////////////////////////////
   //tokens

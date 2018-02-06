@@ -1,24 +1,40 @@
 const apiKey = process.env.GOOGLE_API_KEY || sails.config.env.GOOGLE_API_KEY
+const clientId = process.env.CLIENT_GOOGLE_ID || sails.config.env.CLIENT_GOOGLE_ID
+const clientSecret = process.env.CLIENT_GOOGLE_SECRET || sails.config.env.CLIENT_GOOGLE_SECRET
+const redirectUrl = process.env.API_URL || sails.config.env.API_URL
+
 const google = require('googleapis');
-const urlshortener = google.urlshortener('v1');
-google.options({
+
+const OAuth2 = google.auth.OAuth2;
+const oauth2Client = new OAuth2(
+  clientId,
+  clientSecret,
+  redirectUrl, //probably won't ever use, since not doing actual oauth handling in backend
+);
+
+//pass this in if want to use our api key as the auth
+//probably only for url shortening...if that
+const urlshortener = google.urlshortener({
+  version: 'v1',
   auth: apiKey,
-})
+});
 
-const _setup = (account, accessToken) => {
-  const fb = new FB.Facebook({
-    //this lib automatically adds the app secret key
-    appId,
-    appSecret,
-    accessToken,
-    version: 'v2.10',
-    timeout_ms: 60*1000, //1 min
-  })
-
-  return fb
-}
 
 const Google = {
+  //provide account in general. accessToken here if, like we do with FB, Twitter, LI, check access token before making post and so have latest accesstoken in memory but not set on the account. For now, not making post with Google Plus, so it's fine
+  _setup: (account, accessToken) => {
+    oauth2Client.setCredentials({
+      access_token: ProviderAccounts.decryptToken(account.accessToken),
+      refresh_token: ProviderAccounts.decryptToken(account.refreshToken), //if no refresh token, will fail
+      // Optional, provide an expiry_date (milliseconds since the Unix Epoch, so this is one week)
+      expiry_date: (new Date()).getTime() + (1 * 1000 * 60 * 60 * 24 * 7)
+    });
+
+    // will send this in each request with {auth: oauthClient} (except for url shortener...althought that might change soon too)
+    return oauth2Client
+  },
+
+  //all these helpers are now accessible at Google.analytics.___
   shortenUrl: (url, options = {}) => {
     return new Promise((resolve, reject) => {
       //axios.post(`https://www.googleapis.com/urlshortener/v1/url?key=${apiKey}`, {longUrl: url})
@@ -32,7 +48,6 @@ const Google = {
           } else {
             return reject(error)
           }
-
         }
 
         const result = res.data

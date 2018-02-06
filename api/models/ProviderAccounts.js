@@ -20,6 +20,7 @@ const providerApiWrappers = {
   FACEBOOK: Facebook,
   TWITTER: Twitter,
   LINKEDIN: LinkedIn,
+  GOOGLE: Google,
 }
 
 module.exports = {
@@ -32,7 +33,7 @@ module.exports = {
       //enum: Object.keys(PROVIDERS) now not required; there's fake providers now
     }, //"e.g., FACEBOOK"
 
-    unsupportedProvider: { type: 'boolean' },
+    unsupportedProvider: { type: 'boolean' }, //NOTE really should have been called "unsupportedAccount". Means it is not actually connected through oauth to a real provider
     //should make a hash of these, to dehash before sending
     providerUserId: { type: 'string' },
     accessToken: { type: 'string' },
@@ -118,8 +119,6 @@ module.exports = {
     if (values.accessTokenSecret) {
       values.accessTokenSecret = ProviderAccounts.encryptToken(values.accessTokenSecret)
     }
-console.log("before validating");
-console.log(values);
     cb()
   },
 
@@ -467,5 +466,26 @@ console.log("response from trying to refresh access token");
 
   },
 
+  // get info for all google analytics accounts for all Google accounts this user has
+  getAllGAAccounts: (user) => {
+    return new Promise((resolve, reject) => {
+      //get all real Google accounts for user
+      ProviderAccounts.find({
+        userId: user.id,
+        provider: "GOOGLE",
+      })
+      .then((accounts) => {
+        // just manually filtering for now; basically just as fast (can't imagine there will ever be a lot of accounts to filter
+        const promises = accounts.filter((a) => !a.unsupportedProvider).map((account) => {
+          return GoogleAnalytics.getAccountSummaries(account)
+        }) || []
+
+        return resolve(Promise.all(promises))
+      })
+      .catch((err) => {
+        reject(err)
+      })
+    })
+  },
 };
 
