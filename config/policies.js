@@ -102,7 +102,8 @@ module.exports.policies = {
     refreshChannelType: ['userTokenAuth'],
     //find: ['userTokenAuth', 'canRead'], TODO currently returning all accounts!!!
     getUserAccounts: ['userTokenAuth', 'canRead'],
-    getAllGAAccounts: ['userTokenAuth', 'canRead'],
+    getAllGAAccounts: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+    getAnalytics: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],

@@ -54,7 +54,7 @@ module.exports = function canRead (req, res, next) {
 
 
     //this would be modifying their own record, so the body/param id needs to match the userid
-    if (modelIdentity === "users" && req.user) {
+    if (modelIdentity === "users") {
       //check the possible variables in the same order that sails will to determine target resource
       //otherwise, an attacker could set params to match their own userid, the final user using the req.body
       //using req.params for now, which searches all three.
@@ -69,23 +69,25 @@ module.exports = function canRead (req, res, next) {
         fail(`these are not the same: ${id} and ${req.user.id}`);
       }
 
-    //for all other resources
-    } else {
+    } else if (
       //try to skip a trip to the database by finding and setting the record on the request body
       //as long as we are using this, make sure that no one can change the userId unless admin
-      if (
-        //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
-        //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself
+      //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
+      //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself
         userId && modelAttributes.includes('userId') ||
         ownerId && modelAttributes.includes('ownerId')
-      ) {
-        if ([userId, ownerId].includes(req.user.id)) {
-          pass();
-        } else {
-          fail(`these userids are not the same: ${userId} and ${req.user.id}`);
-        }
-
+    ) {
+      if ([userId, ownerId].includes(req.user.id)) {
+        pass();
       } else {
+        fail(`these userids are not the same: ${userId} and ${req.user.id}`);
+      }
+
+    //certain actions, it doesn't matter as long as there is a user
+    } else if (["getallgaaccounts", "getanalytics"].includes(action)) {
+      pass()
+
+    } else {
         //assuming that if no userId or ownerId is specified, only finding one
         //this keeps the db requests in these policies lower
         sails.models[modelIdentity].findOne(id)
@@ -101,7 +103,6 @@ module.exports = function canRead (req, res, next) {
           console.log("error in checking permissions");
           fail()
         })
-      }
     }
   } else {
     fail();
