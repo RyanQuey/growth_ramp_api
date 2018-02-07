@@ -44,6 +44,12 @@ const Analytics = {
         return resolve(result)
       })
       .catch((err) => {
+        if (err.code) {
+          switch (err.code) {
+            case "no-rows-for-profile":
+            console.error("User: ", user.id, "ProfileId: ", filters.profileId, "WebsiteID: ", filters.websiteId);
+          }
+        }
         return reject(err)
       })
     })
