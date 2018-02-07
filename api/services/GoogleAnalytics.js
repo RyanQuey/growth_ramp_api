@@ -115,8 +115,8 @@ const GAHelpers = {
   },
 
   //takes multiple reports and combines into single data set to send to browser
-  //shared column count is how many dimensions columns each report shares. default is 2 (url and article name), though minimum is 1 (which is requried to ID a given row)
-  combineReports: (reports, reportOrder, sharedColumnsCount = 2) => {
+  //shared column count is how many dimensions columns each report shares. default is 1 (url), though minimum is 1 (which is requried to ID a given row)
+  combineReports: (reports, reportOrder, sharedColumnsCount = 1) => {
     try {
       //last report should get totals, so good to use for base since it will have one row / article
       const combinedReport = _.cloneDeep(reports[reports.length -1])
@@ -171,21 +171,22 @@ const GAHelpers = {
     for (let row of rows) {
       if (options.skipIfFalseDimensions && options.skipIfFalseDimensions.some(index => row.dimensions[options.sharedColumnsCount + index] === "No")) {
         //skip over shared columns to find the relevant column that is unique to this report
+console.log("skippinG");
         continue
-      }
+      } else {options.skipIfFalseDimensions && console.log(reportType, options.sharedColumnsCount, options.skipIfFalseDimensions.map(index => [row.dimensions[options.sharedColumnsCount + index], index, row.dimensions]));}
 
-      if (options.skipIfTrueDimensions && options.skipIfTrueDimensions.some(index => row.dimensions[options.sharedColumnsCount + index] === "Yes")) {
+      if (options.skipIfTrueDimensions && options.skipIfTrueDimensions.map(index => row.dimensions[options.sharedColumnsCount + index] === "Yes")) {
         //skip over shared columns to find the relevant column that is unique to this report
 console.log("skippinG");
         continue
-      }
+      } else {options.skipIfTrueDimensions && console.log(reportType, options.sharedColumnsCount,options.skipIfTrueDimensions.map(index => [row.dimensions[options.sharedColumnsCount + index], index]));}
 
       // find the row with the right page url
       let matchingRow = _.find(combinedReport.data.rows, (combinedReportRow) =>
         //first dimension should be identifier for webpage (currently url)
         combinedReportRow.dimensions[0] === row.dimensions[0]
       )
-if (row.dimensions[0] === "/") {console.log(reportType);}
+//if (row.dimensions[0] === "/") {console.log(reportType, row.dimensions);}
       if (matchingRow !== -1) {
         matchedRows.push(matchingRow.dimensions[0])
         matchingRow.metrics.push(row.metrics[0])
