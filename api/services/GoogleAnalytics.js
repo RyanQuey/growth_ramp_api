@@ -45,8 +45,11 @@ const GAHelpers = {
   generateReportRequests: (filters) => {
     const viewId = filters.profileId
     let dateRanges
-    if (filters.startDate) {
-      dateRanges = [{startDate: filter.startDate, endDate: filter.endDate || moment(filter.startDate).add(1, "week").format("YYYY-MM-DD")}]
+    if (filters.startDate) { //if none set, defaults to one week
+      dateRanges = [{
+        startDate: filters.startDate,
+        endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present
+      }]
     }
 
     // want to apply this for each report set
