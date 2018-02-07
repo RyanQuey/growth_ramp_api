@@ -54,7 +54,6 @@ module.exports = {
   getAllGAAccounts: (req, res) => {
     Analytics.getAllGAAccounts(req.user)
     .then((results) => {
-console.log("GA results", results);
       return res.ok(results)
     })
     .catch((err) => {
@@ -64,11 +63,8 @@ console.log("GA results", results);
   },
 
   getAnalytics: (req, res) => {
-console.log("starting to get analytics");
-console.log(req.allParams(), req.query);
     Analytics.getAnalytics(req.user, req.allParams())
     .then((results) => {
-console.log("GA results", results);
       return res.ok(results)
     })
     .catch((err) => {
