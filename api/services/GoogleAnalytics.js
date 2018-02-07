@@ -65,7 +65,7 @@ const GAHelpers = {
       ], //sessions, users, unique page views, pageviews per session and more are also valid things to use
       dimensions: [ //first dimension needs to be identifier, unique to each article, so that we can sort data later
         {name: "ga:pagePath"}, // could also do pageTitle? or just do both?
-        {name: "ga:pageTitle"},
+        //{name: "ga:pageTitle"}, //gets hundreds of different rows for some pages, eg, root ("/") since had different titles over time
       ],
     }
 
@@ -139,18 +139,18 @@ const GAHelpers = {
         //note: watch out, if no hits, GA won't return data for that webpage
         //TODO dry this up, can use constants better so don't have to do this conditional stuff
         if (["directTraffic", "organicTraffic"].includes(reportType)) {
-          GoogleAnalytics._combineRows(combinedReport, rows)
+          GoogleAnalytics._combineRows(combinedReport, rows, reportType)
 
         // dimension returns a boolean, so can't use for dimension filters or segments apparently.
         // Instead, find all rows that have "Yes" in this column, and return the metric for that
         } else if (["socialTraffic"].includes(reportType)) {
-          GoogleAnalytics._combineRows(combinedReport, rows, {
+          GoogleAnalytics._combineRows(combinedReport, rows, reportType, {
             skipIfFalseDimensions: [0],
             sharedColumnsCount,
           })
 
         } else if (["referralTraffic"].includes(reportType)) {
-          GoogleAnalytics._combineRows(combinedReport, rows, {
+          GoogleAnalytics._combineRows(combinedReport, rows, reportType, {
             skipIfTrueDimensions: [0], //referral traffic does not include social traffic
             sharedColumnsCount,
           })
@@ -165,7 +165,7 @@ const GAHelpers = {
   },
 
   //part of combineReports. Matches a row from one report to a row in the combined report
-  _combineRows: (combinedReport, rows, options = {}) => {
+  _combineRows: (combinedReport, rows, reportType, options = {}) => {
     const matchedRows = []
 
     for (let row of rows) {
@@ -185,7 +185,7 @@ console.log("skippinG");
         //first dimension should be identifier for webpage (currently url)
         combinedReportRow.dimensions[0] === row.dimensions[0]
       )
-
+if (row.dimensions[0] === "/") {console.log(reportType);}
       if (matchingRow !== -1) {
         matchedRows.push(matchingRow.dimensions[0])
         matchingRow.metrics.push(row.metrics[0])

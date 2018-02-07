@@ -42,7 +42,7 @@ module.exports.additionalProperties = {
 module.exports.dimensionSets = {
   totalTraffic: false, //no additional dimension for these
   socialTraffic: [{name: "ga:hasSocialSourceReferral"}], // will extract this to get social referral traffic
-  referralTraffic: [{name: "ga:hasSocialSourceReferral"}, {name: "ga:fullReferrer"}], //full url of referring webpage, if exists
+  referralTraffic: [{name: "ga:hasSocialSourceReferral"}],// {name: "ga:fullReferrer"}], //full url of referring webpage, if exists
   directTraffic: false,
   organicTraffic: false,
 }
