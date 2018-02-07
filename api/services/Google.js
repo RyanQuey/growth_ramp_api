@@ -1,6 +1,7 @@
 const apiKey = process.env.GOOGLE_API_KEY || sails.config.env.GOOGLE_API_KEY
 const clientId = process.env.CLIENT_GOOGLE_ID || sails.config.env.CLIENT_GOOGLE_ID
 const clientSecret = process.env.CLIENT_GOOGLE_SECRET || sails.config.env.CLIENT_GOOGLE_SECRET
+const redirectUrl = process.env.API_URL || sails.config.env.API_URL
 
 const google = require('googleapis');
 
