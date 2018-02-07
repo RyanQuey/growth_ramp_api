@@ -136,6 +136,7 @@ const GAHelpers = {
         metricHeaders.push(Object.assign({}, reportMetricType, {title: `${reportType} ${reportMetricType.name}`}))
 
         let rows = report.data.rows
+console.log(report);
         //note: watch out, if no hits, GA won't return data for that webpage
         //TODO dry this up, can use constants better so don't have to do this conditional stuff
         if (["directTraffic", "organicTraffic"].includes(reportType)) {
@@ -171,15 +172,13 @@ const GAHelpers = {
     for (let row of rows) {
       if (options.skipIfFalseDimensions && options.skipIfFalseDimensions.some(index => row.dimensions[options.sharedColumnsCount + index] === "No")) {
         //skip over shared columns to find the relevant column that is unique to this report
-console.log("skippinG");
         continue
-      } else {options.skipIfFalseDimensions && console.log(reportType, options.sharedColumnsCount, options.skipIfFalseDimensions.map(index => [row.dimensions[options.sharedColumnsCount + index], index, row.dimensions]));}
+      }
 
       if (options.skipIfTrueDimensions && options.skipIfTrueDimensions.map(index => row.dimensions[options.sharedColumnsCount + index] === "Yes")) {
         //skip over shared columns to find the relevant column that is unique to this report
-console.log("skippinG");
         continue
-      } else {options.skipIfTrueDimensions && console.log(reportType, options.sharedColumnsCount,options.skipIfTrueDimensions.map(index => [row.dimensions[options.sharedColumnsCount + index], index]));}
+      }
 
       // find the row with the right page url
       let matchingRow = _.find(combinedReport.data.rows, (combinedReportRow) =>
