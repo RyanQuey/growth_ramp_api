@@ -1,5 +1,6 @@
 const google = require('googleapis');
 const analyticsClient = google.analytics("v3")
+const analyticsConstants = require('../analyticsConstants')
 const analyticsReportingClient = google.analyticsreporting("v4")
 
 
@@ -55,30 +56,6 @@ const GAHelpers = {
     // want to apply this for each report set
 
     // various filters to be applied to the tempalte, one for each report. Might also get counts for
-    const dimensionFilterSets = [
-      {
-        dimensionFilterClauses: {
-          filters: [
-            {
-              dimensionName: "ga:medium",
-              operator: "EXACT",
-              expressions: ["(none)"], //gets direct traffic
-            },
-          ],
-        }
-      },
-      {
-        dimensionFilterClauses: {
-          filters: [
-            {
-              dimensionName: "ga:medium",
-              operator: "EXACT",
-              expressions: ["organic"],
-            },
-          ],
-        }
-      },
-    ]
 
     const template = {
       viewId,
@@ -89,50 +66,23 @@ const GAHelpers = {
       dimensions: [ //first dimension needs to be identifier, unique to each article, so that we can sort data later
         {name: "ga:pagePath"}, // could also do pageTitle? or just do both?
         {name: "ga:pageTitle"},
-        //{name: "ga:segment"},
-        //{name: "ga:fullReferrer"}, //full url of referring webpage, if exists
-        //{name: "ga:hasSocialSourceReferral"}, // will extract this to get social referral traffic
       ],
-      /*segments: [
-        {segmentId: "gaid::-5"}, //organic traffic
-        {segmentId: "gaid::-7"}, //direct traffic
-        /*{
-          dynamicSegment: {
-            name: "Traffic from Social Site",
-            userSegment: {
-              segmentFilters: [{
-                simpleSegment: {
-                  orFiltersForSegment: [{
-                    segmentFilterClauses: [{
-                      dimensionFilter:{
-                        dimensionName: "ga:hasSocialSourceReferral", //can't use in segment, is banned
-                        operator: "EXACT",
-                        expressions: [true],
-                      }
-                    }]
-                  }]
-                }
-              }]
-            }
-          }
-        },*/
-      //]
     }
 
+    //total should always be last, to have for combining reports later
+    const reportOrder = ["directTraffic", "organicTraffic", "referralTraffic", "socialTraffic", "totalTraffic"]
 
+    const reportRequests = reportOrder.map((reportType) => {
+      //adds the dimensions specific for this report to the shared ones
+      const additionalDimensions = analyticsConstants.dimensionSets[reportType] || []
+      const reportDimensions = [...template.dimensions].concat(additionalDimensions)
+      // addes the dimension filters specific for this report if they exist
+      const additionalProperties = analyticsConstants.additionalProperties[reportType] || {}
 
-    const reportRequests = dimensionFilterSets.map((dFilterSet) =>
-      Object.assign({}, template, dFilterSet)
-    )
-    //will have to filter this to only get social referral
-    const socialReferralDimensions = [...template.dimensions].concat({name: "ga:hasSocialSourceReferral"})
-    reportRequests.push(Object.assign({}, template, {dimensions: socialReferralDimensions})) //to get social referrals
+      return Object.assign({}, template, {dimensions: reportDimensions}, additionalProperties)
+    })
 
-    //for now, every report should have total search at teh end for easy parsing and combining
-    reportRequests.push(Object.assign({}, template)) //to get totals. Should be same as combined total of the "ga:hasSocialSourceReferral" query, but yeah
-
-    // eventually, will have several helper functions, and each will return reportOrder so that GoogleAnalytics.combineReports can know what to do with each of them
-    const reportOrder = ["direct-traffic", "organic-traffic", "social-traffic", "total-traffic"]
+    // eventually, will have several other helper functions, and each will return reportOrder so that GoogleAnalytics.combineReports can know what to do with each of them
 
     //NOTE: can do max of 5
     return {reportRequests, reportOrder}
@@ -187,17 +137,23 @@ const GAHelpers = {
 
         let rows = report.data.rows
         //note: watch out, if no hits, GA won't return data for that webpage
-        if (["direct-traffic", "organic-traffic"].includes(reportType)) {
+        //TODO dry this up, can use constants better so don't have to do this conditional stuff
+        if (["directTraffic", "organicTraffic"].includes(reportType)) {
           GoogleAnalytics._combineRows(combinedReport, rows)
 
         // dimension returns a boolean, so can't use for dimension filters or segments apparently.
         // Instead, find all rows that have "Yes" in this column, and return the metric for that
-        } else if (["social-traffic"].includes(reportType)) {
-          GoogleAnalytics._combineRows(combinedReport,rows, {
-            skipIfFalse: true,
-            sharedColumnsCount
+        } else if (["socialTraffic"].includes(reportType)) {
+          GoogleAnalytics._combineRows(combinedReport, rows, {
+            skipIfFalseDimensions: [0],
+            sharedColumnsCount,
           })
 
+        } else if (["referralTraffic"].includes(reportType)) {
+          GoogleAnalytics._combineRows(combinedReport, rows, {
+            skipIfTrueDimensions: [0], //referral traffic does not include social traffic
+            sharedColumnsCount,
+          })
         }
       }
 
@@ -213,18 +169,24 @@ const GAHelpers = {
     const matchedRows = []
 
     for (let row of rows) {
-      if (options.skipIfFalse && row.dimensions[options.sharedColumnsCount] === "No") {
+      if (options.skipIfFalseDimensions && options.skipIfFalseDimensions.some(index => row.dimensions[options.sharedColumnsCount + index] === "No")) {
         //skip over shared columns to find the relevant column that is unique to this report
         continue
       }
 
+      if (options.skipIfTrueDimensions && options.skipIfTrueDimensions.some(index => row.dimensions[options.sharedColumnsCount + index] === "Yes")) {
+        //skip over shared columns to find the relevant column that is unique to this report
+console.log("skippinG");
+        continue
+      }
+
+      // find the row with the right page url
       let matchingRow = _.find(combinedReport.data.rows, (combinedReportRow) =>
         //first dimension should be identifier for webpage (currently url)
         combinedReportRow.dimensions[0] === row.dimensions[0]
       )
 
       if (matchingRow !== -1) {
-        console.log(matchingRow);
         matchedRows.push(matchingRow.dimensions[0])
         matchingRow.metrics.push(row.metrics[0])
       } else {
