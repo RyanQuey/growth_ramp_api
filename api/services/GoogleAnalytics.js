@@ -136,7 +136,11 @@ const GAHelpers = {
         metricHeaders.push(Object.assign({}, reportMetricType, {title: `${reportType} ${reportMetricType.name}`}))
 
         let rows = report.data.rows
-console.log(report);
+        if (!rows) {
+          console.error(`No rows found for this data:`, report.data);
+          throw {code: "no-rows-for-profile", status: 400}
+        }
+
         //note: watch out, if no hits, GA won't return data for that webpage
         //TODO dry this up, can use constants better so don't have to do this conditional stuff
         if (["directTraffic", "organicTraffic"].includes(reportType)) {
@@ -162,6 +166,8 @@ console.log(report);
 
     } catch (err) {
       console.error("error combining reports: ", err);
+      //for now, just throw it anyways. Note though that errors will come up
+      throw err
     }
   },
 
