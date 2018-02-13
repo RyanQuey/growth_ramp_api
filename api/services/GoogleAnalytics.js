@@ -4,7 +4,19 @@ const analyticsConstants = require('../analyticsConstants')
 const analyticsReportingClient = google.analyticsreporting("v4")
 
 
-const GAHelpers = {
+const GoogleAnalytics = {
+  // get info for all google analytics accounts for all Google accounts this user has
+  getAllGAAccounts: (googleAccounts) => {
+    return new Promise((resolve, reject) => {
+      const promises = googleAccounts.map((account) => {
+        return GoogleAnalytics.getAccountSummaries(account)
+      }) || []
+
+      //will be array of arrays of analytics accounts, one array of analytics accts / google provider acct
+      return resolve(Promise.all(promises))
+    })
+  },
+
   // returns all the accounts found that a given Google user account can access
   getAccountSummaries: (providerAccount) => {
     return new Promise((resolve, reject) => {
@@ -18,6 +30,7 @@ const GAHelpers = {
         }
 
         console.log(response.data);
+        //tag our providerAccountId on there for future reference, in case it's needed
         const ret = Object.assign({}, response.data, {providerAccountId: providerAccount.id} )
         return resolve(ret)
       })
@@ -30,7 +43,7 @@ const GAHelpers = {
   getAccountDetails: (providerAccount, analyticsAccountId) => {
     return new Promise((resolve, reject) => {
       let analyticsAccounts, currentAnalyticsAccount
-      GAHelpers.getAccountSummaries(providerAccount)
+      GoogleAnalytics.getAccountSummaries(providerAccount)
       .then((response) => {
         analyticsAccounts = response.items
         currentAnalyticsAccount = analyticsAccounts.find((a) => a.id === analyticsAccountId)
@@ -49,7 +62,7 @@ const GAHelpers = {
     if (filters.startDate) { //if none set, defaults to one week
       dateRanges = [{
         startDate: filters.startDate,
-        endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present
+        endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
       }]
     }
 
@@ -74,10 +87,10 @@ const GAHelpers = {
 
     const reportRequests = reportOrder.map((reportType) => {
       //adds the dimensions specific for this report to the shared ones
-      const additionalDimensions = analyticsConstants.dimensionSets[reportType] || []
+      const additionalDimensions = analyticsConstants.reportTypes[reportType].gaDimensionSets || []
       const reportDimensions = [...template.dimensions].concat(additionalDimensions)
       // addes the dimension filters specific for this report if they exist
-      const additionalProperties = analyticsConstants.additionalProperties[reportType] || {}
+      const additionalProperties = analyticsConstants.reportTypes[reportType].additionalProperties || {}
 
       return Object.assign({}, template, {dimensions: reportDimensions}, additionalProperties)
     })
@@ -207,4 +220,4 @@ const GAHelpers = {
     }
   }
 }
-module.exports = GAHelpers
+module.exports = GoogleAnalytics
