@@ -10,6 +10,7 @@ module.exports = {
   find: (req, res) => {
     return blueprints.find(req, res);
   },
+
   //hack because query language not working right
   getUserAccounts:  (req, res) => {
     const userId = req.param("userId")
@@ -51,8 +52,8 @@ module.exports = {
   },
 
   //might move eventually, but here for now
-  getAllGAAccounts: (req, res) => {
-    Analytics.getAllGAAccounts(req.user)
+  getAllAnalyticsAccounts: (req, res) => {
+    Analytics.getAllAccounts(req.user)
     .then((results) => {
       return res.ok(results)
     })

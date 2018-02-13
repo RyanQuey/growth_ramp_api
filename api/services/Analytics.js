@@ -1,21 +1,24 @@
 const Analytics = {
 
-  // get info for all google analytics accounts for all Google accounts this user has
-  getAllGAAccounts: (user) => {
+  //for a given user, get all of their analytics accounts (GA, GSC...add more later?)
+  getAllAccounts: (user) => {
     return new Promise((resolve, reject) => {
-      //get all real Google accounts for user
       ProviderAccounts.find({
         userId: user.id,
         provider: "GOOGLE",
       })
       .then((accounts) => {
+        //get all real Google accounts for user
         // just manually filtering for now; basically just as fast (can't imagine there will ever be a lot of accounts to filter
-        const promises = accounts.filter((a) => !a.unsupportedProvider).map((account) => {
-          return GoogleAnalytics.getAccountSummaries(account)
-        }) || []
-
-        //will be array of arrays of analytics accounts, one array of analytics accts / google provider acct
-        return resolve(Promise.all(promises))
+        const googleAccounts = accounts.filter((a) => !a.unsupportedProvider)
+        const promises = [
+          GoogleAnalytics.getAllGAAccounts(googleAccounts),
+          GoogleSearchConsole.getAllGSCAccounts(googleAccounts)
+        ]
+        return Promise.all(promises)
+      })
+      .then(([gaAccounts, gscAccounts]) => {
+        return resolve({gaAccounts, gscAccounts})
       })
       .catch((err) => {
         reject(err)
