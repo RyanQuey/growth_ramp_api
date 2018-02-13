@@ -101,11 +101,12 @@ const GoogleAnalytics = {
     return {reportRequests, reportOrder}
   },
 
+  //gets several reports actually currently. Will want to make more helpers to get other traffic reports too TODO
   getReport: (providerAccount, filters) => {
     return new Promise((resolve, reject) => {
       let analyticsAccounts, currentAnalyticsAccount
       const oauthClient = Google._setup(providerAccount)
-     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are a TODO)
+     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not done yet)
       const {reportRequests, reportOrder} = GoogleAnalytics.generateReportRequests(filters)
 
 
@@ -122,7 +123,8 @@ const GoogleAnalytics = {
 
         const reports = response.data && response.data.reports
         const combinedReport = GoogleAnalytics.combineReports(reports, reportOrder)
-        return resolve(combinedReport)
+        const ret = GoogleAnalytics.handleReport(combinedReport)
+        return resolve(ret)
       })
     })
   },
@@ -218,6 +220,26 @@ const GoogleAnalytics = {
     for (let row of unmatchedRows) {
       row.metrics.push({values: ["0"]})
     }
-  }
+  },
+
+  // report === {
+  //  columnHeader
+  //  rows: {
+  //    dimensions: [{values: []}]
+  //    metrics: []
+  //  }
+  // }
+  //takes either a combinedReport (GR makes) or regular google response and spits out the right format we want
+  //goal is to make unified format for all analytics apis
+  //might make prettier column names here too TODO
+  handleReport: (report) => {
+    //get rid of extra nesting and rename to match format of columnHeader.dimensions
+    report.columnHeader.metrics = [...report.columnHeader.metricHeader.metricHeaderEntries]
+    delete report.columnHeader.metricHeader
+
+    report.rows = [...report.data.rows]
+
+    return report
+  },
 }
 module.exports = GoogleAnalytics
