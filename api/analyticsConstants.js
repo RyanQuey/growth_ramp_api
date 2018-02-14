@@ -62,6 +62,21 @@ module.exports.reportTypes = {
 
   ////////////////////////////////////////
   // SEO reports
+  singlePageSeoReport: {
+    gscDimensionFilterGroups: [ //not using yet, but this is what it will look like roughly
+      {
+        //groupType: not supported yet
+        filters: [
+          {
+            dimension: "page",
+            operator: "contains",
+            expression: ["organic"],
+
+          }
+        ]
+      },
+    ]
+  },
 }
 
 
