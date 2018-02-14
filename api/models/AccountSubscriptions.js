@@ -11,7 +11,7 @@ console.log(ACCOUNT_SUBSCRIPTION_STATUSES);
 module.exports = {
   tableName: "accountSubscriptions",
   attributes: {
-    status:            {type: "string", enum: ACCOUNT_SUBSCRIPTION_STATUSES, defaultsTo: ACCOUNT_SUBSCRIPTION_STATUSES[0], required: true},  //SHOULD ALWAYS BE ACTIVE, EVERY USER NEEDS ONE OF THESE . HOwever, when we add workgroups, maybe just leave this alone, and user logs into workgroup to post for the group. But maybe will also want company subscription to apply for a single user. In that case, maybe check both subscriptions? or just ignore the user's one or somethign?
+    status:            {type: "string", enum: ACCOUNT_SUBSCRIPTION_STATUSES, defaultsTo: ACCOUNT_SUBSCRIPTION_STATUSES[0], required: true},  //SHOULD ALWAYS BE ACTIVE, EVERY USER NEEDS ONE OF THESE . Let stripe keep track of when they cancelled etc. We'll just keep track of their current status. HOwever, when we add workgroups, maybe just leave this alone, and user logs into workgroup to post for the group. But maybe will also want company subscription to apply for a single user. In that case, maybe check both subscriptions? or just ignore the user's one or somethign?
     subscriptionFor:   {type: "string", enum: ["USER", "WORKGROUP"], defaultsTo: "USER"},
     subscriptionStatus:   {type: "string"}, //using stripe's statuses
     stripeCustomerId:  {type: "string"},
@@ -198,11 +198,13 @@ console.log("params", stripeParams);
       AccountSubscriptions.findOne({userId: userId, status: "ACTIVE"})
       .then((accountSub) => {
         accountSubscription = accountSub
+console.log("initial result", accountSubscription);
         //if (!accountSubscription || !accountSubscription.stripeSubscriptionId) {
         if (!accountSubscription || !accountSubscription.stripeCustomerId) {
           //there is no subscription in stripe yet, just return
           return resolve(accountSubscription)
         }
+
 
         /* this retrieved one sub, but if admin (jason) changed in dashboard or created a new one, it wouldn't get it
         * instead get all for a given stripe customer, which stays consistent with the user
@@ -213,7 +215,6 @@ console.log("params", stripeParams);
             sails.log.debug("ERROR retrieving stripe subscription: ", err);
             return reject(err)
           }
-          console.log("now syncing with our record");
           //returns in sync account record
           return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
         })
@@ -239,9 +240,10 @@ console.log("params", stripeParams);
             subToUse = subscriptions[0]
           }
 
+console.log(subToUse, accountSubscription);
           console.log("now syncing with our record");
           //returns in sync account record
-          return resolve(AccountSubscriptions._syncAPIWithStripeSub(subToUse, accountSubscription))
+          return resolve(AccountSubscriptions._syncAPIWithStripeSub(subToUse, accountSubscription, {noSubsForCustomer: !subToUse}))
         })
       })
       .catch((err) => {
@@ -361,15 +363,18 @@ console.log("params", stripeParams);
 
   },
 
-  //when receive stripe subscription, this func handles it
-  _syncAPIWithStripeSub: (stripeSubscription, accountSubscription) => {
+  //when receive stripe subscription from their api, this func handles it
+  _syncAPIWithStripeSub: (stripeSubscription, accountSubscription, options = {}) => {
     return new Promise((resolve, reject) => {
 
-      const params = AccountSubscriptions._translateFromStripe(stripeSubscription, "subscription")
+      const params = AccountSubscriptions._translateFromStripe(stripeSubscription, "subscription", options)
 
-      if (accountSubscription.paymentPlan && (stripeSubscription.plan && stripeSubscription.plan.id) !== accountSubscription.paymentPlan) {
+      if (
+        accountSubscription.paymentPlan &&
+        (stripeSubscription && stripeSubscription.plan && stripeSubscription.plan.id) !== accountSubscription.paymentPlan
+      ) {
         // maybe raise an error later, but for now, just make sure we see it
-        sails.log.debug("ERROR: User's plan in stripe doesn't match our record for some reason!!! Did they hack us?", accountSubscription.paymentPlan, stripeSubscription.plan );
+        sails.log.debug("ERROR: User's plan in stripe doesn't match our record for some reason!!! Did they hack us? Could just be we changed something manually too :)", accountSubscription.paymentPlan, stripeSubscription && stripeSubscription.plan );
       }
 
       console.log("now updating to our db record");
@@ -388,6 +393,7 @@ console.log("params", stripeParams);
 
   //does not necessarily create stripe sub though, if no payment info yet. But prepares the customer and creates our db record
   findOrInitializeSubscription: (user) => {
+    //keep in mind, might not ever do anything other than "ACTIVE". Let stripe keep track of when they cancelled etc. We'll just keep track of their current status
     return AccountSubscriptions.findOne({userId: user.id, status: "ACTIVE"})
     .then((sub) => {
       if (!sub) {
@@ -403,10 +409,13 @@ console.log("params", stripeParams);
   },
 
   //default to empty obj, don't want this erroring out
-  _translateFromStripe: (data, stripeResourceType) => {
+  _translateFromStripe: (data, stripeResourceType, options = {}) => {
     console.log("result from stripe:", data);
     let params
-    if (!data || typeof data !== "object") throw new Error("data received from stripe is not an object" , data)
+    if (
+      !options.noSubsForCustomer &&
+      (!data || typeof data !== "object")
+    ) throw new Error("data received from stripe is not an object" , data)
 
     if (stripeResourceType === "customer") {
       const customer = data
@@ -418,16 +427,32 @@ console.log("params", stripeParams);
 
     } else if (stripeResourceType === "subscription") {
       const stripeSubscription = data
-      params = {
-        currentPeriodEnd: stripeSubscription.current_period_end && moment.unix(stripeSubscription.current_period_end).format() || null,// basically when next payment is due
-        currentPeriodStart: stripeSubscription.current_period_start && moment.unix(stripeSubscription.current_period_start).format() || null,// basically when last Payment was made
-        cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
-        cancelledAt: stripeSubscription.canceled_at && moment.unix(stripeSubscription.canceled_at).format() || null,
-        endedAt: stripeSubscription.ended_at && moment.unix(stripeSubscription.ended_at).format() || null,
-        subscriptionStatus: stripeSubscription.status,
-        paymentPlan: stripeSubscription.plan && stripeSubscription.plan.id || null, //often these should already be kthe same. But if not, stripe's records are the source of truth
-        stripeSubscriptionId: stripeSubscription.id,
-        planItemId: Helpers.safeDataPath(stripeSubscription, "items.data.0.id")
+
+      if (options.noSubsForCustomer) {
+        params = {
+          currentPeriodEnd: null,// basically when next payment is due
+          currentPeriodStart: null,
+          cancelAtPeriodEnd: null,
+          cancelledAt: null,
+          endedAt: null,
+          subscriptionStatus: null,
+          paymentPlan: null, //often these should already be kthe same. But if not, stripe's records are the source of truth
+          stripeSubscriptionId: null,
+          planItemId: null,
+        }
+      } else {
+        params = {
+          currentPeriodEnd: stripeSubscription.current_period_end && moment.unix(stripeSubscription.current_period_end).format() || null,// basically when next payment is due
+          currentPeriodStart: stripeSubscription.current_period_start && moment.unix(stripeSubscription.current_period_start).format() || null,// basically when last Payment was made
+          cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+          cancelledAt: null,
+          endedAt: stripeSubscription.ended_at && moment.unix(stripeSubscription.ended_at).format() || null,
+          subscriptionStatus: stripeSubscription.status,
+          paymentPlan: stripeSubscription.plan && stripeSubscription.plan.id || null, //often these should already be kthe same. But if not, stripe's records are the source of truth
+          stripeSubscriptionId: stripeSubscription.id,
+          planItemId: Helpers.safeDataPath(stripeSubscription, "items.data.0.id")
+        }
+
       }
 
     // assumes source is credit card
