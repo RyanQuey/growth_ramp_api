@@ -19,7 +19,7 @@ module.exports = {
     paymentPlan:       {type: "string"}, //stripe's subscription plan ID for their plan
     currency:          {type: "string"}, //not sure if we'll use it, but international so maybe?
     defaultSourceId:     {type: "string"}, //their credit card's source id in stripe's db
-    defaultSourceLastFour:     {type: "string"}, //their credit card's last 4
+    defaultSourceLastFour:    {type: "string"}, //their credit card's last 4
     currentPeriodEnd:  {type: "datetime"},// basically when next payment is due
     currentPeriodStart:{type: "datetime"},// basically when last Payment was made
     cancelAtPeriodEnd:  {type: "boolean"},//whether or not they are set to renew or are not paying anymore at date of nextPaymentDue
@@ -188,7 +188,7 @@ console.log("params", stripeParams);
 
   },
 
-  //refresh data with stripe - particularly subscription
+  //refresh/sync data with stripe - particularly subscription
   //for checking the card's status, see checkCreditCardStatus
   //TODO will have to make usable for workgroups in future too maybe
   checkStripeStatus: (userId) => {
@@ -198,11 +198,15 @@ console.log("params", stripeParams);
       AccountSubscriptions.findOne({userId: userId, status: "ACTIVE"})
       .then((accountSub) => {
         accountSubscription = accountSub
-        if (!accountSubscription || !accountSubscription.stripeSubscriptionId) {
+        //if (!accountSubscription || !accountSubscription.stripeSubscriptionId) {
+        if (!accountSubscription || !accountSubscription.stripeCustomerId) {
           //there is no subscription in stripe yet, just return
           return resolve(accountSubscription)
         }
 
+        /* this retrieved one sub, but if admin (jason) changed in dashboard or created a new one, it wouldn't get it
+        * instead get all for a given stripe customer, which stays consistent with the user
+        *
         stripe.subscriptions.retrieve(accountSubscription.stripeSubscriptionId,
         (err, stripeSubscription) => {
           if (err) {
@@ -212,6 +216,32 @@ console.log("params", stripeParams);
           console.log("now syncing with our record");
           //returns in sync account record
           return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
+        })
+        */
+        stripe.subscriptions.list({
+          customer: accountSubscription.stripeCustomerId
+        }, (err, result) => {
+          if (err) {
+            sails.log.debug("ERROR retrieving stripe subscription: ", err);
+            return reject(err)
+          }
+
+          const subscriptions = result.data || []
+          //if more than one subscription, if any active, use that one
+          //need to send an alert to us too though TODO, we don't want them billed for one if they have a free one active too!
+          const activeSubscriptions = subscriptions.filter((sub) => sub.status === "active") //not doing trialing yet
+          //if more than one active, use the cheapest one
+          let subToUse
+          if (activeSubscriptions.length > 0) {
+            //not doing anything yet, just getting first one. Maybe later get the cheapest one
+            subToUse = activeSubscriptions[0]
+          } else {
+            subToUse = subscriptions[0]
+          }
+
+          console.log("now syncing with our record");
+          //returns in sync account record
+          return resolve(AccountSubscriptions._syncAPIWithStripeSub(subToUse, accountSubscription))
         })
       })
       .catch((err) => {
