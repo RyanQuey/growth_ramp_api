@@ -56,7 +56,93 @@ const GoogleAnalytics = {
     })
   },
 
-  generateReportRequests: (filters) => {
+
+  //gets several reports actually currently. Will want to make more helpers to get other traffic reports too TODO
+  // Report types currently supported:
+  // "by-channel-type"
+  // "by-webpage.channelTraffic" (my original one)
+  getReport: (providerAccount, filters, options = {}) => {
+    return new Promise((resolve, reject) => {
+      let analyticsAccounts, currentAnalyticsAccount
+      const oauthClient = Google._setup(providerAccount)
+     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not done yet)
+
+
+      let {func, defaultMetrics, defaultDimensions} = analyticsConstants.DATASETS[options.dataset]
+
+      //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
+      filters = Object.assign({
+        metrics: defaultMetrics,
+        dimensions: defaultDimensions,
+      }, filters)
+
+      const {reportRequests, reportOrder} = GoogleAnalytics[func](filters)
+
+      const params = {
+        auth: oauthClient,
+        resource: {  // see for how this works: https://github.com/google/google-api-nodejs-client/issues/561
+          reportRequests,
+        }
+      }
+      analyticsReportingClient.reports.batchGet(params, (err, response) => {
+        if (err) {
+          return reject(err)
+        }
+
+        const reports = response.data && response.data.reports
+
+        let reportToReturn
+        if (filters.getChannelTraffic) {
+          reportToReturn = GoogleAnalytics.combineReports(reports, reportOrder)
+        } else {
+          reportToReturn = reports[0]
+        }
+
+        const ret = GoogleAnalytics.handleReport(reportToReturn)
+        return resolve(ret)
+      })
+    })
+  },
+
+  // generates report requests for single dimension (and hwoever many metrics)
+  generateStandardReportRequests: (filters) => {
+    const viewId = filters.profileId
+    let dateRanges
+    if (filters.startDate) { //if none set, defaults to one week
+      dateRanges = [{
+        startDate: filters.startDate,
+        endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
+      }]
+    }
+
+    // want to apply this for each report set
+
+    // various filters to be applied to the tempalte, one for each report. Might also get counts for
+
+    const report = {
+      viewId,
+      dateRanges,
+      metrics: filters.metrics || [
+        {expression: "ga:pageviews"},
+        {expression: "ga:uniquePageviews"},
+        {expression: "ga:bounceRate"},
+        {expression: "ga:avgTimeOnPage"},
+        {expression: "ga:exitRate"},
+      ],
+      dimensions: filters.dimensions || [
+        {name: "ga:landingPagePath"},
+      ],
+    }
+
+    return {
+      reportRequests: [report],
+    }
+  },
+
+  // generates report requests to get all the traffic from the different channel types
+  // NOT the same as traffic by channel type, which uses channel types as rows
+  // note that this uses up the five report max, so would take up a whole request.
+  generateChannelTrafficReportRequests: (filters) => {
     const viewId = filters.profileId
     let dateRanges
     if (filters.startDate) { //if none set, defaults to one week
@@ -87,10 +173,10 @@ const GoogleAnalytics = {
 
     const reportRequests = reportOrder.map((reportType) => {
       //adds the dimensions specific for this report to the shared ones
-      const additionalDimensions = analyticsConstants.reportTypes[reportType].gaDimensionSets || []
+      const additionalDimensions = analyticsConstants.REPORT_TYPES[reportType].gaDimensionSets || []
       const reportDimensions = [...template.dimensions].concat(additionalDimensions)
       // addes the dimension filters specific for this report if they exist
-      const additionalProperties = analyticsConstants.reportTypes[reportType].additionalProperties || {}
+      const additionalProperties = analyticsConstants.REPORT_TYPES[reportType].additionalProperties || {}
 
       return Object.assign({}, template, {dimensions: reportDimensions}, additionalProperties)
     })
@@ -99,34 +185,6 @@ const GoogleAnalytics = {
 
     //NOTE: can do max of 5
     return {reportRequests, reportOrder}
-  },
-
-  //gets several reports actually currently. Will want to make more helpers to get other traffic reports too TODO
-  getReport: (providerAccount, filters) => {
-    return new Promise((resolve, reject) => {
-      let analyticsAccounts, currentAnalyticsAccount
-      const oauthClient = Google._setup(providerAccount)
-     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not done yet)
-      const {reportRequests, reportOrder} = GoogleAnalytics.generateReportRequests(filters)
-
-
-      const params = {
-        auth: oauthClient,
-        resource: {  // see for how this works: https://github.com/google/google-api-nodejs-client/issues/561
-          reportRequests,
-        }
-      }
-      analyticsReportingClient.reports.batchGet(params, (err, response) => {
-        if (err) {
-          return reject(err)
-        }
-
-        const reports = response.data && response.data.reports
-        const combinedReport = GoogleAnalytics.combineReports(reports, reportOrder)
-        const ret = GoogleAnalytics.handleReport(combinedReport)
-        return resolve(ret)
-      })
-    })
   },
 
   //takes multiple reports and combines into single data set to send to browser
@@ -148,7 +206,7 @@ const GoogleAnalytics = {
         let report = reports[i]
         let reportType = reportOrder[i]
         // add column to headers
-        metricHeaders.push(Object.assign({}, reportMetricType, {title: `${reportType} ${reportMetricType.name}`}))
+        metricHeaders.push(Object.assign({}, reportMetricType))// {title: `${reportType} ${reportMetricType.name}`})) do this in frontend
 
         let rows = report.data.rows
         if (!rows) {
@@ -209,7 +267,9 @@ const GoogleAnalytics = {
 //if (row.dimensions[0] === "/") {console.log(reportType, row.dimensions);}
       if (matchingRow !== -1) {
         matchedRows.push(matchingRow.dimensions[0])
-        matchingRow.metrics.push(row.metrics[0])
+        // for each requested daterange, returns an obj in the metrics array. Each metric's value is returned in the metrics[0].values array
+        // for now, only doing one date range at a time
+        matchingRow.metrics[0].push(row.metrics[0])
       } else {
         console.error("row shows up here but not in total? How is that possible? Maybe pagination issue? skipping that row either way; can show that data when the total for that page shows up");
       }
