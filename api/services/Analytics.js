@@ -41,7 +41,7 @@ const Analytics = {
         id: filters.providerAccountId,
       })
       .then((account) => {
-        return GoogleAnalytics.getReport(account, filters)
+        return GoogleAnalytics.getReport(account, filters, {dataset: params.dataset})
       })
       .then((result) => {
         return resolve(result)

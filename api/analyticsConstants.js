@@ -2,7 +2,7 @@
 //gaAdditionalProperties: additional properties on the GA report request for a given report type
 //
 //gaDimensionSets dimensions to add to the shared dimensions for a reportSet for GA
-module.exports.reportTypes = {
+module.exports.REPORT_TYPES = {
   ///////////////////////////////
   //start with traffic reports
   totalTraffic: {
@@ -77,7 +77,21 @@ module.exports.reportTypes = {
       },
     ]
   },
+
 }
+  // defaults for the different datasets
+module.exports.DATASETS = {
+    "channel-traffic": {
+      func: "generateChannelTrafficReportRequests",
+    },
+    "website-traffic": {
+      func: "generateStandardReportRequests",
+      defaultDimensions: [{name: "ga:channelGrouping"}],
+    },
+    "webpage-traffic": {
+      func: "generateStandardReportRequests",
+    },
+  }
 
 
 //sample segment stuff
