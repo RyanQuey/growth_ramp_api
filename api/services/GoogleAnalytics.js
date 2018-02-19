@@ -132,6 +132,9 @@ const GoogleAnalytics = {
       dimensions: filters.dimensions || [
         {name: "ga:landingPagePath"},
       ],
+      orderBys: [
+        filters.orderBy || {fieldName: "ga:pageviews", sortOrder: "DESCENDING"}
+      ]
     }
 
     return {
@@ -296,6 +299,11 @@ const GoogleAnalytics = {
     //get rid of extra nesting and rename to match format of columnHeader.dimensions
     report.columnHeader.metrics = [...report.columnHeader.metricHeader.metricHeaderEntries]
     delete report.columnHeader.metricHeader
+    //make dimensions same format as metric headers
+    report.columnHeader.dimensions = report.columnHeader.dimensions.map((dimensionName) => ({
+      name: dimensionName,
+      type: "STRING",
+    }))
 
     report.rows = [...report.data.rows]
 
