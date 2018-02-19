@@ -81,18 +81,27 @@ module.exports.REPORT_TYPES = {
 }
   // defaults for the different datasets
 module.exports.DATASETS = {
-    "channel-traffic": {
-      func: "generateChannelTrafficReportRequests",
-    },
-    "website-traffic": {
-      func: "generateStandardReportRequests",
-      defaultDimensions: [{name: "ga:channelGrouping"}],
-    },
-    "webpage-traffic": {
-      func: "generateStandardReportRequests",
-    },
-  }
+  "channel-traffic": {
+    func: "generateChannelTrafficReportRequests",
+  },
+  "website-traffic": {
+    func: "generateStandardReportRequests",
+    defaultDimensions: [{name: "ga:channelGrouping"}],
+  },
+  "webpage-traffic": {
+    func: "generateStandardReportRequests",
+  },
+}
 
+module.exports.METRICS_SETS = {
+  behavior: [
+    {expression: "ga:pageviews"},
+    {expression: "ga:uniquePageviews"},
+    {expression: "ga:bounceRate"},
+    {expression: "ga:avgTimeOnPage"},
+    {expression: "ga:exitRate"},
+  ],
+}
 
 //sample segment stuff
 
