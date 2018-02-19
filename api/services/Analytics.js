@@ -47,12 +47,18 @@ const Analytics = {
         return resolve(result)
       })
       .catch((err) => {
-        if (err.code) {
+        if (err.code) { //codes GR made
           switch (err.code) {
             case "no-rows-for-profile":
-            console.error("User: ", user.id, "ProfileId: ", filters.profileId, "WebsiteID: ", filters.websiteId);
+              console.error("User: ", user.id, "ProfileId: ", filters.profileId, "WebsiteID: ", filters.websiteId);
+              break
+            default:
+              console.error("Error from getting analytics: ", err);
           }
+        } else {
+          console.error("Error from getting analytics: ", err);
         }
+
         return reject(err)
       })
     })
