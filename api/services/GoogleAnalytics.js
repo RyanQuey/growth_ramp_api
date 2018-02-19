@@ -2,7 +2,7 @@ const google = require('googleapis');
 const analyticsClient = google.analytics("v3")
 const analyticsConstants = require('../analyticsConstants')
 const analyticsReportingClient = google.analyticsreporting("v4")
-
+const {METRICS_SETS, REPORT_TYPES, DATASETS} = analyticsConstants
 
 const GoogleAnalytics = {
   // get info for all google analytics accounts for all Google accounts this user has
@@ -68,7 +68,7 @@ const GoogleAnalytics = {
      //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not done yet)
 
 
-      let {func, defaultMetrics, defaultDimensions} = analyticsConstants.DATASETS[options.dataset]
+      let {func, defaultMetrics, defaultDimensions} = DATASETS[options.dataset]
 
       //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
       filters = Object.assign({
@@ -90,6 +90,7 @@ const GoogleAnalytics = {
         }
 
         const reports = response.data && response.data.reports
+console.log(response);
 
         let reportToReturn
         if (filters.getChannelTraffic) {
@@ -119,22 +120,22 @@ const GoogleAnalytics = {
 
     // various filters to be applied to the tempalte, one for each report. Might also get counts for
 
+    const pageSize = filters.pageSize || 10
+    //page token should be last page's last row index
+    const pageToken = String(((filters.page || 1) - 1) * pageSize + 1)
+
     const report = {
       viewId,
       dateRanges,
-      metrics: filters.metrics || [
-        {expression: "ga:pageviews"},
-        {expression: "ga:uniquePageviews"},
-        {expression: "ga:bounceRate"},
-        {expression: "ga:avgTimeOnPage"},
-        {expression: "ga:exitRate"},
-      ],
+      metrics: filters.metrics || METRICS_SETS.behavior,
       dimensions: filters.dimensions || [
         {name: "ga:landingPagePath"},
       ],
       orderBys: [
         filters.orderBy || {fieldName: "ga:pageviews", sortOrder: "DESCENDING"}
-      ]
+      ],
+      pageSize,
+      pageToken,
     }
 
     return {
@@ -176,10 +177,10 @@ const GoogleAnalytics = {
 
     const reportRequests = reportOrder.map((reportType) => {
       //adds the dimensions specific for this report to the shared ones
-      const additionalDimensions = analyticsConstants.REPORT_TYPES[reportType].gaDimensionSets || []
+      const additionalDimensions = REPORT_TYPES[reportType].gaDimensionSets || []
       const reportDimensions = [...template.dimensions].concat(additionalDimensions)
       // addes the dimension filters specific for this report if they exist
-      const additionalProperties = analyticsConstants.REPORT_TYPES[reportType].additionalProperties || {}
+      const additionalProperties = REPORT_TYPES[reportType].additionalProperties || {}
 
       return Object.assign({}, template, {dimensions: reportDimensions}, additionalProperties)
     })
@@ -189,6 +190,7 @@ const GoogleAnalytics = {
     //NOTE: can do max of 5
     return {reportRequests, reportOrder}
   },
+
 
   //takes multiple reports and combines into single data set to send to browser
   //shared column count is how many dimensions columns each report shares. default is 1 (url), though minimum is 1 (which is requried to ID a given row)
@@ -306,6 +308,7 @@ const GoogleAnalytics = {
     }))
 
     report.rows = [...report.data.rows]
+    delete report.data.rows //smaller payload === faster
 
     return report
   },
