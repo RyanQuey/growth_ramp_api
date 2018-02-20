@@ -2,6 +2,7 @@ const google = require('googleapis');
 const analyticsClient = google.analytics("v3")
 const analyticsConstants = require('../analyticsConstants')
 const analyticsReportingClient = google.analyticsreporting("v4")
+const url = require('url')
 const {METRICS_SETS, REPORT_TYPES, DATASETS} = analyticsConstants
 
 const GoogleAnalytics = {
@@ -309,6 +310,23 @@ const GoogleAnalytics = {
     }))
 
     report.rows = [...report.data.rows]
+    // if percent or time, add that to the value to display
+    // TODO might move this to frontend? fine here for now though
+    for (let row of report.rows) {
+      for (let i = 0; i < row.metrics[0].values.length; i++) {
+        let value = row.metrics[0].values[i]
+        let valueType = report.columnHeader.metrics[i].type
+        if (valueType === "PERCENT") {
+          //round to 100ths
+          value = parseFloat(value) ? Math.round(value * 100) / 100 : value
+          row.metrics[0].values[i] = String(value) + "%"
+        } else if (valueType === "TIME") {
+          //convert seconds to HH:mm:ss format
+          row.metrics[0].values[i] = (new Date(value * 1000)).toUTCString().match(/(\d\d:\d\d:\d\d)/)[0]
+        }
+      }
+    }
+
     delete report.data.rows //smaller payload === faster
 
     return report
