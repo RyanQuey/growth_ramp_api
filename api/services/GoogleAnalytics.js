@@ -76,6 +76,7 @@ const GoogleAnalytics = {
         dimensions: defaultDimensions,
       }, filters)
 
+      //mostly "func" will be generateStandardReportRequests
       const {reportRequests, reportOrder} = GoogleAnalytics[func](filters)
 
       const params = {
@@ -88,9 +89,7 @@ const GoogleAnalytics = {
         if (err) {
           return reject(err)
         }
-
         const reports = response.data && response.data.reports
-console.log(response);
 
         let reportToReturn
         if (filters.getChannelTraffic) {
@@ -122,7 +121,7 @@ console.log(response);
 
     const pageSize = filters.pageSize || 10
     //page token should be last page's last row index
-    const pageToken = String(((filters.page || 1) - 1) * pageSize + 1)
+    const pageToken = String(((filters.page || 1) - 1) * pageSize)
 
     const report = {
       viewId,
@@ -135,7 +134,9 @@ console.log(response);
         filters.orderBy || {fieldName: "ga:pageviews", sortOrder: "DESCENDING"}
       ],
       pageSize,
-      pageToken,
+    }
+    if (pageToken) {
+      report.pageToken = pageToken
     }
 
     return {
