@@ -91,6 +91,10 @@ module.exports.DATASETS = {
   "webpage-traffic": {
     func: "generateStandardReportRequests",
   },
+  //for the line chart, which shows data change over time
+  "chart-line-time": {
+    func: "generateHistogramReportRequest",
+  },
 }
 
 module.exports.METRICS_SETS = {

@@ -101,7 +101,7 @@ module.exports = class PublishDelayedPosts extends Job {
     .then((results) => {
       results = results || []
       const approvedUserIds = results.filter((r) => r.status === "accepted").map(r => r.userId)
-      console.log('approved user IDs', approvedUserIds);
+      //console.log('approved user IDs', approvedUserIds);
 
       const campaignIds = Object.keys(campaignsToPublish)
 
@@ -110,7 +110,7 @@ module.exports = class PublishDelayedPosts extends Job {
         return approvedUserIds.includes(campaignUserId)
       })
 
-      console.log("approved campaigns: ", approvedCampaignIds);
+      //console.log("approved campaigns: ", approvedCampaignIds);
       const promises2 = approvedCampaignIds.map((id) => {
         const data = campaignsToPublish[id]
         return Campaigns.publishCampaign(data.campaign, data.readyPosts)
@@ -119,13 +119,13 @@ module.exports = class PublishDelayedPosts extends Job {
       return Promise.all(promises2)
     })
     .then((allResults) => {
-      console.log("Finished publishing delayed posts:");
-      console.log(allResults);
+      //console.log("Finished publishing delayed posts:");
+      //console.log(allResults);
 
       // run this after posts are done, so doesn't interrupt them in any way, and keeps code cleaner
       if (usersWithFailedPublishes && usersWithFailedPublishes.length ) {
-        console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
-        sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes.map((data) => Helpers.safeDataPath(data, "user.email", "unknown user") ));
+        //console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
+        //sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedPublishes.map((data) => Helpers.safeDataPath(data, "user.email", "unknown user") ));
       }
 
       return
