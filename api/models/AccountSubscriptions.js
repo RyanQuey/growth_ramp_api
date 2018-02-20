@@ -198,7 +198,6 @@ console.log("params", stripeParams);
       AccountSubscriptions.findOne({userId: userId, status: "ACTIVE"})
       .then((accountSub) => {
         accountSubscription = accountSub
-console.log("initial result", accountSubscription);
         //if (!accountSubscription || !accountSubscription.stripeSubscriptionId) {
         if (!accountSubscription || !accountSubscription.stripeCustomerId) {
           //there is no subscription in stripe yet, just return
@@ -240,8 +239,6 @@ console.log("initial result", accountSubscription);
             subToUse = subscriptions[0]
           }
 
-console.log(subToUse, accountSubscription);
-          console.log("now syncing with our record");
           //returns in sync account record
           return resolve(AccountSubscriptions._syncAPIWithStripeSub(subToUse, accountSubscription, {noSubsForCustomer: !subToUse}))
         })
@@ -377,7 +374,6 @@ console.log(subToUse, accountSubscription);
         sails.log.debug("ERROR: User's plan in stripe doesn't match our record for some reason!!! Did they hack us? Could just be we changed something manually too :)", accountSubscription.paymentPlan, stripeSubscription && stripeSubscription.plan );
       }
 
-      console.log("now updating to our db record");
       return AccountSubscriptions.update({
         id: accountSubscription.id,
       }, params)
@@ -410,7 +406,6 @@ console.log(subToUse, accountSubscription);
 
   //default to empty obj, don't want this erroring out
   _translateFromStripe: (data, stripeResourceType, options = {}) => {
-    console.log("result from stripe:", data);
     let params
     if (
       !options.noSubsForCustomer &&
@@ -494,7 +489,6 @@ console.log(subToUse, accountSubscription);
     //all this so don't send a whole bunch of undefined params to stripe, if there's things we are not tryihg to update, they are left untouched. But, if things set to false or null, we can update that.
     for (let paramPair of potentialParams) {
       let recordData = Helpers.safeDataPath(accountSubscription, paramPair[0], undefined)
-console.log(recordData);
       if (![undefined, null].includes(recordData)) {
         _.set(stripeParams, paramPair[1], recordData)
       }
