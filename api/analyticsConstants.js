@@ -5,6 +5,7 @@
 module.exports.REPORT_TYPES = {
   ///////////////////////////////
   //start with traffic reports
+  //NOTE not tested any of these yet
   totalTraffic: {
     gaAdditionalProperties: false, //no filter for this
     gaDimensionSets: false,
@@ -12,7 +13,26 @@ module.exports.REPORT_TYPES = {
 
   socialTraffic: {
     gaAdditionalProperties: false, //no filter for this
-    gaDimensionSets: [{name: "ga:hasSocialSourceReferral"}], // will extract this to get social referral traffic,
+    //gaDimensionSets: [{name: "ga:hasSocialSourceReferral"}], // was extracting this to get social referral traffic,
+    gaAdditionalProperties: {
+      dimensionFilterClauses: {
+        operator: "OR",
+        filters: [
+          {
+            dimensionName: "ga:medium",
+            operator: "REGEXP",
+            // haven't tested
+            expressions: ["^(social|social-network|social-media|sm|social network|social media)$"],
+          },
+          {
+            dimensionName: "ga:hasSocialSourceReferralmedium", //NOTE
+            operator: "EXACT",
+            // haven't tested
+            expressions: ["Yes"],
+          },
+        ],
+      },
+    },
   },
 
   referralTraffic: {
@@ -33,11 +53,19 @@ module.exports.REPORT_TYPES = {
   directTraffic: {
     gaAdditionalProperties: {
       dimensionFilterClauses: {
+        operator: "AND",
+        filters: [
+          {
+            dimensionName: "ga:source",
+            operator: "EXACT",
+            expressions: ["direct"], //gets direct traffic
+          },
+        ],
         filters: [
           {
             dimensionName: "ga:medium",
-            operator: "EXACT",
-            expressions: ["(none)"], //gets direct traffic
+            operator: "IN_LIST",
+            expressions: ["(none)", "(not set)"], //gets direct traffic
           },
         ],
       },

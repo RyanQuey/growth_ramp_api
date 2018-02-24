@@ -1,5 +1,5 @@
 const analyticsConstants = require('../../analyticsConstants')
-const {METRICS_SETS, REPORT_TYPES, DATASETS} = analyticsConstants
+const {METRICS_SETS, REPORT_TYPES, DATASETS, FILTER_SETS} = analyticsConstants
 const chartHelpers = require('./chartHelpers')
 //helpers to generate report requests for GA, depending on the type of data we're asking for
 module.exports = {
@@ -12,6 +12,15 @@ module.exports = {
         startDate: filters.startDate,
         endDate: filters.endDate, //. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
       }]
+    }
+    let dimensionFilterClauses = []
+    if (filters.dimensionFilterSets) {
+      for (let set of filters.dimensionFilterSets) {
+        dimensionFilterClauses = dimensionFilterClauses.concat(FILTER_SETS[set])
+      }
+    }
+    if (filters.dimensionFilterClauses) {
+      dimensionFilterClauses = dimensionFilterClauses.concat(filters.dimensionFilterClauses)
     }
 
     // want to apply this for each report set
@@ -37,6 +46,9 @@ module.exports = {
     if (pageToken) {
       report.pageToken = pageToken
     }
+    if (dimensionFilterClauses.length) {
+      report.dimensionFilterClauses = dimensionFilterClauses
+    }
 
     return {
       reportRequests: [report],
@@ -52,7 +64,7 @@ module.exports = {
     if (filters.startDate) { //if none set, defaults to one week
       dateRanges = [{
         startDate: filters.startDate,
-        endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
+        endDate: filters.endDate, //TODO might need to set to PST like I did for GSC, if uses PSt as it does there
       }]
     }
 
@@ -91,7 +103,6 @@ module.exports = {
     return {reportRequests, reportOrder}
   },
   generateHistogramReportRequest: (filters) => {
-    //NOTE might remove default from api eventually
     const viewId = filters.profileId
     let dateRanges = [{
       startDate: filters.startDate,
@@ -100,7 +111,6 @@ module.exports = {
 
     const histogramData = chartHelpers.getXAxisData(filters)
     const {rangeArray, unit, step} = histogramData
-console.log(rangeArray, unit, step);
     const histogramBuckets = chartHelpers.getHistogramBuckets(histogramData)
 
     const report = {
