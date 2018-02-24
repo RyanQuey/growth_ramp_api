@@ -26,7 +26,7 @@ module.exports = {
       step = 12
     }
 
-    /* not working for some reason, so working around
+    /* Array.from()not working for some reason, so working around
     const range = moment.range(start, end)
 console.log("range", range, step, unit, filterLength, "days");
 console.log(range.by(unit, {step: step}));
@@ -36,16 +36,18 @@ console.log(range.by(unit, {step: step}));
     const rangeArray = []
     let current = start.clone()
 
-let count = 0
-    while (current.isBefore(end) && count < 25) {
-count ++
-console.log("current", current, "end", end, unit, step);
+    let count = 0
+    //count should never be needed, but good safeguard in case I do something bad :)
+    while (!current.isAfter(end) && count < 25) {
+      count ++
+      console.log("current", current, "end", end, unit, step);
       rangeArray.push(current)
       current = current.clone().add(step, unit)
     }
 
 console.log(rangeArray);
-    return {rangeArray, unit, step}
+//currently endDate and startDate are moments. Only endDate is being used, and only in frontend
+    return {rangeArray, unit, step, endDate: end, startDate: start}
   },
 
   getHistogramBuckets: ({rangeArray, unit, step}) => {

@@ -10,7 +10,7 @@ module.exports = {
     if (filters.startDate) { //if none set, defaults to one week
       dateRanges = [{
         startDate: filters.startDate,
-        endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
+        endDate: filters.endDate, //. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
       }]
     }
 
@@ -91,10 +91,11 @@ module.exports = {
     return {reportRequests, reportOrder}
   },
   generateHistogramReportRequest: (filters) => {
+    //NOTE might remove default from api eventually
     const viewId = filters.profileId
     let dateRanges = [{
-      startDate: filters.startDate || moment().subtract(1, "week").format("YYYY-MM-DD"),
-      endDate: filters.endDate || moment().format("YYYY-MM-DD"), //default to present. TODO might need to set to PST like I did for GSC, if uses PSt as it does there
+      startDate: filters.startDate,
+      endDate: filters.endDate, //TODO might need to set to PST like I did for GSC, if uses PSt as it does there
     }]
 
     const histogramData = chartHelpers.getXAxisData(filters)
