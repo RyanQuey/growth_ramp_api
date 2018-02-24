@@ -225,25 +225,40 @@ const GoogleAnalytics = {
     report.rows = [...report.data.rows]
     // if percent or time, add that to the value to display
     // TODO might move this to frontend? fine here for now though
-    for (let row of report.rows) {
-      for (let i = 0; i < row.metrics[0].values.length; i++) {
-        let value = row.metrics[0].values[i]
-        let valueType = report.columnHeader.metrics[i].type
-        if (valueType === "PERCENT") {
-          //round to 100ths
-          value = parseFloat(value) ? Math.round(value * 100) / 100 : value
-          row.metrics[0].values[i] = String(value) + "%"
-        } else if (valueType === "TIME") {
-          //convert seconds to HH:mm:ss format
-          row.metrics[0].values[i] = (new Date(value * 1000)).toUTCString().match(/(\d\d:\d\d:\d\d)/)[0]
-        }
-console.log(row);
+    const metricHeaders = report.columnHeader.metrics
+    for (let i = 0; i < metricHeaders.length; i++) {
+      let valueType = metricHeaders[i].type
+      if (!["PERCENT", "TIME"].includes(valueType)) {continue}
+
+      // update valuetype for this row if necessary
+      for (let row of report.rows) {
+        let rawValue = row.metrics[0].values[i]
+        row.metrics[0].values[i] = GoogleAnalytics._prettyPrintValue(rawValue, valueType)
       }
+
+      let rawTotal = report.data.totals[0].values[i]
+      report.data.totals[0].values[i] = GoogleAnalytics._prettyPrintValue(rawTotal, valueType)
     }
 
     delete report.data.rows //smaller payload === faster
 
     return report
+  },
+
+  _prettyPrintValue: (rawValue, valueType) => {
+    let value
+    if (valueType === "PERCENT") {
+      //round to 100ths
+      value = parseFloat(rawValue) ? Math.round(rawValue * 100) / 100 : rawValue
+      value = String(value) + "%"
+    } else if (valueType === "TIME") {
+      //convert seconds to HH:mm:ss format
+      value = (new Date(rawValue * 1000)).toUTCString().match(/(\d\d:\d\d:\d\d)/)[0]
+    } else {
+      value = rawValue
+    }
+
+    return value
   },
 }
 module.exports = GoogleAnalytics
