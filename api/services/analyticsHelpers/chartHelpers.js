@@ -17,13 +17,12 @@ module.exports = {
       unit = "Week"
       step = 1
 
-    } else { //if (filterLength < 30 * 30) {
-      //GA doesn't do nthYear, so must do months
+    } else if (filterLength < 30 * 30) {
       unit = "Month"
       step = 1
 
     } else {
-      unit = "Month"
+      unit = "Month" //GA doesn't do nthYear, so must do months here, but label by year in frontend
       step = 12
     }
 
