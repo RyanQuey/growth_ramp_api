@@ -9,20 +9,20 @@ module.exports = {
     const filterLength = end.diff(start) / 1000 / 60 / 60 / 24
 
     let unit, step
-    if (filterLength < 10) {
+    if (filterLength < 30) {
       unit = "Day"
       step = 1
 
-    } else if (filterLength < 50) {
+    } else if (filterLength < 30 * 7) {
       unit = "Week"
       step = 1
 
-    } else if (filterLength < 42) {
+    } else if (filterLength < 30 * 30) {
       unit = "Month"
       step = 1
 
     } else {
-      unit = "Month"
+      unit = "Month" //GA doesn't do nthYear, so must do months here, but year in frontend
       step = 12
     }
 
