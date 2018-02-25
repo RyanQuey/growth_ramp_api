@@ -1,5 +1,5 @@
 const analyticsConstants = require('../../analyticsConstants')
-const {METRICS_SETS, REPORT_TYPES, DATASETS, FILTER_SETS} = analyticsConstants
+const {METRICS_SETS, REPORT_TYPES, FILTER_SETS} = analyticsConstants
 const chartHelpers = require('./chartHelpers')
 //helpers to generate report requests for GA, depending on the type of data we're asking for
 module.exports = {
