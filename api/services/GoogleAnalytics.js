@@ -4,7 +4,7 @@ const analyticsConstants = require('../analyticsConstants')
 const generateGARequest = require('./analyticsHelpers/generateGARequest')
 const analyticsReportingClient = google.analyticsreporting("v4")
 const url = require('url')
-const {METRICS_SETS, REPORT_TYPES, DATASETS} = analyticsConstants
+const {METRICS_SETS, REPORT_TYPES} = analyticsConstants
 
 const GoogleAnalytics = {
   // get info for all google analytics accounts for all Google accounts this user has
@@ -70,7 +70,7 @@ const GoogleAnalytics = {
      //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not done yet)
 
 
-      let {func, defaultMetrics, defaultDimensions} = DATASETS[options.dataset]
+      let {func, defaultMetrics, defaultDimensions, defaultDimensionFilters} = GoogleAnalytics._getDefaultsFromDataset(options.dataset)
 
       //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
       filters = Object.assign({
@@ -260,5 +260,46 @@ const GoogleAnalytics = {
 
     return value
   },
+
+  // takes a dataset and returns some default func and filters
+  // dataset should be in format:
+  // table-{rowsBy}-{columnsBy}
+  // OR
+  // chart-{style}-{xAxis}
+  _getDefaultsFromDataset: (dataset) => {
+    const datasetParts = dataset.split("-")
+    // defaults for the different datasets
+    let func, defaultDimensions, defaultMetrics, defaultDimensionFilters
+
+    const displayType = datasetParts[0]
+    if (displayType === "table") {
+      let rowsBy = datasetParts[1] || ""
+      let columnSetsStr = datasetParts[2] || ""
+      let columnSetsArr = columnSetsStr.split(",") || []
+
+      if (rowsBy === "channelGrouping") {
+        defaultDimensions = [{name: "ga:channelGrouping"}]
+      }
+
+      if (rowsBy === "landingPagePath") {
+        defaultDimensions = [{name: "ga:landingPagePath"}]
+      }
+
+      if (columnSetsArr.includes("channel-traffic")) {
+        // my initial table, not using for now
+        func = "generateChannelTrafficReportRequests"
+
+      } else {
+        func = "generateStandardReportRequests"
+      }
+
+    } else if (displayType === "chart") {
+      //currently only for the line chart, which shows data change over time
+      func = "generateHistogramReportRequest"
+    }
+
+    return {func, defaultDimensions, defaultMetrics, defaultDimensionFilters}
+  },
 }
+
 module.exports = GoogleAnalytics
