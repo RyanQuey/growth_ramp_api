@@ -15,7 +15,7 @@ module.exports.REPORT_TYPES = {
     gaAdditionalProperties: false, //no filter for this
     //gaDimensionSets: [{name: "ga:hasSocialSourceReferral"}], // was extracting this to get social referral traffic,
     gaAdditionalProperties: {
-      dimensionFilterClauses: {
+      /*dimensionFilterClauses: { //this works too...but unnecessary
         operator: "OR",
         filters: [
           {
@@ -25,10 +25,20 @@ module.exports.REPORT_TYPES = {
             expressions: ["^(social|social-network|social-media|sm|social network|social media)$"],
           },
           {
-            dimensionName: "ga:hasSocialSourceReferralmedium", //NOTE
+            dimensionName: "ga:hasSocialSourceReferral", //NOTE might try using filtersExpression instead of dimensionFilterClauses since that is a string query
             operator: "EXACT",
             // haven't tested
             expressions: ["Yes"],
+          },
+        ],
+      },*/
+      dimensionFilterClauses: {
+        filters: [
+          {
+            dimensionName: "ga:channelGrouping",
+            operator: "EXACT",
+            // haven't tested
+            expressions: ["Social"],
           },
         ],
       },
@@ -40,9 +50,9 @@ module.exports.REPORT_TYPES = {
       dimensionFilterClauses: {
         filters: [
           {
-            dimensionName: "ga:medium",
+            dimensionName: "ga:channelGrouping",
             operator: "EXACT",
-            expressions: ["referral"], //gets referral traffic. Will remove social referrals manually later
+            expressions: ["Referral"], //gets referral traffic. Will remove social referrals manually later
           },
         ],
       },
@@ -60,8 +70,6 @@ module.exports.REPORT_TYPES = {
             operator: "EXACT",
             expressions: ["direct"], //gets direct traffic
           },
-        ],
-        filters: [
           {
             dimensionName: "ga:medium",
             operator: "IN_LIST",
@@ -107,24 +115,6 @@ module.exports.REPORT_TYPES = {
   },
 
 }
-  // defaults for the different datasets
-module.exports.DATASETS = {
-  "channel-traffic": {
-    func: "generateChannelTrafficReportRequests",
-  },
-  "website-traffic": {
-    func: "generateStandardReportRequests",
-    defaultDimensions: [{name: "ga:channelGrouping"}],
-  },
-  "webpage-traffic": {
-    func: "generateStandardReportRequests",
-  },
-  //for the line chart, which shows data change over time
-  "chart-line-time": {
-    func: "generateHistogramReportRequest",
-  },
-}
-
 module.exports.METRICS_SETS = {
   behavior: [
     {expression: "ga:pageviews"},
@@ -132,6 +122,14 @@ module.exports.METRICS_SETS = {
     {expression: "ga:bounceRate"},
     {expression: "ga:avgTimeOnPage"},
     {expression: "ga:exitRate"},
+  ],
+  acquisition: [
+    {expression: "ga:impressions"},
+    {expression: "ga:CTR"},
+    {expression: "ga:CPC"},
+    {expression: "ga:sessions"},
+    // to get average position, use GSC api https://developers.google.com/webmaster-tools/search-console-api-original/v3/how-tos/search_analytics
+    // not available in GA (multiple sources confirm)
   ],
 }
 
