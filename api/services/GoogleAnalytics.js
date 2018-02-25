@@ -76,6 +76,7 @@ const GoogleAnalytics = {
       filters = Object.assign({
         metrics: defaultMetrics,
         dimensions: defaultDimensions,
+        dimensionFilterClauses: defaultDimensionFilters,
       }, filters)
 
       //mostly "func" will be generateStandardReportRequests
@@ -284,11 +285,32 @@ const GoogleAnalytics = {
       if (rowsBy === "landingPagePath") {
         defaultDimensions = [{name: "ga:landingPagePath"}]
       }
+      // rows are social networks that referred to the page
+      if (rowsBy === "source=social") {
+        defaultDimensions = [{name: "ga:source"}]
+        defaultDimensionFilters = REPORT_TYPES.socialTraffic.gaAdditionalProperties.dimensionFilterClauses
+      }
+      // rows are ideally non-social networks that referred to the page
+      if (rowsBy === "source=referral") {
+        defaultDimensions = [{name: "ga:source"}]
+        defaultDimensionFilters = REPORT_TYPES.referralTraffic.gaAdditionalProperties.dimensionFilterClauses
+      }
+      //rows are keywords; data is for SEO
+      if (rowsBy === "keyword") {
+        defaultDimensions = [{name: "ga:keyword"}]
+      }
+
+      if (columnSetsArr.length) {
+        defaultMetrics = []
+        for (let metricSet of columnSetsArr) {
+          defaultMetrics = defaultMetrics.concat(METRICS_SETS[metricSet])
+        }
+      }
+
 
       if (columnSetsArr.includes("channel-traffic")) {
         // my initial table, not using for now
         func = "generateChannelTrafficReportRequests"
-
       } else {
         func = "generateStandardReportRequests"
       }

@@ -31,15 +31,19 @@ module.exports = {
     //page token should be last page's last row index
     const pageToken = String(((filters.page || 1) - 1) * pageSize)
 
+    const metrics = filters.metrics || METRICS_SETS.behavior
     const report = {
       viewId,
       dateRanges,
-      metrics: filters.metrics || METRICS_SETS.behavior,
+      metrics,
       dimensions: filters.dimensions || [
         {name: "ga:landingPagePath"},
       ],
       orderBys: [
-        filters.orderBy || {fieldName: "ga:pageviews", sortOrder: "DESCENDING"}
+        filters.orderBy || {
+          fieldName: metrics[0].expression, //default to sorting by first metric
+          sortOrder: "DESCENDING"
+        }
       ],
       pageSize,
     }
