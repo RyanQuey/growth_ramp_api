@@ -3,6 +3,7 @@ const analyticsClient = google.analytics("v3")
 const analyticsConstants = require('../analyticsConstants')
 const generateGARequest = require('./analyticsHelpers/generateGARequest')
 const queryHelpers = require('./analyticsHelpers/queryHelpers')
+const parsingHelpers = require('./analyticsHelpers/parsingHelpers')
 const analyticsReportingClient = google.analyticsreporting("v4")
 const url = require('url')
 const {METRICS_SETS, REPORT_TYPES} = analyticsConstants
@@ -235,32 +236,16 @@ const GoogleAnalytics = {
       // update valuetype for this row if necessary
       for (let row of report.rows) {
         let rawValue = row.metrics[0].values[i]
-        row.metrics[0].values[i] = GoogleAnalytics._prettyPrintValue(rawValue, valueType)
+        row.metrics[0].values[i] = parsingHelpers.prettyPrintValue(rawValue, valueType)
       }
 
       let rawTotal = report.data.totals[0].values[i]
-      report.data.totals[0].values[i] = GoogleAnalytics._prettyPrintValue(rawTotal, valueType)
+      report.data.totals[0].values[i] = parsingHelpers.prettyPrintValue(rawTotal, valueType)
     }
 
     delete report.data.rows //smaller payload === faster
 
     return report
-  },
-
-  _prettyPrintValue: (rawValue, valueType) => {
-    let value
-    if (valueType === "PERCENT") {
-      //round to 100ths
-      value = parseFloat(rawValue) ? Math.round(rawValue * 100) / 100 : rawValue
-      value = String(value) + "%"
-    } else if (valueType === "TIME") {
-      //convert seconds to HH:mm:ss format
-      value = (new Date(rawValue * 1000)).toUTCString().match(/(\d\d:\d\d:\d\d)/)[0]
-    } else {
-      value = rawValue
-    }
-
-    return value
   },
 
   // takes a dataset and returns some default func and filters
