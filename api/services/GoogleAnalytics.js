@@ -2,6 +2,7 @@ const google = require('googleapis');
 const analyticsClient = google.analytics("v3")
 const analyticsConstants = require('../analyticsConstants')
 const generateGARequest = require('./analyticsHelpers/generateGARequest')
+const queryHelpers = require('./analyticsHelpers/queryHelpers')
 const analyticsReportingClient = google.analyticsreporting("v4")
 const url = require('url')
 const {METRICS_SETS, REPORT_TYPES} = analyticsConstants
@@ -268,16 +269,12 @@ const GoogleAnalytics = {
   // OR
   // chart-{style}-{xAxis}
   _getDefaultsFromDataset: (dataset) => {
-    const datasetParts = dataset.split("-")
+    const {datasetParts, displayType, rowsBy, xAxisBy, columnSetsArr} = queryHelpers.parseDataset(dataset)
+
     // defaults for the different datasets
     let func, defaultDimensions, defaultMetrics, defaultDimensionFilters
 
-    const displayType = datasetParts[0]
     if (displayType === "table") {
-      let rowsBy = datasetParts[1] || ""
-      let columnSetsStr = datasetParts[2] || ""
-      let columnSetsArr = columnSetsStr.split(",") || []
-
       if (rowsBy === "channelGrouping") {
         defaultDimensions = [{name: "ga:channelGrouping"}]
       }
@@ -306,7 +303,6 @@ const GoogleAnalytics = {
           defaultMetrics = defaultMetrics.concat(METRICS_SETS[metricSet])
         }
       }
-
 
       if (columnSetsArr.includes("channel-traffic")) {
         // my initial table, not using for now
