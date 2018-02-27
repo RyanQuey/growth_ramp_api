@@ -1,6 +1,8 @@
 const google = require('googleapis');
 const searchConsoleClient = google.webmasters("v3")
 const analyticsConstants = require('../analyticsConstants')
+const queryHelpers = require('./analyticsHelpers/queryHelpers')
+const parsingHelpers = require('./analyticsHelpers/parsingHelpers')
 
 const GoogleSearchConsole = {
   // get info for all google sc websites for all Google accounts this user has (not necessarily the same as the GA accounts, I think?)
@@ -38,14 +40,18 @@ const GoogleSearchConsole = {
   },
 
   //will eventually predefine some reportTypes for this too
-  generateQuery: (filters, reportType) => {
+  generateQuery: (filters) => {
     const template = {
       startDate: filters.startDate || moment.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD"), //NOTE: date is calculated in PST time
       endDate: filters.endDate || moment.tz("America/Los Angeles").format("YYYY-MM-DD"), //default to present
-      dimensions: ["page"],
-      aggregationType: "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either,
+      dimensions: filters.dimensions || ["page"],
+      aggregationType: filters.aggregationType || "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either,
       startRow: 0, //pagination
       rowLimit: 1000, //can go up to 5000
+    }
+    if (filters.dimensionFilterClauses) {
+      //GSC's rough equivalent of GA's dimensionFilterClauses
+      template.dimensionFilterGroups = filters.dimensionFilterGroups
     }
 
 
@@ -61,19 +67,31 @@ const GoogleSearchConsole = {
     return {query}
   },
 
-  getReport: (providerAccount, filters) => {
+  getReport: (providerAccount, filters, options) => {
     return new Promise((resolve, reject) => {
+      const {dataset} = options
       let analyticsAccounts, currentAnalyticsAccount
       const oauthClient = Google._setup(providerAccount)
 
-     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are a TODO)
-      const {query} = GoogleSearchConsole.generateQuery(filters)
+      let {func, defaultMetrics, defaultDimensions, defaultDimensionFilters, defaultAggregationType} = GoogleSearchConsole._getDefaultsFromDataset(dataset)
+console.log("func", func);
+
+      //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
+      filters = Object.assign({
+        metrics: defaultMetrics,
+        dimensions: defaultDimensions,
+        dimensionFilterClauses: defaultDimensionFilters,
+        aggregationType: defaultAggregationType,
+      }, filters)
+
+      //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are a TODO)
+      const {query} = GoogleSearchConsole[func](filters, dataset)
 
       const params = {
         auth: oauthClient,
-        siteUrl: filters.websiteUrl,
+        siteUrl: encodeURIComponent(filters.gscUrl),
+        resource: query, //all Google payloads go on this resource thing
       }
-      Object.assign(params, query)
 
       searchConsoleClient.searchanalytics.query(params, (err, response) => {
         if (err) {
@@ -81,7 +99,7 @@ const GoogleSearchConsole = {
         }
 
         //TODO make data same format as GA, probably changing data from GA too though, so that it's easy for frontend to handle. Uniform the data, into columnHeaders, and rows, rows having first dimensions (not "keys"), which is far left column, and then metrics (as GA has it, but just return straight, not needing to get the row.metrics[0].values[0], as GSC has it TODO!!!)
-        const ret = GoogleSearchConsole.handleReport(response.data, params)
+        const ret = GoogleSearchConsole.handleReport(response.data, query)
         //returns an array of rows, one row per page, sorted by clicks in desc
         return resolve(ret)
       })
@@ -95,38 +113,48 @@ const GoogleSearchConsole = {
       metrics: [
         {
           name: "clicks",
-          title: "clicks",
+          title: "Clicks",
           type: "INTEGER",
         },
         {
           name: "impressions",
-          title: "impressions",
+          title: "Impressions",
           type: "INTEGER",
         },
         {
           name: "ctr",
           title: "Click Through Rate",
-          type: "FLOAT",
+          type: "DECIMALED_PERCENT",
         },
         {
           name: "position",
-          title: "Click Through Rate",
+          title: "Position",
           type: "FLOAT",
         },
       ],
     }
 
+    // make consistent with what I'm returning from GA (which is itself modified, but yeah)
     report.rows = report.rows.map((row) => {
       const ret = {
         dimensions: row.keys.map((key) => key.replace(params.siteUrl, "")),
       }
       delete row.keys
 
-      ret.metrics = Object.keys(row).map((key) => {
-        //since GA returns in this formula, keep it consistent with that
-        const value = row[key]
-        return {values: [value]}
-      })
+      /* ends up like:
+       * metrics: [{values: [10, 25, 14, 14]}]
+       * one per metric we asked for
+       */
+
+      ret.metrics = [{
+        values: Object.keys(row).map((key, index) => {
+          //since GA returns in this formula, keep it consistent with that
+          const rawValue = row[key]
+          const valueType = report.columnHeader.metrics[index].type
+          const value = parsingHelpers.prettyPrintValue(rawValue, valueType)
+          return value
+        })
+      }]
 
       return ret
     })
@@ -134,6 +162,41 @@ const GoogleSearchConsole = {
     return report
   },
 
+  // takes a dataset and returns some default func and filters
+  // dataset should be in format:
+  // table-{rowsBy}-{columnsBy}
+  // OR
+  // chart-{style}-{xAxis}
+  _getDefaultsFromDataset: (dataset) => {
+    const {datasetParts, displayType, rowsBy, xAxisBy, columnSetsArr} = queryHelpers.parseDataset(dataset)
+
+    // defaults for the different datasets
+    let func, defaultDimensions, defaultMetrics, defaultDimensionFilters, defaultAggregationType
+
+    func = "generateQuery"
+    if (displayType === "table") {
+      if (rowsBy === "landingPagePath") {
+        defaultDimensions = ["page"]
+        defaultAggregationType = "byPage"
+      }
+      // rows are social networks that referred to the page
+      if (rowsBy === "keyword") {
+        defaultDimensions = ["query"]
+        defaultAggregationType = "byProperty"
+      }
+
+      //if (columnSetsArr.length) {}
+
+
+    } else if (displayType === "chart") {
+      //currently only for the line chart, which shows data change over time
+      // func = "generateHistogramReportRequest"
+      // TODO make it a batch request somehow???? it would be nice to do histogram as well...
+      // currently it never goes here though
+    }
+
+    return {func, defaultDimensions, defaultMetrics, defaultDimensionFilters, defaultAggregationType}
+  },
 
 }
 module.exports = GoogleSearchConsole

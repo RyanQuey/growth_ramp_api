@@ -69,8 +69,9 @@ module.exports = {
       return res.ok(results)
     })
     .catch((err) => {
-      console.error("Error getting Analytics for user", req.user.id, err);
-      return res.negotiate(err)
+      //Google returns err.errors
+      console.error("Error getting Analytics for user", req.user.id);
+      return res.negotiate(err.errors || err)
     })
 
   },

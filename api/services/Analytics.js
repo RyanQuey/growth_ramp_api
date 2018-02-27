@@ -46,6 +46,7 @@ const Analytics = {
         const whomToAsk = queryHelpers.whomToAsk(dataset)
 
         const promises = []
+
         if (whomToAsk.includes("GoogleAnalytics")) {
           promises.push(GoogleAnalytics.getReport(account, filters, options))
 
@@ -73,10 +74,10 @@ const Analytics = {
               console.error("User: ", user.id, "ProfileId: ", filters.profileId, "WebsiteID: ", filters.websiteId);
               break
             default:
-              console.error("Error from getting analytics: ", err);
+              console.error("Error from getting analytics:");
           }
         } else {
-          console.error("Error from getting analytics: ", err);
+          console.error("Error from getting analytics: ");
         }
 
         return reject(err)
