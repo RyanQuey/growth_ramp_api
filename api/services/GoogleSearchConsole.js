@@ -47,7 +47,7 @@ const GoogleSearchConsole = {
       dimensions: filters.dimensions || ["page"],
       aggregationType: filters.aggregationType || "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either,
       startRow: (filters.page -1) * filters.pageSize || 0, //pagination
-      rowLimit: filters.pageSize || 10, //can go up to 5000
+      rowLimit: 5000 //filters.pageSize || 10, //can go up to 5000. Getting all and sorting now
     }
 
     if (filters.dimensionFilterClauses) {
@@ -110,7 +110,10 @@ console.log("func", func);
   //get into consistent format with GA data and other api if we add it
   handleReport: (report, params) => {
     report.columnHeader = {
-      dimensions: params.dimensions,
+      dimensions: params.dimensions.map((dimension) => ({
+        name: dimension,
+        type: "STRING",
+      })),
       metrics: [
         {
           name: "clicks",
@@ -161,7 +164,7 @@ console.log("func", func);
     }) || []
 
     report.data = {
-      rowCount: 999, //TODO seems like it's a good place to max out
+      rowCount: 999, //TODO seems like it's a good place to max out?? (currently doing 5000 max though haha
     }
 
 
