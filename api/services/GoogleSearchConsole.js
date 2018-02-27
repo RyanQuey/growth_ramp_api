@@ -46,9 +46,10 @@ const GoogleSearchConsole = {
       endDate: filters.endDate || moment.tz("America/Los Angeles").format("YYYY-MM-DD"), //default to present
       dimensions: filters.dimensions || ["page"],
       aggregationType: filters.aggregationType || "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either,
-      startRow: 0, //pagination
-      rowLimit: 1000, //can go up to 5000
+      startRow: (filters.page -1) * filters.pageSize || 0, //pagination
+      rowLimit: filters.pageSize || 10, //can go up to 5000
     }
+
     if (filters.dimensionFilterClauses) {
       //GSC's rough equivalent of GA's dimensionFilterClauses
       template.dimensionFilterGroups = filters.dimensionFilterGroups
@@ -135,7 +136,7 @@ console.log("func", func);
     }
 
     // make consistent with what I'm returning from GA (which is itself modified, but yeah)
-    report.rows = report.rows.map((row) => {
+    report.rows = report.rows && report.rows.map((row) => {
       const ret = {
         dimensions: row.keys.map((key) => key.replace(params.siteUrl, "")),
       }
@@ -157,7 +158,12 @@ console.log("func", func);
       }]
 
       return ret
-    })
+    }) || []
+
+    report.data = {
+      rowCount: 999, //TODO seems like it's a good place to max out
+    }
+
 
     return report
   },
