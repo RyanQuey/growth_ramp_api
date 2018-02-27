@@ -1,3 +1,4 @@
+const queryHelpers = require('./analyticsHelpers/queryHelpers')
 const Analytics = {
 
   //for a given user, get all of their analytics accounts (GA, GSC...add more later?)
@@ -29,7 +30,7 @@ const Analytics = {
   //wrapper around GoogleAnalytics.getReport currently, until other analytics apis are added
   getAnalytics: (user, params) => {
     return new Promise((resolve, reject) => {
-      let filters = params.filters
+      let {filters, dataset} = params
       //happens if coming from a GET query string
       if (typeof filters === "string") {
         filters = JSON.parse(filters)
@@ -41,9 +42,28 @@ const Analytics = {
         id: filters.providerAccountId,
       })
       .then((account) => {
-        return GoogleAnalytics.getReport(account, filters, {dataset: params.dataset})
+        const options = {dataset}
+        const whomToAsk = queryHelpers.whomToAsk(dataset)
+
+        const promises = []
+        if (whomToAsk.includes("GoogleAnalytics")) {
+          promises.push(GoogleAnalytics.getReport(account, filters, options))
+
+        } else {
+          promises.push("did-not-ask-them")
+        }
+
+        if (whomToAsk.includes("GoogleSearchConsole")) {
+          promises.push(GoogleSearchConsole.getReport(account, filters, options))
+
+        } else {
+          promises.push("did-not-ask-them")
+        }
+
+        return Promise.all(promises)
       })
-      .then((result) => {
+      .then(([GAResults, GSCResults]) => {
+        const result = Analytics._combineResultsFromApis(GAResults, GSCResults)
         return resolve(result)
       })
       .catch((err) => {
@@ -62,6 +82,19 @@ const Analytics = {
         return reject(err)
       })
     })
-  }
+  },
+
+  // so far, only asking one api at a time, but will change this helper if that changes
+  _combineResultsFromApis: (GAResults, GSCResults) => {
+    let ret
+    if (GAResults === "did-not-ask-them") {
+      ret = GSCResults
+
+    } else if (GSCResults === "did-not-ask-them") {
+      ret = GAResults
+    }
+
+    return ret
+  },
 }
 module.exports = Analytics
