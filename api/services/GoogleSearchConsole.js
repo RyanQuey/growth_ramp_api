@@ -45,12 +45,12 @@ const GoogleSearchConsole = {
       startDate: filters.startDate || moment.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD"), //NOTE: date is calculated in PST time
       endDate: filters.endDate || moment.tz("America/Los Angeles").format("YYYY-MM-DD"), //default to present
       dimensions: filters.dimensions || ["page"],
-      aggregationType: filters.aggregationType || "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either,
+      //aggregationType: filters.aggregationType || "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either. BUt breaks it when only searching for one page for some reason, and we always use defaults, so yeah
       startRow: (filters.page -1) * filters.pageSize || 0, //pagination
       rowLimit: 5000 //filters.pageSize || 10, //can go up to 5000. Getting all and sorting now
     }
 
-    if (filters.dimensionFilterClauses) {
+    if (filters.dimensionFilterGroups) {
       //GSC's rough equivalent of GA's dimensionFilterClauses
       template.dimensionFilterGroups = filters.dimensionFilterGroups
     }
@@ -81,12 +81,14 @@ console.log("func", func);
       filters = Object.assign({
         metrics: defaultMetrics,
         dimensions: defaultDimensions,
-        dimensionFilterClauses: defaultDimensionFilters,
+        dimensionFilterGroups: defaultDimensionFilters,
         aggregationType: defaultAggregationType,
       }, filters)
 
       //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are a TODO)
       const {query} = GoogleSearchConsole[func](filters, dataset)
+
+console.log(query);
 
       const params = {
         auth: oauthClient,
