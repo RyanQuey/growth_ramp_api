@@ -14,6 +14,7 @@ module.exports = {
       }]
     }
     let dimensionFilterClauses = []
+    // can receive sets, if want to define some predefined sets of clauses
     if (filters.dimensionFilterSets) {
       for (let set of filters.dimensionFilterSets) {
         dimensionFilterClauses = dimensionFilterClauses.concat(FILTER_SETS[set])
@@ -131,6 +132,19 @@ module.exports = {
       includeEmptyRows: true,//so get a clean timeline. Can trim off start if want too
     }
 
+    let dimensionFilterClauses = []
+    // can receive sets, if want to define some predefined sets of clauses
+    if (filters.dimensionFilterSets) {
+      for (let set of filters.dimensionFilterSets) {
+        dimensionFilterClauses = dimensionFilterClauses.concat(FILTER_SETS[set])
+      }
+    }
+    if (filters.dimensionFilterClauses) {
+      dimensionFilterClauses = dimensionFilterClauses.concat(filters.dimensionFilterClauses)
+    }
+    if (dimensionFilterClauses.length) {
+      report.dimensionFilterClauses = dimensionFilterClauses
+    }
     return {
       reportRequests: [report],
     }
