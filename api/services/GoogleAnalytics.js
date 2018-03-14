@@ -33,7 +33,6 @@ const GoogleAnalytics = {
           return reject(err)
         }
 
-        console.log(response.data);
         //tag our providerAccountId on there for future reference, in case it's needed
         const ret = Object.assign({}, response.data, {providerAccountId: providerAccount.id} )
         return resolve(ret)
@@ -61,28 +60,35 @@ const GoogleAnalytics = {
   },
 
 
-  //gets several reports actually currently. Will want to make more helpers to get other traffic reports too TODO
-  // Report types currently supported:
-  // "by-channel-type"
-  // "by-webpage.channelTraffic" (my original one)
-  getReport: (providerAccount, filters, options = {}) => {
+  //
+  // report sets should not have more than 5 in the array
+  getReport: (providerAccount, reportSets, options = {}) => {
     return new Promise((resolve, reject) => {
       let analyticsAccounts, currentAnalyticsAccount
-      const oauthClient = Google._setup(providerAccount)
-     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not done yet)
 
+      if (!Array.isArray(reportSets)) {
+        reportSets = [reportSets]
+      }
+
+      const oauthClient = Google._setup(providerAccount)
+     //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are not used yet in GR)
 
       let {func, defaultMetrics, defaultDimensions, defaultDimensionFilters} = GoogleAnalytics._getDefaultsFromDataset(options.dataset)
+      let reportOrder, reportRequests = []
+      for (let filters of reportSets) {
+        //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
+        filters = Object.assign({
+          metrics: defaultMetrics,
+          dimensions: defaultDimensions,
+          dimensionFilterClauses: defaultDimensionFilters,
+        }, filters)
+        //mostly "func" will be generateStandardReportRequest
+        let requestData = generateGARequest[func](filters)
+        reportOrder = requestData.reportOrder //often undefined
 
-      //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
-      filters = Object.assign({
-        metrics: defaultMetrics,
-        dimensions: defaultDimensions,
-        dimensionFilterClauses: defaultDimensionFilters,
-      }, filters)
-
-      //mostly "func" will be generateStandardReportRequests
-      const {reportRequests, reportOrder} = generateGARequest[func](filters)
+//console.log("request data", requestData.reportRequests);
+        reportRequests = reportRequests.concat(requestData.reportRequests)
+      }
 
       const params = {
         auth: oauthClient,
@@ -96,14 +102,19 @@ const GoogleAnalytics = {
         }
         const reports = response.data && response.data.reports
 
-        let reportToReturn
-        if (filters.getChannelTraffic) {
+        let reportToReturn, ret
+        if (options.getChannelTraffic) {
           reportToReturn = GoogleAnalytics.combineReports(reports, reportOrder)
+          ret = GoogleAnalytics.handleReport(reportToReturn)
+        } else if (options.multipleReports) {
+
+          ret = reports && reports.map((report) => GoogleAnalytics.handleReport(report))
+
         } else {
-          reportToReturn = reports[0]
+          // just requesting a single report
+          ret = reports && GoogleAnalytics.handleReport(reports[0])
         }
 
-        const ret = GoogleAnalytics.handleReport(reportToReturn)
         return resolve(ret)
       })
     })
@@ -293,12 +304,15 @@ const GoogleAnalytics = {
         // my initial table, not using for now
         func = "generateChannelTrafficReportRequests"
       } else {
-        func = "generateStandardReportRequests"
+        func = "generateStandardReportRequest"
       }
 
     } else if (displayType === "chart") {
       //currently only for the line chart, which shows data change over time
       func = "generateHistogramReportRequest"
+    } else if (displayType === "contentAudit") {
+      //currently only for the line chart, which shows data change over time
+      func = "generateStandardReportRequest"
     }
 
     return {func, defaultDimensions, defaultMetrics, defaultDimensionFilters}

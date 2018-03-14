@@ -84,7 +84,7 @@ module.exports = function canRead (req, res, next) {
       }
 
     //certain actions, it doesn't matter as long as there is a user
-    } else if (["getallgaaccounts", "getanalytics"].includes(action)) {
+    } else if (["getallgaaccounts", "getanalytics", "auditcontent"].includes(action)) {
       pass()
 
     } else {

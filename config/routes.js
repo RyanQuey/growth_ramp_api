@@ -70,6 +70,11 @@ module.exports.routes = {
     action: 'getAnalytics'
   },
 
+  'get /analytics/auditContent': {
+    controller: 'ProviderAccountsController',
+    action: 'auditContent'
+  },
+
   ////////////////////////////////////////////////////////////////
   //campaigns
   //
@@ -79,6 +84,7 @@ module.exports.routes = {
     action: 'publish'
   },
 
+   //gets brief summary of clicks for shortlinks
   'get /campaigns/:id/getAnalytics': {
     controller: 'CampaignsController',
     action: 'getAnalytics'
