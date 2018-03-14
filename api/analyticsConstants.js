@@ -153,10 +153,14 @@ module.exports.AUDIT_TESTS = {
 */
   headlineStrength: {
     key: "headlineStrength",
-    gaReports: [{
-      dimensions: [{name: "ga:pagePath"}],
-      metrics: [{expression: "ga:avgPageLoadTime"}, {expression: "ga:pageviews"}],
-    }],
+    gscReports: [
+      {
+        dimensions: ["page"],
+      },
+      {
+        dimensions: [],
+      },
+    ],
   },
 
   browserCompatibility: {
@@ -175,6 +179,7 @@ module.exports.AUDIT_TESTS = {
     }],
   },
 }
+
 //sample segment stuff
 
 /*segments: [

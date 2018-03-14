@@ -49,7 +49,45 @@ const auditHelpers = {
     keywordTargets: {//not using yet
     },
   */
-    headlineStrength: () => {},
+    headlineStrength: (gaResults = [], gscResults = []) => {
+      const {relevantGscReports} = findRelevantReports("headlineStrength", gaResults, gscResults)
+      const [pageSEOData, siteTotalsData] = relevantGscReports // this test only has one
+
+      const impressionsIndex = getMetricIndex("impressions", pageSEOData)
+      const ctrIndex = getMetricIndex("ctr", pageSEOData)
+
+      const siteTotals = siteTotalsData.rows[0]
+      const headlineStrengthDataSummary = {totals: siteTotals}
+      const siteAvgCTR = parseFloat(siteTotals[ctrIndex])
+
+      const weakHeadlineRows = pageSEOData.rows.reduce((acc, row) => {
+        const impressions = row.metrics[0].values[impressionsIndex]
+        const ctr = parseFloat(row.metrics[0].values[ctrIndex])
+
+        if (impressions > 500 && ctr < (siteAvgCTR / 2) ) {
+          acc.push({
+            dimension: row.dimensions[0],
+            impressions,
+            ctr,
+          })
+        }
+
+        return acc
+      }, [])
+
+
+      const ret = {
+        lists: [
+          {
+            key: "headlineStrength",
+            items: weakHeadlineRows,
+            summaryData: headlineStrengthDataSummary
+          }
+        ]
+      }
+
+      return ret
+    },
 
     browserCompatibility: () => {},
 
@@ -67,6 +105,7 @@ function findRelevantReports(key, gaResults, gscResults) {
 
     return _.find(gaResults, (report) => {
       // same dimensions exactly and includes every metric we need for this test
+      // TODO if ever filter, will need to use that here too to find the right one
       const reportDimensionNames = report.columnHeader.dimensions.map((d) => d.name)
       const reportMetricNames = report.columnHeader.metrics.map((m) => m.name)
 
@@ -74,19 +113,39 @@ function findRelevantReports(key, gaResults, gscResults) {
     })
   })
 
-  const relevantGscReports = test.gscReports && test.gscReports.map((r) => r) //TODO
+  const relevantGscReports = test.gscReports && test.gscReports.map((r) =>{
+    const testDimensionNames = r.dimensions
+    return _.find(gscResults, (report) => {
+      // same dimensions exactly
+      const reportDimensionNames = report.columnHeader.dimensions.map((d) => d.name)
+
+      return (
+        testDimensionNames.length === 0 && report.columnHeader.dimensions.length === 0 ||
+        _.isEqual(testDimensionNames, reportDimensionNames)
+      )
+    })
+  })
+
   return {relevantGaReports, relevantGscReports}
 }
 
+// NOTE only for GA, not for GSC
 function getDataSummary (metricNames, report) {
   const ret = {}
   const categories = ["maximums", "minimums", "totals"]
 
   categories.forEach((category) => {
     ret[category] = {}
-    for (let name of metricNames) {
-      const metricIndex = getMetricIndex(name, report)
-      ret[category][name] = report.data[category][0].values[metricIndex]
+
+    if (metricNames === "all") {
+      // mostly for gsc, where metrics are always the same
+
+    } else {
+      for (let name of metricNames) {
+        const metricIndex = getMetricIndex(name, report)
+        ret[category][name] = report.data[category][0].values[metricIndex]
+      }
+
     }
   })
 

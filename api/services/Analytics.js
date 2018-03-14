@@ -148,9 +148,15 @@ const Analytics = {
 
         let gscReportCount = 0
         reportRequestsData.gscReports.forEach((report) => {
-          // TODO
+          promises.push(GoogleSearchConsole.getReport(account, report, {
+            dataset: "contentAudit-all",
+            multipleReports: true,
+          }))
           gscReportCount ++
         })
+
+        if (gscReportCount) {
+        }
 
         return Promise.all(promises)
       })
@@ -165,7 +171,7 @@ const Analytics = {
 
         const auditResults = {}
         console.log("---------------------");
- console.log("now going over tests");
+        console.log("now going over tests");
         for (let key of testKeys) {
           auditResults[key] = auditHelpers.auditTestFunctions[key](gaResults, gscResults)
         }
