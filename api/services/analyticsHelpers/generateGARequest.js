@@ -4,7 +4,7 @@ const chartHelpers = require('./chartHelpers')
 //helpers to generate report requests for GA, depending on the type of data we're asking for
 module.exports = {
   // generates report requests for single dimension (and hwoever many metrics)
-  generateStandardReportRequests: (filters) => {
+  generateStandardReportRequest: (filters, options = {}) => {
     const viewId = filters.profileId
     let dateRanges
     if (filters.startDate) { //if none set, defaults to one week
@@ -56,7 +56,7 @@ module.exports = {
     }
 
     return {
-      reportRequests: [report],
+      reportRequests: [report], //only ever returns one, but use plural to stay consistent with other generateGARequest funcs
     }
   },
 
@@ -92,7 +92,7 @@ module.exports = {
     //total should always be last, to have for combining reports later
     const reportOrder = ["directTraffic", "organicTraffic", "referralTraffic", "socialTraffic", "totalTraffic"]
 
-    const reportRequests = reportOrder.map((reportType) => {
+    const reportRequest = reportOrder.map((reportType) => {
       //adds the dimensions specific for this report to the shared ones
       const additionalDimensions = REPORT_TYPES[reportType].gaDimensionSets || []
       const reportDimensions = [...template.dimensions].concat(additionalDimensions)

@@ -133,28 +133,70 @@ module.exports.METRICS_SETS = {
   ],
 }
 
+module.exports.AUDIT_TESTS = {
+  pageSpeed: {
+    key: "pageSpeed",
+    gaReports: [{
+      dimensions: [{name: "ga:pagePath"}],
+      metrics: [{expression: "ga:avgPageLoadTime"}, {expression: "ga:pageviews"}],
+    }],
+  },
+
+/*
+  wellBalancedPortfolio: { //not using yet
+    key: "wellBalancedPortfolio",
+  },
+
+  keywordTargets: {//not using yet
+    key: "keywordTargets",
+  },
+*/
+  headlineStrength: {
+    key: "headlineStrength",
+    gaReports: [{
+      dimensions: [{name: "ga:pagePath"}],
+      metrics: [{expression: "ga:avgPageLoadTime"}, {expression: "ga:pageviews"}],
+    }],
+  },
+
+  browserCompatibility: {
+    key: "browserCompatibility",
+    gaReports: [{
+      dimensions: [{name: "ga:browser"}],
+      metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}],
+    }],
+  },
+
+  deviceCompatibility: {
+    key: "deviceCompatibility",
+    gaReports: [{
+      dimensions: [{name: "ga:deviceCategory"}],
+      metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
+    }],
+  },
+}
 //sample segment stuff
 
-      /*segments: [
-        {segmentId: "gaid::-5"}, //organic traffic
-        {segmentId: "gaid::-7"}, //direct traffic
-        /*{
-          dynamicSegment: {
-            name: "Traffic from Social Site",
-            userSegment: {
-              segmentFilters: [{
-                simpleSegment: {
-                  orFiltersForSegment: [{
-                    segmentFilterClauses: [{
-                      dimensionFilter:{
-                        dimensionName: "ga:hasSocialSourceReferral", //can't use in segment, is banned
-                        operator: "EXACT",
-                        expressions: [true],
-                      }
-                    }]
-                  }]
+/*segments: [
+  {segmentId: "gaid::-5"}, //organic traffic
+  {segmentId: "gaid::-7"}, //direct traffic
+  /*{
+    dynamicSegment: {
+      name: "Traffic from Social Site",
+      userSegment: {
+        segmentFilters: [{
+          simpleSegment: {
+            orFiltersForSegment: [{
+              segmentFilterClauses: [{
+                dimensionFilter:{
+                  dimensionName: "ga:hasSocialSourceReferral", //can't use in segment, is banned
+                  operator: "EXACT",
+                  expressions: [true],
                 }
               }]
-            }
+            }]
           }
-        },*/
+        }]
+      }
+    }
+  },*/

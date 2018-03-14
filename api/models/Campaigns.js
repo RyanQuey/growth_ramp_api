@@ -43,13 +43,12 @@ module.exports = {
   autoUpdatedAt: true,
 
   afterUpdate: (updatedRecord, cb) => {
-    console.log("now in campaign afterUpdate hook", updatedRecord);
     // ideally, would check to see if contentUrl changed, or something else. Can use BEFORE update, which gets the new params, and check for that TODO
     Posts.update({campaignId: updatedRecord.id}, {
       contentUrl: updatedRecord.contentUrl
     })
     .then((posts) => {
-      console.log("now updated ", posts.length, "posts after updating campaign");
+      //console.log("now updated ", posts.length, "posts after updating campaign");
       cb()
     })
     .catch((err) => {
@@ -292,7 +291,7 @@ module.exports = {
         }
       })
       .then((c) => {
-        console.log("updated campaign");
+        //console.log("updated campaign");
         let updatedCampaign = Object.assign({}, c[0]) //don't want the same object here b/c...I'm not sure. Maybe doesn't matter
         updatedCampaign.posts = postResults //DO NOT POPULATE! Need to have error prop on the posts, as is returned here
 
@@ -306,6 +305,7 @@ module.exports = {
     })
   },
 
+  // gets summary statistics for thsi campaign
 	getAnalytics: (campaign) => {
     let posts
     return new Promise((resolve, reject) => {
