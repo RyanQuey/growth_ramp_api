@@ -143,7 +143,7 @@ console.log(query);
     // make consistent with what I'm returning from GA (which is itself modified, but yeah)
     report.rows = report.rows && report.rows.map((row) => {
       const ret = {
-        dimensions: row.keys.map((key) => key.replace(params.siteUrl, "")),
+        dimensions: row.keys ? row.keys.map((key) => key.replace(params.siteUrl, "")) : [],
       }
       delete row.keys
 
@@ -204,6 +204,7 @@ console.log(query);
       // func = "generateHistogramReportRequest"
       // TODO make it a batch request somehow???? it would be nice to do histogram as well...
       // currently it never goes here though
+    } else if (displayType === "contentAudit") {
     }
 
     return {func, defaultDimensions, defaultMetrics, defaultDimensionFilters, defaultAggregationType}
