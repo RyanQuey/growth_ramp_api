@@ -73,7 +73,19 @@ module.exports = {
       console.error("Error getting Analytics for user", req.user.id);
       return res.negotiate(err.errors || err)
     })
+  },
 
+  auditContent: (req, res) => {
+    Analytics.auditContent(req.user, req.allParams())
+    .then((results) => {
+      console.log("results", results)
+      return res.ok(results)
+    })
+    .catch((err) => {
+      //Google returns err.errors
+      console.error("Error auditing content for user", req.user.id);
+      return res.negotiate(err.errors || err)
+    })
   },
 };
 

@@ -56,7 +56,7 @@ module.exports.policies = {
     publish: ['userTokenAuth', 'canWrite'],
     //eventually will set controller actions for this for the resources
     //changePermissions: ['canChangePermissions'],
-    getAnalytics: ['userTokenAuth', 'canRead'],
+    getAnalytics: ['userTokenAuth', 'canRead'], //don't think this does anything
   },
   ChannelsController: {
     create: ['userTokenAuth', 'canWrite'],
@@ -104,6 +104,7 @@ module.exports.policies = {
     getUserAccounts: ['userTokenAuth', 'canRead'],
     getAllAnalyticsAccounts: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
     getAnalytics: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+    auditContent: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],

@@ -52,8 +52,10 @@ const queryHelpers = {
       const columnSetsStr = datasetParts[2] || ""
       columnSetsArr = columnSetsStr.split(",") || []
 
-    } else if (displayType === "table") {
+    } else if (displayType === "chart") {
       xAxisBy = datasetParts[1] || ""
+    } else if (displayType === "contentAudit") {
+      // not sure what else I should have here...
     }
 
     return {datasetParts, displayType, rowsBy, xAxisBy, columnSetsArr}
@@ -71,10 +73,14 @@ const queryHelpers = {
       } else {
         ret.push("GoogleSearchConsole")
       }
-    } else if (displayType === "chart") {
-//TODO fix for GSC later
-        ret.push("GoogleAnalytics")
 
+    } else if (displayType === "chart") {
+      if (!xAxisBy.includes("keyword")) {
+        ret.push("GoogleAnalytics")
+      } else {
+        // TODO fix for gsc. For now, just continue to show GA data
+        //ret.push("GoogleSearchConsole")
+      }
     }
 
     return ret

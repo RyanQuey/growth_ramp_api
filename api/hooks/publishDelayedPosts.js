@@ -6,7 +6,7 @@ module.exports = function publishDelayedPosts(sails) {
       sails.on('hook:orm:loaded', function() {
         console.log("initializing background job: publishing delayed posts");
         var publisher = new PublishDelayedPosts()
-        publisher.every('1 minutes').now().start();
+        publisher.every('10 minutes').now().start();
         cb ();
       });
     }
