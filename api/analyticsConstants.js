@@ -2,19 +2,16 @@
 //gaAdditionalProperties: additional properties on the GA report request for a given report type
 //
 //gaDimensionSets dimensions to add to the shared dimensions for a reportSet for GA
-module.exports.REPORT_TYPES = {
+const REPORT_TYPES = {
   ///////////////////////////////
   //start with traffic reports
   //NOTE not tested any of these yet
   totalTraffic: {
-    gaAdditionalProperties: false, //no filter for this
     gaDimensionSets: false,
   },
 
   socialTraffic: {
-    gaAdditionalProperties: false, //no filter for this
     //gaDimensionSets: [{name: "ga:hasSocialSourceReferral"}], // was extracting this to get social referral traffic,
-    gaAdditionalProperties: {
       /*dimensionFilterClauses: { //this works too...but unnecessary
         operator: "OR",
         filters: [
@@ -32,66 +29,72 @@ module.exports.REPORT_TYPES = {
           },
         ],
       },*/
-      dimensionFilterClauses: {
-        filters: [
-          {
-            dimensionName: "ga:channelGrouping",
-            operator: "EXACT",
-            // haven't tested
-            expressions: ["Social"],
-          },
-        ],
-      },
+    gaDimensionFilterClauses: {
+      filters: [
+        {
+          dimensionName: "ga:channelGrouping",
+          operator: "EXACT",
+          // haven't tested
+          expressions: ["Social"],
+        },
+      ],
     },
   },
 
   referralTraffic: {
-    gaAdditionalProperties: {
-      dimensionFilterClauses: {
-        filters: [
-          {
-            dimensionName: "ga:channelGrouping",
-            operator: "EXACT",
-            expressions: ["Referral"], //gets referral traffic. Will remove social referrals manually later
-          },
-        ],
-      },
+    gaDimensionFilterClauses: {
+      filters: [
+        {
+          dimensionName: "ga:channelGrouping",
+          operator: "EXACT",
+          expressions: ["Referral"], //gets referral traffic. Will remove social referrals manually later
+        },
+      ],
     },
     gaDimensionSets: [{name: "ga:hasSocialSourceReferral"}],// {name: "ga:fullReferrer"}], //full url of referring webpage, if exists
   },
 
   directTraffic: {
-    gaAdditionalProperties: {
-      dimensionFilterClauses: {
-        operator: "AND",
-        filters: [
-          {
-            dimensionName: "ga:source",
-            operator: "EXACT",
-            expressions: ["direct"], //gets direct traffic
-          },
-          {
-            dimensionName: "ga:medium",
-            operator: "IN_LIST",
-            expressions: ["(none)", "(not set)"], //gets direct traffic
-          },
-        ],
-      },
+    gaDimensionFilterClauses: {
+      operator: "AND",
+      filters: [
+        {
+          dimensionName: "ga:source",
+          operator: "EXACT",
+          expressions: ["direct"], //gets direct traffic
+        },
+        {
+          dimensionName: "ga:medium",
+          operator: "IN_LIST",
+          expressions: ["(none)", "(not set)"], //gets direct traffic
+        },
+      ],
     },
     gaDimensionSets: false,
   },
 
   organicTraffic: {
-    gaAdditionalProperties: {
-      dimensionFilterClauses: {
-        filters: [
-          {
-            dimensionName: "ga:medium",
-            operator: "EXACT",
-            expressions: ["organic"],
-          },
-        ],
-      }
+    gaDimensionFilterClauses: {
+      filters: [
+        {
+          dimensionName: "ga:medium",
+          operator: "EXACT",
+          expressions: ["organic"],
+        },
+      ],
+    },
+    gaDimensionSets: false,
+  },
+
+  emailTraffic: {
+    gaDimensionFilterClauses: {
+      filters: [
+        {
+          dimensionName: "ga:channelGrouping",
+          operator: "EXACT",
+          expressions: ["Email"], //gets referral traffic. Will remove social referrals manually later
+        },
+      ],
     },
     gaDimensionSets: false,
   },
@@ -115,6 +118,8 @@ module.exports.REPORT_TYPES = {
   },
 
 }
+
+
 module.exports.METRICS_SETS = {
   behavior: [
     {expression: "ga:pageviews"},
@@ -167,7 +172,7 @@ module.exports.AUDIT_TESTS = {
     key: "browserCompatibility",
     gaReports: [{
       dimensions: [{name: "ga:browser"}],
-      metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}],
+      metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:transactionRevenue"}, {expression: "ga:revenuePerUser"}], // revenue part might be 2.0
     }],
   },
 
@@ -178,6 +183,46 @@ module.exports.AUDIT_TESTS = {
       metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
     }],
   },
+
+  // tests if bounce rate and session duration are disproprotionately bad, and goals (later) are not being met for pages
+  userInteraction: {
+    key: "userInteraction",
+    gaReports: [{
+      dimensions: [{name: "ga:deviceCategory"}],
+      metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}, {expression: "ga:sessions"}],
+    }],
+  },
+
+  pageValue: {
+    key: "pageValue",
+    gaReports: [
+      {
+        dimensions: [{name: "ga:landingPagePath"}],
+        metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}, {expression: "ga:sessions"}, {expression: "ga:transactionRevenue"}, {expression: "ga:revenuePerUser"}],
+      },
+      { // organic traffic
+        dimensions: [{name: "ga:landingPagePath"}],
+        dimensionFilterClauses: REPORT_TYPES.organicTraffic.gaDimensionFilterClauses,
+        metrics: [{expression: "ga:sessions"}],
+      },
+      { // social traffic
+        dimensions: [{name: "ga:landingPagePath"}],
+        dimensionFilterClauses: REPORT_TYPES.socialTraffic.gaDimensionFilterClauses,
+        metrics: [{expression: "ga:sessions"}],
+      },
+      { // organic traffic
+        dimensions: [{name: "ga:landingPagePath"}],
+        dimensionFilterClauses: REPORT_TYPES.referralTraffic.gaDimensionFilterClauses,
+        metrics: [{expression: "ga:sessions"}],
+      },
+      { // email traffic
+        dimensions: [{name: "ga:landingPagePath"}],
+        dimensionFilterClauses: REPORT_TYPES.emailTraffic.gaDimensionFilterClauses,
+        metrics: [{expression: "ga:sessions"}],
+      },
+    ],
+
+  }
 }
 
 //sample segment stuff
@@ -205,3 +250,4 @@ module.exports.AUDIT_TESTS = {
       }
     }
   },*/
+module.exports.REPORT_TYPES = REPORT_TYPES

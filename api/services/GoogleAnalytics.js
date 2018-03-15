@@ -281,12 +281,12 @@ const GoogleAnalytics = {
       // rows are social networks that referred to the page
       if (rowsBy === "source=social") {
         defaultDimensions = [{name: "ga:source"}]
-        defaultDimensionFilters = REPORT_TYPES.socialTraffic.gaAdditionalProperties.dimensionFilterClauses
+        defaultDimensionFilters = REPORT_TYPES.socialTraffic.gaDimensionFilterClauses
       }
       // rows are ideally non-social networks that referred to the page
       if (rowsBy === "source=referral") {
         defaultDimensions = [{name: "ga:source"}]
-        defaultDimensionFilters = REPORT_TYPES.referralTraffic.gaAdditionalProperties.dimensionFilterClauses
+        defaultDimensionFilters = REPORT_TYPES.referralTraffic.gaDimensionFilterClauses
       }
       //rows are keywords; data is for SEO
       if (rowsBy === "keyword") {
