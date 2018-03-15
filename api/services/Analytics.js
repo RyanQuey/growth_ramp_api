@@ -1,6 +1,6 @@
 const queryHelpers = require('./analyticsHelpers/queryHelpers')
 const auditHelpers = require('./analyticsHelpers/auditHelpers')
-const {AUDIT_TESTS} = require('../analyticsConstants')
+const {AUDIT_TESTS, TEST_GROUPS} = require('../analyticsConstants')
 
 const Analytics = {
 
@@ -38,6 +38,7 @@ const Analytics = {
       if (typeof filters === "string") {
         filters = JSON.parse(filters)
       }
+
 
       let analyticsProfile
       ProviderAccounts.findOne({
@@ -110,9 +111,14 @@ const Analytics = {
 
       const gscFilters = Object.assign({}, filters)
 
+      let {testKeys, testGroup, specifyingTestBy} = queryHelpers.parseDataset(dataset)
+console.log(testGroup, dataset, specifyingTestBy);
+      if (specifyingTestBy === "testGroup") {
+        testKeys = TEST_GROUPS[testGroup]
+      }
 //console.log("filters", filters);
       // 1) get all dimensions + metric sets we have. Try to combine into one call if two auditTests share a dimension (will have the same date, at least as of now)
-      const testKeys = Object.keys(AUDIT_TESTS)
+      const allTestKeys = Object.keys(AUDIT_TESTS)
       const reportRequestsData = {
         gaReports: [],
         gscReports: [],
@@ -139,12 +145,6 @@ const Analytics = {
         if (!account) {
           throw new Error("Google account not for user ", user.id)
         }
-
-        // they're picking by profile, which is specific to a web property, so only showing goals for tht web propertY
-        return GoogleAnalytics.getGoals(account, {websiteId: filters.websiteId})//, profileId: filters.profileId, webPropertyId: filters.websiteId})
-      })
-      .then((goalData) => {
-        websiteGoals = goalData.items || []
 
         // 3) for each test use the data and return results
         const promises = []

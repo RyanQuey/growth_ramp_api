@@ -1,6 +1,6 @@
 module.exports = function canRead (req, res, next) {
   const modelIdentity = req.options.controller
-  const modelAttributes = Object.keys(sails.models[modelIdentity].attributes)
+  const modelAttributes = sails.models[modelIdentity] ? Object.keys(sails.models[modelIdentity].attributes) : []
   const action = req.options.action
   let fail = (message) => {
     // still going onto next, but with no user set
@@ -84,7 +84,7 @@ module.exports = function canRead (req, res, next) {
       }
 
     //certain actions, it doesn't matter as long as there is a user
-    } else if (["getallgaaccounts", "getanalytics", "auditcontent"].includes(action)) {
+    } else if (["getallanalyticsaccounts", "getanalytics", "auditcontent", "getgagoals"].includes(action)) {
       pass()
 
     } else {
