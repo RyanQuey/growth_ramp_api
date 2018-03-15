@@ -80,7 +80,7 @@ const auditHelpers = {
       const ret = {
         lists: [
           {
-            key: "headlineStrength",
+            key: "weakHeadlines",
             items: weakHeadlineRows,
             summaryData: headlineStrengthDataSummary
           }
