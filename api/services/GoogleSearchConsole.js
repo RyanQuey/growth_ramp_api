@@ -71,7 +71,7 @@ const GoogleSearchConsole = {
   getReport: (providerAccount, filters, options) => {
     return new Promise((resolve, reject) => {
       const {dataset} = options
-      let analyticsAccounts, currentAnalyticsAccount
+      let analyticsAccounts, currentAnalyticsAccount, requestMetadata
       const oauthClient = Google._setup(providerAccount)
 
       let {func, defaultMetrics, defaultDimensions, defaultDimensionFilters, defaultAggregationType} = GoogleSearchConsole._getDefaultsFromDataset(dataset)
@@ -88,12 +88,14 @@ console.log("func", func);
       //all requests should have the same daterange, viewId, segments, samplingLevel, and cohortGroup (these latter ones are a TODO)
       const {query} = GoogleSearchConsole[func](filters, dataset)
 
-console.log(query);
-
       const params = {
         auth: oauthClient,
         siteUrl: encodeURIComponent(filters.gscUrl),
         resource: query, //all Google payloads go on this resource thing
+      }
+
+      if (options.dataset.includes("contentAudit")) {
+        requestMetadata = {forLists: filters.forLists}
       }
 
       searchConsoleClient.searchanalytics.query(params, (err, response) => {
@@ -102,7 +104,7 @@ console.log(query);
         }
 
         //TODO make data same format as GA, probably changing data from GA too though, so that it's easy for frontend to handle. Uniform the data, into columnHeaders, and rows, rows having first dimensions (not "keys"), which is far left column, and then metrics (as GA has it, but just return straight, not needing to get the row.metrics[0].values[0], as GSC has it TODO!!!)
-        const ret = GoogleSearchConsole.handleReport(response.data, query)
+        const ret = GoogleSearchConsole.handleReport(response.data, query, requestMetadata)
         //returns an array of rows, one row per page, sorted by clicks in desc
         return resolve(ret)
       })
@@ -110,7 +112,7 @@ console.log(query);
   },
 
   //get into consistent format with GA data and other api if we add it
-  handleReport: (report, params) => {
+  handleReport: (report, params, requestMetadata) => {
     report.columnHeader = {
       dimensions: params.dimensions.map((dimension) => ({
         name: dimension,
@@ -169,6 +171,9 @@ console.log(query);
       rowCount: 999, //TODO seems like it's a good place to max out?? (currently doing 5000 max though haha
     }
 
+    if (requestMetadata) {
+      report.requestMetadata = requestMetadata
+    }
 
     return report
   },

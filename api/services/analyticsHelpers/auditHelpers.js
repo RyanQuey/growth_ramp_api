@@ -4,8 +4,8 @@ const {AUDIT_TESTS} = require('../../analyticsConstants')
 const auditHelpers = {
   auditTestFunctions: {
     pageSpeed: (gaResults = [], gscResults = []) => {
-      const {relevantGaReports} = findRelevantReports("pageSpeed", gaResults, gscResults)
-      const [relevantGaReport] = relevantGaReports // this test only has one
+      const relevantReports = findRelevantReports("pageSpeed", gaResults, gscResults)
+      const [relevantGaReport] = relevantReports.slowPages.ga // this test only has one
       const avgPageLoadTimeIndex = getMetricIndex("ga:avgPageLoadTime", relevantGaReport)
       const pageViewsIndex = getMetricIndex("ga:pageviews", relevantGaReport)
 
@@ -49,8 +49,8 @@ const auditHelpers = {
     },
   */
     headlineStrength: (gaResults = [], gscResults = []) => {
-      const {relevantGscReports} = findRelevantReports("headlineStrength", gaResults, gscResults)
-      const [pageSEOData, siteTotalsData] = relevantGscReports // this test only has one
+      const relevantReports = findRelevantReports("headlineStrength", gaResults, gscResults)
+      const [pageSEOData, siteTotalsData] = relevantReports.weakHeadlines.gsc // this test only has one TODO more sturdy way of getting these two reports
 
       const impressionsIndex = getMetricIndex("impressions", pageSEOData)
       const ctrIndex = getMetricIndex("ctr", pageSEOData)
@@ -90,8 +90,8 @@ const auditHelpers = {
     },
 
     browserCompatibility:  (gaResults = [], gscResults = []) => {
-      const {relevantGaReports} = findRelevantReports("browserCompatibility", gaResults, gscResults)
-      const [relevantGaReport] = relevantGaReports // this test only has one
+      const relevantReports = findRelevantReports("browserCompatibility", gaResults, gscResults)
+      const [relevantGaReport] = relevantReports.badBounceRate.ga // this test only has one report for both lists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
       const usersIndex = getMetricIndex("ga:users", relevantGaReport)
@@ -152,8 +152,8 @@ const auditHelpers = {
     },
 
     deviceCompatibility:  (gaResults = [], gscResults = []) => {
-      const {relevantGaReports} = findRelevantReports("deviceCompatibility", gaResults, gscResults)
-      const [relevantGaReport] = relevantGaReports // this test only has one
+      const relevantReports = findRelevantReports("deviceCompatibility", gaResults, gscResults)
+      const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both lists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
       const usersIndex = getMetricIndex("ga:users", relevantGaReport)
@@ -213,8 +213,8 @@ const auditHelpers = {
 
 
     userInteraction:  (gaResults = [], gscResults = [], goals) => {
-      const {relevantGaReports} = findRelevantReports("userInteraction", gaResults, gscResults)
-      const [relevantGaReport] = relevantGaReports // this test only has one
+      const relevantReports = findRelevantReports("userInteraction", gaResults, gscResults)
+      const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both lists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
       const sessionsIndex = getMetricIndex("ga:sessions", relevantGaReport)
@@ -276,8 +276,9 @@ const auditHelpers = {
     pageValue:  (gaResults = [], gscResults = [], goals) => {},
 
     searchPositionToImprove:  (gaResults = [], gscResults = []) => {
-      const {relevantGscReports} = findRelevantReports("searchPositionToImprove", gaResults, gscResults)
-      const [pageSEOData, siteTotalsData] = relevantGscReports // this test only has one
+      const relevantReports = findRelevantReports("searchPositionToImprove", gaResults, gscResults)
+      console.log("relevant reports", relevantReports);
+      const [pageSEOData, siteTotalsData] = relevantReports.searchPositionToImprove.gsc
 
       const positionIndex = getMetricIndex("position", pageSEOData)
 
@@ -314,18 +315,15 @@ const auditHelpers = {
     },
     missingPages:  (gaResults = [], gscResults = []) => {
       //return everything
-      const {relevantGaReports} = findRelevantReports("missingPages", gaResults, gscResults)
-      const [brokenExternalLinks, brokenInternalLinks] = relevantGaReports
-
-
-      const pageTitleIndex = getMetricIndex("pageTitle", brokenExternalLinks)
+      const {brokenExternal, brokenInternal} = findRelevantReports("missingPages", gaResults, gscResults)
+      const [brokenExternalLinks] = brokenExternal.ga
+      const [brokenInternalLinks] = brokenInternal.ga
 
       const brokenExternalRows = brokenExternalLinks.rows.map((row) => (
         {
           dimension: row.dimensions[0],
-          "ga:pagePath": row.dimensions[1],
-          "ga:fullReferrer": row.dimensions[2],
-          "ga:pageTitle": row.metrics[0].values[pageTitleIndex],
+          "ga:pageTitle": row.dimensions[1],
+          "ga:sessions": row.metrics[0].values[0],
         }
       ))
       const externalRowsDataSummary = getGADataSummary("all", brokenExternalLinks)
@@ -361,45 +359,30 @@ const auditHelpers = {
   }
 }
 
+/////////////////////////////////////////////////////
+//Helpers for auditHelpers
 // maps the reports requested for this test to the returned result from ga or gsc
 function findRelevantReports(key, gaResults, gscResults) {
   console.log("keuy to find", key);
   const test = AUDIT_TESTS[key]
-  const relevantGaReports = test.gaReports && test.gaReports.map((r) => {
-    const testDimensionNames = r.dimensions.map((d) => d.name)
-    console.log("test dimensions", testDimensionNames);
-    const testMetricNames = r.metrics.map((d) => d.expression)
-    console.log("test metrics", testMetricNames);
-    console.log(_.isEqual(gaResults[1].columnHeader.dimensions.map((d) => d.name), testDimensionNames));
-    console.log(_.isEqual(gaResults[1].columnHeader.metrics.map((d) => d.name), testMetricNames));
+  const testLists = Object.keys(test.lists)
+  const ret = {}
+  for (let list of testLists) {
+    console.log("list is: ", list);
+      console.log("searching for reports with: ", `${test.key}-${list}`);
+    // GA
+    ret[list] = {}
+    ret[list].ga = gaResults.filter((gaReport) =>
+      gaReport.requestMetadata.forLists.includes(`${test.key}-${list}`)
+    )
 
-    return _.find(gaResults, (report) => {
-      // same dimensions exactly and includes every metric we need for this test
-      // TODO if ever filter, will need to use that here too to find the right one
-      const reportDimensionNames = report.columnHeader.dimensions.map((d) => d.name)
-      const reportMetricNames = report.columnHeader.metrics.map((m) => m.name)
+    // GSC
+    ret[list].gsc = gscResults.filter((gscReport) =>
+      gscReport.requestMetadata.forLists.includes(`${test.key}-${list}`)
+    )
+  }
 
-      return (
-        _.isEqual(testDimensionNames, reportDimensionNames) &&
-        testMetricNames.every((metricName) => reportMetricNames.includes(metricName))
-      )
-    })
-  })
-
-  const relevantGscReports = test.gscReports && test.gscReports.map((r) =>{
-    const testDimensionNames = r.dimensions
-    return _.find(gscResults, (report) => {
-      // same dimensions exactly
-      const reportDimensionNames = report.columnHeader.dimensions.map((d) => d.name)
-
-      return (
-        testDimensionNames.length === 0 && report.columnHeader.dimensions.length === 0 ||
-        _.isEqual(testDimensionNames, reportDimensionNames)
-      )
-    })
-  })
-
-  return {relevantGaReports, relevantGscReports}
+  return ret
 }
 
 function getGADataSummary (metricNames, report) {
@@ -413,12 +396,12 @@ console.log("mns", metricNames);
       for (let metric of report.columnHeader.metrics) {
         let name = metric.name
         const metricIndex = getMetricIndex(name, report)
-        ret[category][name] = report.data[category][0].values[metricIndex]
+        ret[category][name] = Helpers.safeDataPath(report, `data.${category}.0.values.${metricIndex}`, 0)
       }
     } else {
       for (let name of metricNames) {
         const metricIndex = getMetricIndex(name, report)
-        ret[category][name] = report.data[category][0].values[metricIndex]
+        ret[category][name] = Helpers.safeDataPath(report, `data.${category}.0.values.${metricIndex}`, 0)
       }
     }
   })

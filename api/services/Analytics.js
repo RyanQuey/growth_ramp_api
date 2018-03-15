@@ -112,7 +112,6 @@ const Analytics = {
       const gscFilters = Object.assign({}, filters)
 
       let {testKeys, testGroup, specifyingTestBy} = queryHelpers.parseDataset(dataset)
-console.log(testGroup, dataset, specifyingTestBy);
       if (specifyingTestBy === "testGroup") {
         testKeys = TEST_GROUPS[testGroup]
       }
@@ -154,7 +153,7 @@ console.log(testGroup, dataset, specifyingTestBy);
           let setOf5 = reportRequestsData.gaReports.splice(0, 5)
           //console.log("set of 5", setOf5);
           promises.push(GoogleAnalytics.getReport(account, setOf5, {
-            dataset: "contentAudit-all",
+            dataset,
             multipleReports: true,
           }))
 
@@ -164,7 +163,7 @@ console.log(testGroup, dataset, specifyingTestBy);
         let gscReportCount = 0
         reportRequestsData.gscReports.forEach((report) => {
           promises.push(GoogleSearchConsole.getReport(account, report, {
-            dataset: "contentAudit-all",
+            dataset,
             multipleReports: true,
           }))
           gscReportCount ++
@@ -202,6 +201,7 @@ console.log(testGroup, dataset, specifyingTestBy);
   },
 
 
+//TODO move these helpers to auditHelpers file
 
   // so far, only asking one api at a time, but will change this helper if that changes
   _combineResultsFromApis: (GAResults, GSCResults) => {
@@ -237,10 +237,11 @@ console.log(testGroup, dataset, specifyingTestBy);
 
       if (matchingReport) {
         matchingReport.metrics = (matchingReport.metrics || []).concat(report.metrics)
+        matchingReport.forLists = matchingReport.forLists.concat(report.forLists)
 
       } else {
         // build out the report with the otherFilters, and push
-        let fullReport = Object.assign({}, report, otherFilters)
+        let fullReport = Object.assign({}, report, otherFilters, {forLists: report.forLists})
 
         currentReportSets.push(fullReport)
       }

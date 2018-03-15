@@ -149,7 +149,11 @@ module.exports.AUDIT_TESTS = {
           sortOrder: "DESCENDING"
         }
       ],
+      forLists: ["pageSpeed-slowPages"],
     }],
+    lists: {
+      slowPages: {}
+    },
   },
 
 /*
@@ -166,11 +170,16 @@ module.exports.AUDIT_TESTS = {
     gscReports: [
       {
         dimensions: ["page"],
+        forLists: ["headlineStrength-weakHeadlines"],
       },
       {
         dimensions: [],
+        forLists: ["headlineStrength-weakHeadlines"],
       },
     ],
+    lists: {
+      weakHeadlines: {},
+    },
   },
 
   browserCompatibility: {
@@ -178,7 +187,12 @@ module.exports.AUDIT_TESTS = {
     gaReports: [{
       dimensions: [{name: "ga:browser"}],
       metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
+      forLists: ["browserCompatibility-badBounceRate", "browserCompatibility-badSessionDuration"],
     }],
+    lists: {
+      badBounceRate: {},
+      badSessionDuration: {},
+    },
   },
 
   deviceCompatibility: {
@@ -186,7 +200,12 @@ module.exports.AUDIT_TESTS = {
     gaReports: [{
       dimensions: [{name: "ga:deviceCategory"}],
       metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
+      forLists: ["deviceCompatibility-badBounceRate", "deviceCompatibility-badSessionDuration"],
     }],
+    lists: {
+      badBounceRate: {},
+      badSessionDuration: {},
+    },
   },
 
   // tests if bounce rate and session duration are disproprotionately bad, and goals (later) are not being met for pages
@@ -196,7 +215,12 @@ module.exports.AUDIT_TESTS = {
     gaReports: [{
       dimensions: [{name: "ga:landingPagePath"}],
       metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}, {expression: "ga:sessions"}],
+      forLists: ["userInteraction-badBounceRate", "userInteraction-badSessionDuration"],
     }],
+    lists: {
+      badBounceRate: {},
+      badSessionDuration: {},
+    },
   }, //eventually do all kinds of goals lists too, ga:goalXXConverionRate
 
   // hold off on working on, Jason is figuring out
@@ -206,40 +230,53 @@ module.exports.AUDIT_TESTS = {
       {
         dimensions: [{name: "ga:landingPagePath"}],
         metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}, {expression: "ga:sessions"}, {expression: "ga:transactionRevenue"}, {expression: "ga:revenuePerUser"}],
+        forLists: [], //TODO
       },
       { // organic traffic
         dimensions: [{name: "ga:landingPagePath"}],
         dimensionFilterClauses: REPORT_TYPES.organicTraffic.gaDimensionFilterClauses,
         metrics: [{expression: "ga:sessions"}],
+        forLists: [], //TODO
       },
       { // social traffic
         dimensions: [{name: "ga:landingPagePath"}],
         dimensionFilterClauses: REPORT_TYPES.socialTraffic.gaDimensionFilterClauses,
         metrics: [{expression: "ga:sessions"}],
+        forLists: [], //TODO
       },
       { // organic traffic
         dimensions: [{name: "ga:landingPagePath"}],
         dimensionFilterClauses: REPORT_TYPES.referralTraffic.gaDimensionFilterClauses,
         metrics: [{expression: "ga:sessions"}],
+        forLists: [], //TODO
       },
       { // email traffic
         dimensions: [{name: "ga:landingPagePath"}],
         dimensionFilterClauses: REPORT_TYPES.emailTraffic.gaDimensionFilterClauses,
         metrics: [{expression: "ga:sessions"}],
+        forLists: [], //TODO
       },
     ],
+    lists: {
+//TODO
+    },
   },
 
   searchPositionToImprove: {
-    key: "pageValue",
+    key: "searchPositionToImprove",
     gscReports: [
       {
         dimensions: ["page"],
+        forLists: ["searchPositionToImprove-searchPositionToImprove"],
       },
       {
         dimensions: [],
+        forLists: ["searchPositionToImprove-searchPositionToImprove"],
       },
     ],
+    lists: {
+      searchPositionToImprove: {},
+    },
   },
 
   // https://www.rebelytics.com/404-errors-google-analytics/
@@ -247,7 +284,7 @@ module.exports.AUDIT_TESTS = {
     key: "missingPages",
     gaReports: [
       { // either from address bar or external link
-        dimensions: [{name: "ga:pageTitle"}, {name: "ga:pagePath"}],
+        dimensions: [{name: "ga:pagePath"}, {name: "ga:pageTitle"}],
         metrics: [{expression: "ga:sessions"}],
         dimensionFilterClauses: {
           operator: "AND",
@@ -263,10 +300,11 @@ module.exports.AUDIT_TESTS = {
               expressions: ["(entrance)"], //gets referral traffic. Will remove social referrals manually later
             },
           ],
-        }
+        },
+        forLists: ["missingPages-brokenExternal"],
       },
       { // this one gets internal links
-        dimensions: [{name: "ga:pageTitle"}, {name: "ga:pagePath"}],
+        dimensions: [{name: "ga:pagePath"}, {name: "ga:pageTitle"}],
         metrics: [{expression: "ga:sessions"}],
         dimensionFilterClauses: {
           operator: "AND",
@@ -283,9 +321,14 @@ module.exports.AUDIT_TESTS = {
               expressions: ["404|page not found"], //gets referral traffic. Will remove social referrals manually later
             },
           ],
-        }
+        },
+        forLists: ["missingPages-brokenInternal"],
       },
     ],
+    lists: {
+      brokenExternal: {},
+      brokenInternal: {},
+    },
   },
 }
 
