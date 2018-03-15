@@ -46,7 +46,12 @@ module.exports.policies = {
     reactivateStripeSubscription: ['userTokenAuth', 'canWrite'],
     handleCreditCardUpdate: ['userTokenAuth', 'canWrite'],
   },
-
+  AnalyticsController: {
+    getAllAnalyticsAccounts: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+    getAnalytics: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+    getGAGoals: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+    auditContent: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+  },
   CampaignsController: {
     create: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
@@ -102,9 +107,6 @@ module.exports.policies = {
     refreshChannelType: ['userTokenAuth'],
     //find: ['userTokenAuth', 'canRead'], TODO currently returning all accounts!!!
     getUserAccounts: ['userTokenAuth', 'canRead'],
-    getAllAnalyticsAccounts: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
-    getAnalytics: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
-    auditContent: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
   },
   TokensController: {
     //create: ['userTokenAuth', 'canWrite'],
