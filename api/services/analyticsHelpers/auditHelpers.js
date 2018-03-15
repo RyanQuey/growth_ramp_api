@@ -27,7 +27,7 @@ const auditHelpers = {
         return acc
       }, [])
 
-      const slowPageDataSummary = getDataSummary(["ga:pageviews", "ga:avgPageLoadTime"], relevantGaReport)
+      const slowPageDataSummary = getGADataSummary(["ga:pageviews", "ga:avgPageLoadTime"], relevantGaReport)
 
       const ret = {
         lists: [
@@ -57,7 +57,8 @@ const auditHelpers = {
       const ctrIndex = getMetricIndex("ctr", pageSEOData)
 
       const siteTotals = siteTotalsData.rows[0]
-      const headlineStrengthDataSummary = {totals: siteTotals}
+      const headlineStrengthDataSummary = getGSCDataSummary(siteTotalsData)
+
       const siteAvgCTR = parseFloat(siteTotals[ctrIndex])
 
       const weakHeadlineRows = pageSEOData.rows.reduce((acc, row) => {
@@ -92,6 +93,12 @@ const auditHelpers = {
     browserCompatibility: () => {},
 
     deviceCompatibility: () => {},
+
+    userInteraction: () => {},
+
+    pageValue: () => {},
+
+    searchPositionToImprove: () => {},
   }
 }
 
@@ -129,31 +136,35 @@ function findRelevantReports(key, gaResults, gscResults) {
   return {relevantGaReports, relevantGscReports}
 }
 
-// NOTE only for GA, not for GSC
-function getDataSummary (metricNames, report) {
+function getGADataSummary (metricNames, report) {
   const ret = {}
   const categories = ["maximums", "minimums", "totals"]
-
+console.log("mns", metricNames);
   categories.forEach((category) => {
     ret[category] = {}
 
-    if (metricNames === "all") {
-      // mostly for gsc, where metrics are always the same
-
-    } else {
-      for (let name of metricNames) {
-        const metricIndex = getMetricIndex(name, report)
-        ret[category][name] = report.data[category][0].values[metricIndex]
-      }
-
+    for (let name of metricNames) {
+console.log("name", name);
+      const metricIndex = getMetricIndex(name, report)
+console.log("metric index", metricIndex);
+      ret[category][name] = report.data[category][0].values[metricIndex]
     }
   })
 
   return ret
 }
 
+function getGSCDataSummary (report) {
+  const totals = {}
+  report.columnHeader.metrics.forEach((metric, index) => {
+    totals[metric.name] = report.rows[0].metrics[0].values[index]
+  })
+
+  return {totals}
+}
+
 function getMetricIndex (metricName, report) {
-  report.columnHeader.metrics.findIndex((metricHeader) => metricHeader.name === metricName)
+  return report.columnHeader.metrics.findIndex((metricHeader) => metricHeader.name === metricName)
 }
 
 module.exports = auditHelpers

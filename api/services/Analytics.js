@@ -205,14 +205,15 @@ const Analytics = {
   },
 
   // need to run once per GSC and GA, for each audit test we're going to make
-  // otherFilters should be start and end date that kind of thing
+  // otherFilters should be start and end date that kind of thing (and should be same for every report set)
   _buildAuditReportRequests: (api, auditTestReports, currentReportSets, otherFilters = {}) => {
 
     for (let report of auditTestReports) {
-      let matchingReport = currentReportSets.find((set) => set.dimension === report.dimension)
+      let matchingReport = _.find(currentReportSets, (set) => _.isEqual(set.dimensions, report.dimensions))
 
-      if (matchingReport && matchingReport !== -1) {
+      if (matchingReport) {
         matchingReport.metrics = (matchingReport.metrics || []).concat(report.metrics)
+
       } else {
         // build out the report with the otherFilters, and push
         let fullReport = Object.assign({}, report, otherFilters)
