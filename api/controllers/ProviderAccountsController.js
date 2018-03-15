@@ -78,7 +78,6 @@ module.exports = {
   auditContent: (req, res) => {
     Analytics.auditContent(req.user, req.allParams())
     .then((results) => {
-      console.log("results", results)
       return res.ok(results)
     })
     .catch((err) => {
