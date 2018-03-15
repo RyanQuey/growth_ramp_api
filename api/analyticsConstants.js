@@ -109,7 +109,7 @@ const REPORT_TYPES = {
           {
             dimension: "page",
             operator: "contains",
-            expression: ["organic"],
+            expression: [""], //whatever the webpage is
 
           }
         ]
@@ -221,8 +221,16 @@ module.exports.AUDIT_TESTS = {
         metrics: [{expression: "ga:sessions"}],
       },
     ],
+  },
 
-  }
+  searchPositionToImprove: {
+    key: "pageValue",
+    gscReports: [
+      {
+        dimensions: ["page"],
+      },
+    ],
+  },
 }
 
 //sample segment stuff

@@ -102,7 +102,16 @@ const Analytics = {
       if (typeof filters === "string") {
         filters = JSON.parse(filters)
       }
-      const {endDate, startDate, websiteId, websiteUrl, profileId} = filters
+
+      // set some defaults for the audits
+      const gaFilters = Object.assign({
+        pageSize: 1000, //max 10,000
+      }, filters)
+
+      const gscFilters = Object.assign({
+
+      }, filters)
+
 //console.log("filters", filters);
       // 1) get all dimensions + metric sets we have. Try to combine into one call if two auditTests share a dimension (will have the same date, at least as of now)
       const testKeys = Object.keys(AUDIT_TESTS)
@@ -115,8 +124,8 @@ const Analytics = {
         let {gaReports = [], gscReports = []} = testData // each test could have multiple reports it requires; prepare all of them
         // add or combine each report for ga and gsc to what's there
         // can combine if has same dimension
-        Analytics._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, filters)
-        Analytics._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, filters)
+        Analytics._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, gaFilters)
+        Analytics._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscFilters)
       }
 //console.log("total ga report sets", reportRequestsData.gaReports);
 
