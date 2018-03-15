@@ -40,6 +40,33 @@ const GoogleAnalytics = {
     })
   },
 
+  // returns all the accounts found that a given Google user account can access
+  getGoals: (providerAccount, accountParams = {}) => {
+    return new Promise((resolve, reject) => {
+      const oauthClient = Google._setup(providerAccount)
+
+      // default '~all' to get all that this user has access to
+      const {accountId = "~all", profileId = "~all", webPropertyId = "~all"} = accountParams
+
+      const params = {
+        auth: oauthClient,
+        accountId,
+        profileId,
+        webPropertyId,
+      } //can use other params to paginate
+      analyticsClient.management.goals.list(params, (err, response) => {
+        if (err) {
+          return reject(err)
+        }
+
+        //tag our providerAccountId on there for future reference, in case it's needed
+        const ret = Object.assign({}, response.data, {providerAccountId: providerAccount.id} )
+        return resolve(ret)
+      })
+    })
+  },
+
+
   // thin wrapper around getAccountSummaries
   // returns details for a single google analytics account that a given google user account can access
   // might want to persist this for all users? Might not be necessary though, just a little faster, and can do more things with that data

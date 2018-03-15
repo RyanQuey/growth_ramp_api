@@ -116,7 +116,6 @@ const REPORT_TYPES = {
       },
     ]
   },
-
 }
 
 
@@ -143,7 +142,13 @@ module.exports.AUDIT_TESTS = {
     key: "pageSpeed",
     gaReports: [{
       dimensions: [{name: "ga:pagePath"}],
-      metrics: [{expression: "ga:avgPageLoadTime"}, {expression: "ga:pageviews"}],
+      metrics: [{expression: "ga:avgPageLoadTime"}, {expression: "ga:pageviews"}], //can max do 10 metrics at once
+      orderBys: [
+        {
+          fieldName: "ga:avgPageLoadTime", //default to sorting by first metric
+          sortOrder: "DESCENDING"
+        }
+      ],
     }],
   },
 
@@ -172,7 +177,7 @@ module.exports.AUDIT_TESTS = {
     key: "browserCompatibility",
     gaReports: [{
       dimensions: [{name: "ga:browser"}],
-      metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:transactionRevenue"}, {expression: "ga:revenuePerUser"}], // revenue part might be 2.0
+      metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
     }],
   },
 
@@ -180,19 +185,21 @@ module.exports.AUDIT_TESTS = {
     key: "deviceCompatibility",
     gaReports: [{
       dimensions: [{name: "ga:deviceCategory"}],
-      metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
+      metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
     }],
   },
 
   // tests if bounce rate and session duration are disproprotionately bad, and goals (later) are not being met for pages
+  // TODO might be able to find a way to combine with pageSpeed test
   userInteraction: {
     key: "userInteraction",
     gaReports: [{
-      dimensions: [{name: "ga:deviceCategory"}],
+      dimensions: [{name: "ga:landingPagePath"}],
       metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}, {expression: "ga:sessions"}],
     }],
-  },
+  }, //eventually do all kinds of goals lists too, ga:goalXXConverionRate
 
+  // hold off on working on, Jason is figuring out
   pageValue: {
     key: "pageValue",
     gaReports: [
@@ -228,6 +235,53 @@ module.exports.AUDIT_TESTS = {
     gscReports: [
       {
         dimensions: ["page"],
+      },
+      {
+        dimensions: [],
+      },
+    ],
+  },
+
+  // https://www.rebelytics.com/404-errors-google-analytics/
+  missingPages: {
+    key: "missingPages",
+    gaReports: [
+      { // either from address bar or external link
+        dimensions: [{name: "ga:pageTitle"}, {name: "ga:pagePath"}],
+        metrics: [{expression: "ga:sessions"}],
+        dimensionFilterClauses: {
+          filters: [
+            {
+              dimensionName: "ga:pageTitle",
+              operator: "REGEXP",
+              expressions: ["404|page not found"], //gets referral traffic. Will remove social referrals manually later
+            },
+            {
+              dimensionName: "ga:previousPagePath",
+              operator: "EXACT",
+              expressions: ["(entrance)"], //gets referral traffic. Will remove social referrals manually later
+            },
+          ],
+        }
+      },
+      { // this one gets internal links
+        dimensions: [{name: "ga:pageTitle"}, {name: "ga:pagePath"}],
+        metrics: [{expression: "ga:sessions"}],
+        dimensionFilterClauses: {
+          filters: [
+            {
+              dimensionName: "ga:previousPagePath",
+              operator: "EXACT",
+              not: true,
+              expressions: ["(entrance)"], //gets referral traffic. Will remove social referrals manually later
+            },
+            {
+              dimensionName: "ga:pageTitle",
+              operator: "REGEXP",
+              expressions: ["404|page not found"], //gets referral traffic. Will remove social referrals manually later
+            },
+          ],
+        }
       },
     ],
   },

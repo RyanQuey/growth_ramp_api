@@ -105,12 +105,10 @@ const Analytics = {
 
       // set some defaults for the audits
       const gaFilters = Object.assign({
-        pageSize: 1000, //max 10,000
+        pageSize: 10000, //max 10,000
       }, filters)
 
-      const gscFilters = Object.assign({
-
-      }, filters)
+      const gscFilters = Object.assign({}, filters)
 
 //console.log("filters", filters);
       // 1) get all dimensions + metric sets we have. Try to combine into one call if two auditTests share a dimension (will have the same date, at least as of now)
@@ -127,18 +125,26 @@ const Analytics = {
         Analytics._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, gaFilters)
         Analytics._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscFilters)
       }
+      const reportRequestsFinal = _.cloneDeep(reportRequestsData)
 //console.log("total ga report sets", reportRequestsData.gaReports);
 
-      let gaReportCount, allReports
+      let gaReportCount, allReports, account, websiteGoals
 
       ProviderAccounts.findOne({
         userId: user.id,
         id: filters.providerAccountId,
       })
-      .then((account) => {
+      .then((acct) => {
+        account = acct
         if (!account) {
           throw new Error("Google account not for user ", user.id)
         }
+
+        // they're picking by profile, which is specific to a web property, so only showing goals for tht web propertY
+        return GoogleAnalytics.getGoals(account, {websiteId: filters.websiteId})//, profileId: filters.profileId, webPropertyId: filters.websiteId})
+      })
+      .then((goalData) => {
+        websiteGoals = goalData.items || []
 
         // 3) for each test use the data and return results
         const promises = []
@@ -164,9 +170,6 @@ const Analytics = {
           gscReportCount ++
         })
 
-        if (gscReportCount) {
-        }
-
         return Promise.all(promises)
       })
       .then((result) => {
@@ -182,10 +185,10 @@ const Analytics = {
         console.log("---------------------");
         console.log("now going over tests");
         for (let key of testKeys) {
-          auditResults[key] = auditHelpers.auditTestFunctions[key](gaResults, gscResults)
+          auditResults[key] = auditHelpers.auditTestFunctions[key](gaResults, gscResults, websiteGoals)
         }
 
-        auditResults.allReports = allReports
+        Object.assign(auditResults, {allReports, reportRequests: reportRequestsFinal, websiteGoals})
 
         return resolve(auditResults)
       })
@@ -193,7 +196,7 @@ const Analytics = {
 //        return reject(err)
 //        debugging, so return all reports
         console.error(err);
-        return resolve({allReports, err: err.toString()})
+        return resolve({allReports, err: err.toString(), reportRequests: reportRequestsFinal, websiteGoals})
       })
     })
   },
@@ -218,7 +221,19 @@ const Analytics = {
   _buildAuditReportRequests: (api, auditTestReports, currentReportSets, otherFilters = {}) => {
 
     for (let report of auditTestReports) {
-      let matchingReport = _.find(currentReportSets, (set) => _.isEqual(set.dimensions, report.dimensions))
+      let matchingReport = _.find(currentReportSets, (set) =>
+        _.isEqual(set.dimensions, report.dimensions) &&
+        // if ga, has to be same dimension filters and order bys too
+        (
+          api !== "ga" || (
+            _.isEqual(set.dimensionFilterClauses, report.dimensionFilterClauses) &&
+            (!set.orderBys || !report.orderBys || _.isEqual(set.orderBys, report.orderBys))
+          )
+        ) &&
+
+        // if gsc, has to be same dimension groups too
+        (api !== "gsc" || _.isEqual(set.dimensionFilterGroups, report.dimensionFilterGroups))
+      )
 
       if (matchingReport) {
         matchingReport.metrics = (matchingReport.metrics || []).concat(report.metrics)
