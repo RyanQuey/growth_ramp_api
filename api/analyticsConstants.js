@@ -250,6 +250,7 @@ module.exports.AUDIT_TESTS = {
         dimensions: [{name: "ga:pageTitle"}, {name: "ga:pagePath"}],
         metrics: [{expression: "ga:sessions"}],
         dimensionFilterClauses: {
+          operator: "AND",
           filters: [
             {
               dimensionName: "ga:pageTitle",
@@ -268,6 +269,7 @@ module.exports.AUDIT_TESTS = {
         dimensions: [{name: "ga:pageTitle"}, {name: "ga:pagePath"}],
         metrics: [{expression: "ga:sessions"}],
         dimensionFilterClauses: {
+          operator: "AND",
           filters: [
             {
               dimensionName: "ga:previousPagePath",
