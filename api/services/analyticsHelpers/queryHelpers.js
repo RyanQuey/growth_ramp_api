@@ -46,7 +46,7 @@ const queryHelpers = {
     const datasetParts = dataset.split("-")
     const displayType = datasetParts[0]
 
-    let rowsBy, columnSetsArr, xAxisBy
+    let rowsBy, columnSetsArr, xAxisBy, specifyingTestBy, testGroup, testKeys
     if (displayType === "table") {
       rowsBy = datasetParts[1] || ""
       const columnSetsStr = datasetParts[2] || ""
@@ -55,10 +55,19 @@ const queryHelpers = {
     } else if (displayType === "chart") {
       xAxisBy = datasetParts[1] || ""
     } else if (displayType === "contentAudit") {
-      // not sure what else I should have here...
+      specifyingTestBy = datasetParts[1]// "testGroup", "testKey"
+
+      if (specifyingTestBy === "testGroup") {
+        //"all", "nonGoals", "goals". For now not doing "all". Will probably do more later
+        testGroup = datasetParts[2]
+
+      } else if (specifyingTestBy === "testKeys") {
+        // accepts array of test keys to run
+        testKeys = datasetParts[2]
+      }
     }
 
-    return {datasetParts, displayType, rowsBy, xAxisBy, columnSetsArr}
+    return {datasetParts, displayType, rowsBy, xAxisBy, columnSetsArr, specifyingTestBy, testGroup, testKeys}
   },
 
   // takes dataset info and returns which api will be requested

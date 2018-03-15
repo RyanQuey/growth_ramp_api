@@ -289,6 +289,12 @@ module.exports.AUDIT_TESTS = {
   },
 }
 
+module.exports.TEST_GROUPS = {
+  all: ["pageSpeed", "headlineStrength", "browserCompatibility", "deviceCompatibility", "userInteractionGoals", "userInteraction", "pageValue", "pageValueGoals", "searchPositionToImprove", "missingPages"],
+  nonGoals: ["pageSpeed", "headlineStrength", "browserCompatibility", "deviceCompatibility", "userInteraction", "pageValue", "searchPositionToImprove", "missingPages"],
+  goals: ["userInteractionGoals", "pageValueGoals"],
+}
+
 //sample segment stuff
 
 /*segments: [
