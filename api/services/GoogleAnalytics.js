@@ -117,25 +117,40 @@ const GoogleAnalytics = {
         reportRequests = reportRequests.concat(requestData.reportRequests)
       }
 
+      if (options.dataset.includes("contentAudit")) {
+        reportOrder = reportSets.map((set) => (
+          {
+            forLists: set.forLists,
+          }
+        ))
+      }
+
       const params = {
         auth: oauthClient,
         resource: {  // see for how this works: https://github.com/google/google-api-nodejs-client/issues/561
           reportRequests,
         }
       }
+
       analyticsReportingClient.reports.batchGet(params, (err, response) => {
         if (err) {
           return reject(err)
         }
-        const reports = response.data && response.data.reports
 
+        const reports = response.data && response.data.reports
         let reportToReturn, ret
+
         if (options.getChannelTraffic) {
+          // this one is weird, so combining reports using report order
           reportToReturn = GoogleAnalytics.combineReports(reports, reportOrder)
           ret = GoogleAnalytics.handleReport(reportToReturn)
+
         } else if (options.multipleReports) {
 
-          ret = reports && reports.map((report) => GoogleAnalytics.handleReport(report))
+          ret = reports && reports.map((report, index) => {
+            let requestMetadata = reportOrder[index]
+            return GoogleAnalytics.handleReport(report, requestMetadata)
+          })
 
         } else {
           // just requesting a single report
@@ -253,7 +268,7 @@ const GoogleAnalytics = {
   //takes either a combinedReport (GR makes) or regular google response and spits out the right format we want
   //goal is to make unified format for all analytics apis
   //might make prettier column names here too TODO
-  handleReport: (report) => {
+  handleReport: (report, requestMetadata) => {
     //get rid of extra nesting and rename to match format of columnHeader.dimensions
     report.columnHeader.metrics = [...report.columnHeader.metricHeader.metricHeaderEntries]
     delete report.columnHeader.metricHeader
@@ -282,6 +297,8 @@ const GoogleAnalytics = {
     }
 
     delete report.data.rows //smaller payload === faster
+
+    report.requestMetadata = requestMetadata
 
     return report
   },
