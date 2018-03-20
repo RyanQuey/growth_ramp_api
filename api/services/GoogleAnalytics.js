@@ -279,7 +279,8 @@ const GoogleAnalytics = {
     }))
 
     report.rows = [...report.data.rows]
-    // if percent or time, add that to the value to display
+    // pretty prints the metrics
+    // TODO might do in frontend, since that might make it easier if need to manipulate the data later?
 
     const metricHeaders = report.columnHeader.metrics
     for (let i = 0; i < metricHeaders.length; i++) {
