@@ -280,11 +280,10 @@ const GoogleAnalytics = {
 
     report.rows = [...report.data.rows]
     // if percent or time, add that to the value to display
-    // TODO might move this to frontend? fine here for now though
+
     const metricHeaders = report.columnHeader.metrics
     for (let i = 0; i < metricHeaders.length; i++) {
       let valueType = metricHeaders[i].type
-      if (!["PERCENT", "TIME"].includes(valueType)) {continue}
 
       // update valuetype for this row if necessary
       for (let row of report.rows) {

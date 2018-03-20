@@ -3,6 +3,7 @@
 const parsingHelpers = {
   prettyPrintValue: (rawValue, valueType) => {
     let value
+
     if (valueType === "PERCENT") {
       //round to 100ths
       value = parseFloat(rawValue) ? Math.round(rawValue * 100) / 100 : rawValue
