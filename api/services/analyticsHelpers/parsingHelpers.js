@@ -27,5 +27,23 @@ const parsingHelpers = {
 
     return value
   },
+
+  nonPrettyValue: (prettyValue, valueType) => {
+    let value
+
+    //might also parseFloat too
+    if (["PERCENT", "DECIMALED_PERCENT"].includes(valueType)) {
+      value = prettyValue.replace("%", "")
+
+    } else if (valueType === "TIME") {
+      //convert from HH:mm:ss format to milliseconds
+      let values = prettyValue.split(":")
+      value = values[0] *60 *60 + values[1]*60 + values[2] * 1000
+    } else {
+      value = prettyValue
+    }
+
+    return value
+  },
 }
 module.exports = parsingHelpers
