@@ -1,5 +1,6 @@
 // for help parsing what we get from their apis
 const {AUDIT_TESTS} = require('../../analyticsConstants')
+const {nonPrettyValue} = require('./parsingHelpers')
 
 const auditHelpers = {
   auditTestFunctions: {
@@ -55,15 +56,13 @@ const auditHelpers = {
       const impressionsIndex = getMetricIndex("impressions", pageSEOData)
       const ctrIndex = getMetricIndex("ctr", pageSEOData)
 
-      const siteTotals = siteTotalsData.rows[0]
       const headlineStrengthDataSummary = getGSCDataSummary(siteTotalsData)
 
-      const siteAvgCTR = parseFloat(siteTotals[ctrIndex])
+      const siteAvgCTR = parseFloat(headlineStrengthDataSummary.totals.ctr)
 
       const weakHeadlineRows = pageSEOData.rows.reduce((acc, row) => {
         const impressions = row.metrics[0].values[impressionsIndex]
         const ctr = parseFloat(row.metrics[0].values[ctrIndex])
-
         if (impressions > 500 && ctr < (siteAvgCTR / 2) ) {
           acc.push({
             dimension: row.dimensions[0],
@@ -97,19 +96,21 @@ const auditHelpers = {
       const usersIndex = getMetricIndex("ga:users", relevantGaReport)
 
       const browserDataSummary = getGADataSummary("all", relevantGaReport)
-      const siteAvgBounceRate = parseFloat(browserDataSummary.totals["ga:bounceRate"])
-      const siteAvgSessionDuration = browserDataSummary.totals["ga:avgSessionDuration"]
+      const siteAvgBounceRate = nonPrettyValue(browserDataSummary.totals["ga:bounceRate"], "PERCENT")
+      const siteAvgSessionDuration = nonPrettyValue(browserDataSummary.totals["ga:avgSessionDuration"], "TIME")
 
       const badBounceRateRows = []
       const badSessionDurationRows = []
 
       relevantGaReport.rows.forEach((row) => {
         const bounceRate = row.metrics[0].values[bounceRateIndex]
+        const rawBounceRate = nonPrettyValue(bounceRate, "PERCENT")
         const avgSessionDuration = row.metrics[0].values[avgSessionDurationIndex]
+        const rawAvgSessionDuration = nonPrettyValue(avgSessionDuration, "TIME")
         const users = row.metrics[0].values[usersIndex]
 
         if (users > 299 &&
-          (bounceRate > siteAvgBounceRate + (siteAvgBounceRate * .05))
+          (rawBounceRate > siteAvgBounceRate + (siteAvgBounceRate * .05))
         ) {
           badBounceRateRows.push({
             dimension: row.dimensions[0],
@@ -120,7 +121,7 @@ const auditHelpers = {
         }
 
         if (users > 299 &&
-          (avgSessionDuration < siteAvgSessionDuration - (siteAvgSessionDuration * .05))
+          (rawAvgSessionDuration < siteAvgSessionDuration - (siteAvgSessionDuration * .05))
         ) {
           badSessionDurationRows.push({
             dimension: row.dimensions[0],
@@ -159,19 +160,21 @@ const auditHelpers = {
       const usersIndex = getMetricIndex("ga:users", relevantGaReport)
 
       const deviceDataSummary = getGADataSummary("all", relevantGaReport)
-      const siteAvgBounceRate = parseFloat(deviceDataSummary.totals["ga:bounceRate"])
-      const siteAvgSessionDuration = deviceDataSummary.totals["ga:avgSessionDuration"]
+      const siteAvgBounceRate = nonPrettyValue(deviceDataSummary.totals["ga:bounceRate"], "PERCENT")
+      const siteAvgSessionDuration = nonPrettyValue(deviceDataSummary.totals["ga:avgSessionDuration"], "TIME")
 
       const badBounceRateRows = []
       const badSessionDurationRows = []
 
       relevantGaReport.rows.forEach((row) => {
         const bounceRate = row.metrics[0].values[bounceRateIndex]
+        const rawBounceRate = nonPrettyValue(bounceRate, "PERCENT")
         const avgSessionDuration = row.metrics[0].values[avgSessionDurationIndex]
+        const rawAvgSessionDuration = nonPrettyValue(avgSessionDuration, "TIME")
         const users = row.metrics[0].values[usersIndex]
 
         if (users > 299 &&
-          (bounceRate > siteAvgBounceRate + (siteAvgBounceRate * .05))
+          (rawBounceRate > siteAvgBounceRate + (siteAvgBounceRate * .05))
         ) {
           badBounceRateRows.push({
             dimension: row.dimensions[0],
@@ -182,7 +185,7 @@ const auditHelpers = {
         }
 
         if (users > 299 &&
-          (avgSessionDuration < siteAvgSessionDuration - (siteAvgSessionDuration * .05))
+          (rawAvgSessionDuration < siteAvgSessionDuration - (siteAvgSessionDuration * .05))
         ) {
           badSessionDurationRows.push({
             dimension: row.dimensions[0],
@@ -220,19 +223,21 @@ const auditHelpers = {
       const sessionsIndex = getMetricIndex("ga:sessions", relevantGaReport)
 
       const dataSummary = getGADataSummary("all", relevantGaReport)
-      const siteAvgBounceRate = parseFloat(dataSummary.totals["ga:bounceRate"])
-      const siteAvgSessionDuration = dataSummary.totals["ga:avgSessionDuration"]
+      const siteAvgBounceRate = dataSummary.totals["ga:bounceRate"]
+      const siteAvgSessionDuration = nonPrettyValue(dataSummary.totals["ga:avgSessionDuration"], "TIME")
 
       const badBounceRateRows = []
       const badSessionDurationRows = []
 
       relevantGaReport.rows.forEach((row) => {
         const bounceRate = row.metrics[0].values[bounceRateIndex]
+        const rawBounceRate = nonPrettyValue(bounceRate, "PERCENT")
         const avgSessionDuration = row.metrics[0].values[avgSessionDurationIndex]
+        const rawAvgSessionDuration = nonPrettyValue(avgSessionDuration, "TIME")
         const sessions = row.metrics[0].values[sessionsIndex]
 
         if (sessions > 299 &&
-          (bounceRate > siteAvgBounceRate + (siteAvgBounceRate * .05))
+          (rawBounceRate > siteAvgBounceRate + (siteAvgBounceRate * .05))
         ) {
           badBounceRateRows.push({
             dimension: row.dimensions[0],
@@ -243,7 +248,7 @@ const auditHelpers = {
         }
 
         if (sessions > 299 &&
-          (avgSessionDuration < siteAvgSessionDuration - (siteAvgSessionDuration * .05))
+          (rawAvgSessionDuration < siteAvgSessionDuration - (siteAvgSessionDuration * .05))
         ) {
           badSessionDurationRows.push({
             dimension: row.dimensions[0],
@@ -285,7 +290,7 @@ const auditHelpers = {
       const siteTotals = siteTotalsData.rows[0]
       const dataSummary = getGSCDataSummary(siteTotalsData)
 
-      const siteAvgPosition = parseFloat(siteTotals[positionIndex])
+      const siteAvgPosition = parseFloat(siteTotals.position)
 
       const canImprovePositionRows = pageSEOData.rows.reduce((acc, row) => {
         const position = parseFloat(row.metrics[0].values[positionIndex])
@@ -388,7 +393,6 @@ function findRelevantReports(key, gaResults, gscResults) {
 function getGADataSummary (metricNames, report) {
   const ret = {}
   const categories = ["maximums", "minimums", "totals"]
-console.log("mns", metricNames);
   categories.forEach((category) => {
     ret[category] = {}
 
