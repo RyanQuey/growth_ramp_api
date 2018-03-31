@@ -104,7 +104,7 @@ console.log("func", func);
         }
 
         //TODO make data same format as GA, probably changing data from GA too though, so that it's easy for frontend to handle. Uniform the data, into columnHeaders, and rows, rows having first dimensions (not "keys"), which is far left column, and then metrics (as GA has it, but just return straight, not needing to get the row.metrics[0].values[0], as GSC has it TODO!!!)
-        const ret = GoogleSearchConsole.handleReport(response.data, query, requestMetadata)
+        const ret = GoogleSearchConsole.handleReport({report: response.data, query, requestMetadata, siteUrl: filters.gscUrl})
         //returns an array of rows, one row per page, sorted by clicks in desc
         return resolve(ret)
       })
@@ -112,9 +112,9 @@ console.log("func", func);
   },
 
   //get into consistent format with GA data and other api if we add it
-  handleReport: (report, params, requestMetadata) => {
+  handleReport: ({report, query, requestMetadata, siteUrl}) => {
     report.columnHeader = {
-      dimensions: params.dimensions.map((dimension) => ({
+      dimensions: query.dimensions.map((dimension) => ({
         name: dimension,
         type: "STRING",
       })),
@@ -145,7 +145,8 @@ console.log("func", func);
     // make consistent with what I'm returning from GA (which is itself modified, but yeah)
     report.rows = report.rows && report.rows.map((row) => {
       const ret = {
-        dimensions: row.keys ? row.keys.map((key) => key.replace(params.siteUrl, "")) : [],
+        // remove the site base url from the full url to get just the path (so from https://example.com/path => /path)
+        dimensions: row.keys ? row.keys.map((key) => key.replace(siteUrl, "/")) : [],
       }
       delete row.keys
 
