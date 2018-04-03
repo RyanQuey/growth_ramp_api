@@ -90,7 +90,7 @@ console.log("func", func);
 
       const params = {
         auth: oauthClient,
-        siteUrl: encodeURIComponent(filters.gscUrl),
+        siteUrl: encodeURIComponent(filters.gscSiteUrl),
         resource: query, //all Google payloads go on this resource thing
       }
 
@@ -104,7 +104,7 @@ console.log("func", func);
         }
 
         //TODO make data same format as GA, probably changing data from GA too though, so that it's easy for frontend to handle. Uniform the data, into columnHeaders, and rows, rows having first dimensions (not "keys"), which is far left column, and then metrics (as GA has it, but just return straight, not needing to get the row.metrics[0].values[0], as GSC has it TODO!!!)
-        const ret = GoogleSearchConsole.handleReport({report: response.data, query, requestMetadata, siteUrl: filters.gscUrl})
+        const ret = GoogleSearchConsole.handleReport({report: response.data, query, requestMetadata, siteUrl: filters.gscSiteUrl})
         //returns an array of rows, one row per page, sorted by clicks in desc
         return resolve(ret)
       })

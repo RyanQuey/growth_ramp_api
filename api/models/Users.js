@@ -50,6 +50,22 @@ module.exports = {
       collection: 'postTemplates',
       via: 'userId'
     },
+    audits: {
+      collection: 'audits',
+      via: 'userId'
+    },
+    auditLists: {
+      collection: 'auditLists',
+      via: 'userId'
+    },
+    auditListItems: {
+      collection: 'auditListItems',
+      via: 'userId'
+    },
+    websites: {
+      collection: 'websites',
+      via: 'userId'
+    },
     // not supporting individual permissions yet; just do group perms
     /*permissions: {
       collection: 'permissions',
@@ -214,9 +230,10 @@ module.exports = {
       promises.unshift(ProviderAccounts.find({userId}).populate('channels'))
       promises.unshift(Plans.find({userId, status: "ACTIVE"}))
       promises.unshift(AccountSubscriptions.findOne({userId})) //makes sure this data is up to date
+      promises.unshift(Websites.find({userId, status: "ACTIVE"})) //makes sure this data is up to date
 
       return Promise.all(promises)
-      .then(([accountSubscription, plans, accounts, user]) => {
+      .then(([websites, accountSubscription, plans, accounts, user]) => {
         const sortedAccounts = ProviderAccounts.sortAccounts(accounts)
         const sortedPlans = Helpers.sortRecordsById(plans)
 
@@ -233,6 +250,7 @@ module.exports = {
           plans: sortedPlans,
           providerAccounts: sortedAccounts,
           accountSubscription,
+          websites,
         });
       })
     })

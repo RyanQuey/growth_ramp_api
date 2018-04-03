@@ -75,8 +75,10 @@ module.exports.routes = {
     action: 'getGAGoals'
   },
 
-  'get /analytics/auditContent': {
-    controller: 'AnalyticsController',
+  ////////////////////////////////////////////////////////////////
+  //audits
+  'post /audits/auditContent': {
+    controller: 'AuditsController',
     action: 'auditContent'
   },
 
@@ -200,6 +202,14 @@ module.exports.routes = {
     action: 'signOut'
   },
 
+  ////////////////////////////////////////////////////////////////
+  //websites
+
+  //logging in with Token instance or credentials
+  'post /websites/reactivateOrCreate': {
+    controller: 'websitesController',
+    action: 'reactivateOrCreate',
+  },
 
   /***************************************************************************
   *                                                                          *
