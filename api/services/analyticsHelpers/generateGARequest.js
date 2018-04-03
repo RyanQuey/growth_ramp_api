@@ -4,8 +4,9 @@ const chartHelpers = require('./chartHelpers')
 //helpers to generate report requests for GA, depending on the type of data we're asking for
 module.exports = {
   // generates report requests for single dimension (and hwoever many metrics)
+  // can actually also do multiple dimensions though (as we do with the content audit)
   generateStandardReportRequest: (filters, options = {}) => {
-    const viewId = filters.profileId
+    const viewId = filters.gaProfileId
     let dateRanges
     if (filters.startDate) { //if none set, defaults to one week
       dateRanges = [{
@@ -64,7 +65,7 @@ module.exports = {
   // NOT the same as traffic by channel type, which uses channel types as rows
   // note that this uses up the five report max, so would take up a whole request.
   generateChannelTrafficReportRequests: (filters) => {
-    const viewId = filters.profileId
+    const viewId = filters.gaProfileId
     let dateRanges
     if (filters.startDate) { //if none set, defaults to one week
       dateRanges = [{
@@ -108,7 +109,7 @@ module.exports = {
     return {reportRequests, reportOrder}
   },
   generateHistogramReportRequest: (filters) => {
-    const viewId = filters.profileId
+    const viewId = filters.gaProfileId
     let dateRanges = [{
       startDate: filters.startDate,
       endDate: filters.endDate, //TODO might need to set to PST like I did for GSC, if uses PSt as it does there

@@ -1,93 +1,35 @@
-const queryHelpers = require('./analyticsHelpers/queryHelpers')
-const auditHelpers = require('./analyticsHelpers/auditHelpers')
+/**
+ * Audits.js
+ *
+ * @description :: TODO: You might write a short summary of how this model works and what it represents here.
+ * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
+ */
+
+const queryHelpers = require('../services/analyticsHelpers/queryHelpers')
+const auditHelpers = require('../services/analyticsHelpers/auditHelpers')
 const {AUDIT_TESTS, TEST_GROUPS} = require('../analyticsConstants')
 
-const Analytics = {
+module.exports = {
+  tableName: "audits",
 
-  //for a given user, get all of their analytics accounts (GA, GSC...add more later?)
-  getAllAccounts: (user) => {
-    return new Promise((resolve, reject) => {
-      ProviderAccounts.find({
-        userId: user.id,
-        provider: "GOOGLE",
-      })
-      .then((accounts) => {
-        //get all real Google accounts for user
-        // just manually filtering for now; basically just as fast (can't imagine there will ever be a lot of accounts to filter
-        const googleAccounts = accounts.filter((a) => !a.unsupportedProvider)
-        const promises = [
-          GoogleAnalytics.getAllGAAccounts(googleAccounts),
-          GoogleSearchConsole.getAllGSCAccounts(googleAccounts)
-        ]
-        return Promise.all(promises)
-      })
-      .then(([gaAccounts, gscAccounts]) => {
-        return resolve({gaAccounts, gscAccounts})
-      })
-      .catch((err) => {
-        reject(err)
-      })
-    })
+  attributes: {
+    status: { type: 'string', defaultsTo: "ACTIVE" },
+    dataset: { type: 'string' }, //can be annual, monthly, etc...might use the dataset thing here
+
+    //associations
+    userId: { model: 'users', required: true },
+    websiteId: { model: 'websites', required: true },
+    auditLists: {
+      collection: 'auditLists',
+      via: 'auditId'
+    },
+    auditListItems: {
+      collection: 'auditListItems',
+      via: 'auditId'
+    },
   },
-
-  //wrapper around GoogleAnalytics.getReport currently, until other analytics apis are added
-  getAnalytics: (user, params) => {
-    return new Promise((resolve, reject) => {
-      let {filters, dataset} = params
-      //happens if coming from a GET query string
-      if (typeof filters === "string") {
-        filters = JSON.parse(filters)
-      }
-
-
-      let analyticsProfile
-      ProviderAccounts.findOne({
-        userId: user.id,
-        id: filters.providerAccountId,
-      })
-      .then((account) => {
-        const options = {dataset}
-        const whomToAsk = queryHelpers.whomToAsk(dataset)
-
-        const promises = []
-
-        if (whomToAsk.includes("GoogleAnalytics")) {
-          promises.push(GoogleAnalytics.getReport(account, filters, options))
-
-        } else {
-          promises.push("did-not-ask-them")
-        }
-
-        if (whomToAsk.includes("GoogleSearchConsole")) {
-          promises.push(GoogleSearchConsole.getReport(account, filters, options))
-
-        } else {
-          promises.push("did-not-ask-them")
-        }
-
-        return Promise.all(promises)
-      })
-      .then(([GAResults, GSCResults]) => {
-        const result = Analytics._combineResultsFromApis(GAResults, GSCResults)
-        return resolve(result)
-      })
-      .catch((err) => {
-        if (err.code) { //codes GR made
-          switch (err.code) {
-            case "no-rows-for-profile":
-              console.error("User: ", user.id, "ProfileId: ", filters.profileId, "WebsiteID: ", filters.websiteId);
-              break
-            default:
-              console.error("Error from getting analytics:");
-          }
-        } else {
-          console.error("Error from getting analytics: ");
-        }
-
-        return reject(err)
-      })
-    })
-  },
+  autoCreatedAt: true,
+  autoUpdatedAt: true,
 
   //TODO will have to set quotaUser param with each request to avoid the 10 api calls / ip / sec.
   //params:
@@ -127,8 +69,8 @@ const Analytics = {
         let {gaReports = [], gscReports = []} = testData // each test could have multiple reports it requires; prepare all of them
         // add or combine each report for ga and gsc to what's there
         // can combine if has same dimension
-        Analytics._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, gaParams)
-        Analytics._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscParams)
+        Audits._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, gaParams)
+        Audits._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscParams)
       }
       const reportRequestsFinal = _.cloneDeep(reportRequestsData)
 //console.log("total ga report sets", reportRequestsData.gaReports);
@@ -200,22 +142,6 @@ const Analytics = {
     })
   },
 
-
-//TODO move these helpers to auditHelpers file
-
-  // so far, only asking one api at a time, but will change this helper if that changes
-  _combineResultsFromApis: (GAResults, GSCResults) => {
-    let ret
-    if (GAResults === "did-not-ask-them") {
-      ret = GSCResults
-
-    } else if (GSCResults === "did-not-ask-them") {
-      ret = GAResults
-    }
-
-    return ret
-  },
-
   // need to run once per GSC and GA, for each audit test we're going to make
   // otherFilters should be start and end date that kind of thing (and should be same for every report set)
   _buildAuditReportRequests: (api, auditTestReports, currentReportSets, otherFilters = {}) => {
@@ -247,6 +173,5 @@ const Analytics = {
       }
     }
   },
-}
+};
 
-module.exports = Analytics

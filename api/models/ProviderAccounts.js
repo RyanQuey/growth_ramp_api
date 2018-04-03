@@ -95,6 +95,10 @@ module.exports = {
       collection: 'postTemplates',
       via: 'providerAccountId',
     },
+    googleWebsites: { //in case we want to retrieve websites via a different foreignKey
+      collection: 'websites',
+      via: 'googleAccountId'
+    },
     permissions: {
       collection: 'permissions',
       via: 'providerAccountId'

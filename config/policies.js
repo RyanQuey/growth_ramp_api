@@ -50,7 +50,10 @@ module.exports.policies = {
     getAllAnalyticsAccounts: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
     getAnalytics: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
     getGAGoals: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
-    auditContent: ['userTokenAuth', 'canRead'], //doesn't need to check if can read, only gets your own analytics!!
+  },
+  AuditsController: {
+    find: ['userTokenAuth', 'canRead'],
+    auditContent: ['userTokenAuth', 'canWrite'],
   },
   CampaignsController: {
     create: ['userTokenAuth', 'canWrite'],
@@ -144,6 +147,10 @@ module.exports.policies = {
     //changePermissions: ['canChangePermissions'],
   },
     */
+  WebsitesController: {
+    find: ['userTokenAuth', 'canRead'],
+    reactivateOrCreate: ['userTokenAuth', 'canWrite'],
+  },
 
   /***************************************************************************
   *                                                                          *

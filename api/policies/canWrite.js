@@ -5,7 +5,7 @@ module.exports = function canRead (req, res, next) {
   let fail = (message) => {
     // still going onto next, but with no user set
     console.log("forbidden request for ", action, "on model ", modelIdentity)
-    console.log(message);
+    console.error(message);
     console.log("failing data: ", req.params, req.body);
     res.status(400).json("Insufficient permissions")
   };
@@ -61,7 +61,7 @@ console.log("matching record", record);
       //still is ok for reading (sinec will only find resources with that userid hopefully??), but not writing
       if (
         //can create anything if it's for yourself!
-        ["create", "createfromcampaign", "contactus"].includes(action) || modelIdentity === "accountsubscriptions"
+        ["create", "createfromcampaign", "contactus", "reactivateorcreate", "auditcontent"].includes(action) || modelIdentity === "accountsubscriptions"
 
         //ownerId is equivalent of userId, is the one user who made the resource/has full access. NO RECORD SHOULD HAVE BOTH ownerId AND userId!!
         //this doesn't count though if record doesn't have that param, and someone tries to use that param to get in knowing it won't be set in the record itself
