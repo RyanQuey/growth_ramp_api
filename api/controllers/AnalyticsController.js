@@ -35,11 +35,11 @@ module.exports = {
     const params = req.allParams()
     ProviderAccounts.findOne({
       userId: req.user.id,
-      id: params.providerAccountId,
+      id: params.googleAccountId,
     })
     .then((account) => {
       // they're picking by profile, which is specific to a web property, so only showing goals for tht web propertY
-      return GoogleAnalytics.getGoals(account, {websiteId: params.websiteId})//, profileId: filters.profileId, webPropertyId: filters.websiteId})
+      return GoogleAnalytics.getGoals(account, {webPropertyId: params.gaWebPropertyId})//, profileId: filters.profileId, webPropertyId: filters.websiteId})
     })
     .then((goalData) => {
       return res.ok(goalData)
@@ -50,16 +50,5 @@ module.exports = {
     })
   },
 
-  auditContent: (req, res) => {
-    Analytics.auditContent(req.user, req.allParams())
-    .then((results) => {
-      return res.ok(results)
-    })
-    .catch((err) => {
-      //Google returns err.errors
-      console.error("Error auditing content for user", req.user.id);
-      return res.negotiate(err.errors || err)
-    })
-  },
 };
 
