@@ -19,8 +19,10 @@ const auditHelpers = {
         if (pageViews > 500 && avgLoadTime > 4.9) {
           acc.push({
             dimension: row.dimensions[0],
-            "ga:avgPageLoadTime": avgLoadTime,
-            "ga:pageviews": pageViews,
+            metrics: {
+              "ga:avgPageLoadTime": avgLoadTime,
+              "ga:pageviews": pageViews,
+            },
           })
         }
 
@@ -30,10 +32,10 @@ const auditHelpers = {
       const slowPageDataSummary = getGADataSummary(["ga:pageviews", "ga:avgPageLoadTime"], relevantGaReport)
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "slowPages",
-            items: slowPageRows,
+            listKey: "slowPages",
+            auditListItems: slowPageRows,
             summaryData: slowPageDataSummary
           }
         ]
@@ -66,8 +68,10 @@ const auditHelpers = {
         if (impressions > 500 && ctr < (siteAvgCTR / 2) ) {
           acc.push({
             dimension: row.dimensions[0],
-            impressions,
-            ctr,
+            metrics: {
+              impressions,
+              ctr,
+            },
           })
         }
 
@@ -76,10 +80,10 @@ const auditHelpers = {
 
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "weakHeadlines",
-            items: weakHeadlineRows,
+            listKey: "weakHeadlines",
+            auditListItems: weakHeadlineRows,
             summaryData: headlineStrengthDataSummary
           }
         ]
@@ -90,7 +94,7 @@ const auditHelpers = {
 
     browserCompatibility:  (gaResults = [], gscResults = []) => {
       const relevantReports = findRelevantReports("browserCompatibility", gaResults, gscResults)
-      const [relevantGaReport] = relevantReports.badBounceRate.ga // this test only has one report for both lists, so for now can reuse TODO make more sturdy method
+      const [relevantGaReport] = relevantReports.badBounceRate.ga // this test only has one report for both auditLists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
       const usersIndex = getMetricIndex("ga:users", relevantGaReport)
@@ -114,9 +118,11 @@ const auditHelpers = {
         ) {
           badBounceRateRows.push({
             dimension: row.dimensions[0],
-            "ga:avgSessionDuration": avgSessionDuration,
-            "ga:bounceRate": bounceRate,
-            "ga:users": users,
+            metrics: {
+              "ga:avgSessionDuration": avgSessionDuration,
+              "ga:bounceRate": bounceRate,
+              "ga:users": users,
+            },
           })
         }
 
@@ -125,9 +131,11 @@ const auditHelpers = {
         ) {
           badSessionDurationRows.push({
             dimension: row.dimensions[0],
-            "ga:avgSessionDuration": avgSessionDuration,
-            "ga:bounceRate": bounceRate,
-            "ga:users": users,
+            metrics: {
+              "ga:avgSessionDuration": avgSessionDuration,
+              "ga:bounceRate": bounceRate,
+              "ga:users": users,
+            },
           })
         }
 
@@ -135,15 +143,15 @@ const auditHelpers = {
 
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "badBounceRate",
-            items: badBounceRateRows,
+            listKey: "badBounceRate",
+            auditListItems: badBounceRateRows,
             summaryData: browserDataSummary
           },
           {
-            key: "badSessionDuration",
-            items: badSessionDurationRows,
+            listKey: "badSessionDuration",
+            auditListItems: badSessionDurationRows,
             summaryData: browserDataSummary
           }
         ]
@@ -154,7 +162,7 @@ const auditHelpers = {
 
     deviceCompatibility:  (gaResults = [], gscResults = []) => {
       const relevantReports = findRelevantReports("deviceCompatibility", gaResults, gscResults)
-      const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both lists, so for now can reuse TODO make more sturdy method
+      const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both auditLists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
       const usersIndex = getMetricIndex("ga:users", relevantGaReport)
@@ -178,9 +186,11 @@ const auditHelpers = {
         ) {
           badBounceRateRows.push({
             dimension: row.dimensions[0],
-            "ga:avgSessionDuration": avgSessionDuration,
-            "ga:bounceRate": bounceRate,
-            "ga:users": users,
+            metrics: {
+              "ga:avgSessionDuration": avgSessionDuration,
+              "ga:bounceRate": bounceRate,
+              "ga:users": users,
+            },
           })
         }
 
@@ -189,23 +199,25 @@ const auditHelpers = {
         ) {
           badSessionDurationRows.push({
             dimension: row.dimensions[0],
-            "ga:avgSessionDuration": avgSessionDuration,
-            "ga:bounceRate": bounceRate,
-            "ga:users": users,
+            metrics: {
+              "ga:avgSessionDuration": avgSessionDuration,
+              "ga:bounceRate": bounceRate,
+              "ga:users": users,
+            },
           })
         }
       })
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "badBounceRate",
-            items: badBounceRateRows,
+            listKey: "badBounceRate",
+            auditListItems: badBounceRateRows,
             summaryData: deviceDataSummary
           },
           {
-            key: "badSessionDuration",
-            items: badSessionDurationRows,
+            listKey: "badSessionDuration",
+            auditListItems: badSessionDurationRows,
             summaryData: deviceDataSummary
           }
         ]
@@ -217,7 +229,7 @@ const auditHelpers = {
 
     userInteraction:  (gaResults = [], gscResults = [], goals) => {
       const relevantReports = findRelevantReports("userInteraction", gaResults, gscResults)
-      const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both lists, so for now can reuse TODO make more sturdy method
+      const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both auditLists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
       const sessionsIndex = getMetricIndex("ga:sessions", relevantGaReport)
@@ -241,9 +253,11 @@ const auditHelpers = {
         ) {
           badBounceRateRows.push({
             dimension: row.dimensions[0],
-            "ga:avgSessionDuration": avgSessionDuration,
-            "ga:bounceRate": bounceRate,
-            "ga:sessions": sessions,
+            metrics: {
+              "ga:avgSessionDuration": avgSessionDuration,
+              "ga:bounceRate": bounceRate,
+              "ga:sessions": sessions,
+            },
           })
         }
 
@@ -252,23 +266,25 @@ const auditHelpers = {
         ) {
           badSessionDurationRows.push({
             dimension: row.dimensions[0],
-            "ga:avgSessionDuration": avgSessionDuration,
-            "ga:bounceRate": bounceRate,
-            "ga:sessions": sessions,
+            metrics: {
+              "ga:avgSessionDuration": avgSessionDuration,
+              "ga:bounceRate": bounceRate,
+              "ga:sessions": sessions,
+            },
           })
         }
       })
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "badBounceRate",
-            items: badBounceRateRows,
+            listKey: "badBounceRate",
+            auditListItems: badBounceRateRows,
             summaryData: dataSummary
           },
           {
-            key: "badSessionDuration",
-            items: badSessionDurationRows,
+            listKey: "badSessionDuration",
+            auditListItems: badSessionDurationRows,
             summaryData: dataSummary
           }
         ]
@@ -298,7 +314,9 @@ const auditHelpers = {
         if (5 < position && position < 21) {
           acc.push({
             dimension: row.dimensions[0],
-            position,
+            metrics: {
+              position,
+            },
           })
         }
 
@@ -306,10 +324,10 @@ const auditHelpers = {
       }, [])
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "searchPositionToImprove",
-            items: canImprovePositionRows,
+            listKey: "searchPositionToImprove",
+            auditListItems: canImprovePositionRows,
             summaryData: dataSummary
           }
         ]
@@ -327,8 +345,10 @@ const auditHelpers = {
       const brokenExternalRows = brokenExternalLinks.rows.map((row) => (
         {
           dimension: row.dimensions[0],
-          "ga:pageTitle": row.dimensions[1],
-          "ga:sessions": row.metrics[0].values[0],
+          metrics: {
+            "ga:pageTitle": row.dimensions[1],
+            "ga:sessions": row.metrics[0].values[0],
+          },
         }
       ))
       const externalRowsDataSummary = getGADataSummary("all", brokenExternalLinks)
@@ -338,22 +358,24 @@ const auditHelpers = {
       const brokenInternalRows = brokenInternalLinks.rows.map((row) => (
         {
           dimension: row.dimensions[0],
-          "ga:pagePath": row.dimensions[1],
-          "ga:sessions": row.metrics[0].values[0],
+          metrics: {
+            "ga:pagePath": row.dimensions[1],
+            "ga:sessions": row.metrics[0].values[0],
+          },
         }
       ))
       const internalRowsDataSummary = getGADataSummary("all", brokenInternalLinks)
 
       const ret = {
-        lists: [
+        auditLists: [
           {
-            key: "brokenExternal",
-            items: brokenExternalRows,
+            listKey: "brokenExternal",
+            auditListItems: brokenExternalRows,
             summaryData: externalRowsDataSummary,
           },
           {
-            key: "brokenInternal",
-            items: brokenInternalRows,
+            listKey: "brokenInternal",
+            auditListItems: brokenInternalRows,
             summaryData: internalRowsDataSummary,
           }
         ]
@@ -370,7 +392,7 @@ const auditHelpers = {
 function findRelevantReports(key, gaResults, gscResults) {
   console.log("keuy to find", key);
   const test = AUDIT_TESTS[key]
-  const testLists = Object.keys(test.lists)
+  const testLists = Object.keys(test.auditLists)
   const ret = {}
   for (let list of testLists) {
     console.log("list is: ", list);

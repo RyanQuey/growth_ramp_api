@@ -54,17 +54,9 @@ const queryHelpers = {
 
     } else if (displayType === "chart") {
       xAxisBy = datasetParts[1] || ""
+
     } else if (displayType === "contentAudit") {
-      specifyingTestBy = datasetParts[1]// "testGroup", "testKey"
-
-      if (specifyingTestBy === "testGroup") {
-        //"all", "nonGoals", "goals". For now not doing "all". Will probably do more later
-        testGroup = datasetParts[2]
-
-      } else if (specifyingTestBy === "testKeys") {
-        // accepts array of test keys to run
-        testKeys = datasetParts[2]
-      }
+      // just pass params as json now...
     }
 
     return {datasetParts, displayType, rowsBy, xAxisBy, columnSetsArr, specifyingTestBy, testGroup, testKeys}

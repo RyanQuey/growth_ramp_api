@@ -27,5 +27,49 @@ module.exports = {
   },
   autoCreatedAt: true,
   autoUpdatedAt: true,
+
+  // takes a single list from a test and persists the list and all its auditListItems
+  persistList: ({testKey, list, auditParams, auditRecord, user}) => {
+    let auditList
+
+    return AuditLists.create({
+      testKey,
+      listKey: list.listKey,
+      startDate: auditParams.startDate,
+      endDate: auditParams.endDate,
+      summaryData: list.summaryData,
+      userId: user.id,
+      auditId: auditRecord.id,
+      websiteId: auditParams.websiteId,
+    })
+    .then((newList) => {
+      auditList = newList
+
+      const promises = []
+      for (let item of list.auditListItems) {
+        promises.push(AuditListItems.create({
+          testKey,
+          listKey: list.listKey,
+          dimension: item.dimension,
+          metrics: item.metrics,
+          userId: user.id,
+          auditId: auditRecord.id,
+          auditListId: auditList.id,
+          websiteId: auditParams.websiteId,
+        }))
+      }
+
+      return Promise.all(promises)
+    })
+    .then((auditListItems) => {
+      auditList.auditListItems = auditListItems
+
+      return auditList
+    })
+    .catch((err) => {
+      console.error("Error: failure to persist list");
+      throw err
+    })
+  },
 };
 

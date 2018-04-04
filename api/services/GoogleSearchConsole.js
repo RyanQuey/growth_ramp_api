@@ -3,6 +3,7 @@ const searchConsoleClient = google.webmasters("v3")
 const analyticsConstants = require('../analyticsConstants')
 const queryHelpers = require('./analyticsHelpers/queryHelpers')
 const parsingHelpers = require('./analyticsHelpers/parsingHelpers')
+const momentTZ = require('moment-timezone')
 
 const GoogleSearchConsole = {
   // get info for all google sc websites for all Google accounts this user has (not necessarily the same as the GA accounts, I think?)
@@ -42,8 +43,9 @@ const GoogleSearchConsole = {
   //will eventually predefine some reportTypes for this too
   generateQuery: (filters) => {
     const template = {
-      startDate: filters.startDate || moment.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD"), //NOTE: date is calculated in PST time
-      endDate: filters.endDate || moment.tz("America/Los Angeles").format("YYYY-MM-DD"), //default to present
+//TODO ; 2) send in start and end dates for audits
+      startDate: filters.startDate || momentTZ.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD"), //NOTE: date is calculated in PST time
+      endDate: filters.endDate || momentTZ.tz("America/Los Angeles").format("YYYY-MM-DD"), //default to present
       dimensions: filters.dimensions || ["page"],
       //aggregationType: filters.aggregationType || "byPage", //combine all results by canonical url (as opposed to "byProperty" which combines by website, I believe, or "auto" which is either. BUt breaks it when only searching for one page for some reason, and we always use defaults, so yeah
       startRow: (filters.page -1) * filters.pageSize || 0, //pagination
@@ -75,7 +77,6 @@ const GoogleSearchConsole = {
       const oauthClient = Google._setup(providerAccount)
 
       let {func, defaultMetrics, defaultDimensions, defaultDimensionFilters, defaultAggregationType} = GoogleSearchConsole._getDefaultsFromDataset(dataset)
-console.log("func", func);
 
       //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
       filters = Object.assign({

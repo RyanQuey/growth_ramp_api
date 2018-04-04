@@ -8,13 +8,14 @@
 const queryHelpers = require('../services/analyticsHelpers/queryHelpers')
 const auditHelpers = require('../services/analyticsHelpers/auditHelpers')
 const {AUDIT_TESTS, TEST_GROUPS} = require('../analyticsConstants')
+const momentTZ = require('moment-timezone')
 
 module.exports = {
   tableName: "audits",
 
   attributes: {
     status: { type: 'string', defaultsTo: "ACTIVE" },
-    dataset: { type: 'string' }, //can be annual, monthly, etc...might use the dataset thing here
+    dateLength: { type: 'string' }, //year, month, quarter
 
     //associations
     userId: { model: 'users', required: true },
@@ -44,7 +45,18 @@ module.exports = {
   //  }
   auditContent: (user, params, options) => {
     return new Promise((resolve, reject) => {
-      let {dataset} = params
+      let auditRecord
+
+      params.endDate = momentTZ.tz("America/Los Angeles").format("YYYY-MM-DD")
+
+      if (params.dateLength === "month") {
+        params.startDate = momentTZ.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+      } else if (params.dateLength === "year") {
+        params.startDate = momentTZ.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+
+      } else if (params.dateLength === "quarter") {
+        params.startDate = momentTZ.tz("America/Los Angeles").subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+      }
 
       // set some defaults for the audits
       const gaParams = Object.assign({
@@ -54,10 +66,8 @@ module.exports = {
 
       const gscParams = Object.assign({}, params)
 
-      let {testKeys, testGroup, specifyingTestBy} = queryHelpers.parseDataset(dataset)
-      if (specifyingTestBy === "testGroup") {
-        testKeys = TEST_GROUPS[testGroup]
-      }
+      const testKeys = TEST_GROUPS[params.testGroup]
+
       // 1) get all dimensions + metric sets we have. Try to combine into one call if two auditTests share a dimension (will have the same date, at least as of now)
       const allTestKeys = Object.keys(AUDIT_TESTS)
       const reportRequestsData = {
@@ -95,7 +105,7 @@ module.exports = {
           let setOf5 = reportRequestsData.gaReports.splice(0, 5)
           //console.log("set of 5", setOf5);
           promises.push(GoogleAnalytics.getReport(account, setOf5, {
-            dataset,
+            dataset: "contentAudit",
             multipleReports: true,
           }))
 
@@ -105,16 +115,24 @@ module.exports = {
         let gscReportCount = 0
         reportRequestsData.gscReports.forEach((report) => {
           promises.push(GoogleSearchConsole.getReport(account, report, {
-            dataset,
+            dataset: "contentAudit",
             multipleReports: true,
           }))
           gscReportCount ++
         })
 
+        promises.push(Audits.create({
+          userId: user.id,
+          websiteId: params.websiteId,
+          dateLength: params.dateLength,
+        }))
+
         return Promise.all(promises)
       })
       .then((result) => {
         // 4) with ga and gsc results, send through tests to see what passed
+        auditRecord = result.pop()
+
         // an array of ga reports and gsc reports
         const gaResultSets = result.splice(0, gaReportCount)
         // divide ga reportSets into individual reports
@@ -122,21 +140,36 @@ module.exports = {
         const gscResults = result //whatevers left
         allReports = {gaResults, gscResults}
 
-        const auditResults = {}
         console.log("---------------------");
         console.log("now going over tests");
-        for (let key of testKeys) {
-          auditResults[key] = auditHelpers.auditTestFunctions[key](gaResults, gscResults, websiteGoals)
+        const testResults = {}
+        const promises2 = []
+        for (let testKey of testKeys) {
+          // test the data to see what passes/fails for their site for each test we do
+          testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults, websiteGoals)
+
+          // persist each test's lists
+          testResults[testKey].auditLists.forEach((list) => {
+            promises2.push(AuditLists.persistList({testKey, list, auditParams: params, auditRecord, user}))
+          })
         }
 
-        Object.assign(auditResults, {allReports, reportRequests: reportRequestsFinal, websiteGoals})
+        return Promise.all(promises2)
+      })
+      .then((auditLists) => {
+        // auditLists is an array of lists, with populated auditListItems
+        auditRecord.auditLists = auditLists
+        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests: reportRequestsFinal, websiteGoals})
 
-        return resolve(auditResults)
+        return resolve(ret)
       })
       .catch((err) => {
 //        return reject(err)
 //        debugging, so return all reports
         console.error(err);
+
+        auditRecord && Audits.update({id: auditRecord.id}, {status: "ARCHIVED"})
+
         return resolve({allReports, err: err.toString(), reportRequests: reportRequestsFinal, websiteGoals})
       })
     })
@@ -167,7 +200,11 @@ module.exports = {
 
       } else {
         // build out the report with the otherFilters, and push
-        let fullReport = Object.assign({}, report, otherFilters, {forLists: report.forLists})
+        let fullReport = Object.assign({},
+          report,
+          otherFilters,
+          {forLists: report.forLists},
+        )
 
         currentReportSets.push(fullReport)
       }
