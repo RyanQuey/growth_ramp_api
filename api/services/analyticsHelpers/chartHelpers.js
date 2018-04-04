@@ -40,7 +40,6 @@ console.log(range.by(unit, {step: step}));
     //count should never be needed, but good safeguard in case I do something bad :)
     while (!current.isAfter(end) && count < 25) {
       count ++
-      console.log("current", current, "end", end, unit, step);
       rangeArray.push(current)
       current = current.clone().add(step, unit)
     }

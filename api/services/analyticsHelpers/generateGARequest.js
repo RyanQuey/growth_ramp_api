@@ -66,7 +66,7 @@ module.exports = {
   // NOT the same as traffic by channel type, which uses channel types as rows
   // note that this uses up the five report max, so would take up a whole request.
   generateChannelTrafficReportRequests: (params) => {
-    const viewId = params.gaProfileId
+    const viewId = String(params.gaProfileId)
     let dateRanges
     if (params.startDate) { //if none set, defaults to one week
       dateRanges = [{
@@ -110,7 +110,7 @@ module.exports = {
     return {reportRequests, reportOrder}
   },
   generateHistogramReportRequest: (params) => {
-    const viewId = params.gaProfileId
+    const viewId = String(params.gaProfileId)
     let dateRanges = [{
       startDate: params.startDate,
       endDate: params.endDate, //TODO might need to set to PST like I did for GSC, if uses PSt as it does there
