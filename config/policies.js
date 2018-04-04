@@ -59,6 +59,9 @@ module.exports.policies = {
     find: ['userTokenAuth', 'canRead'],
     findOne: ['userTokenAuth', 'canRead'],
   },
+  AuditListItemsController: {
+    update: ['userTokenAuth', 'canWrite'],
+  },
   CampaignsController: {
     create: ['userTokenAuth', 'canWrite'],
     update: ['userTokenAuth', 'canWrite'],
