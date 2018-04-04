@@ -22,7 +22,7 @@ exports.up = function(knex, Promise) {
     knex.schema.createTable('audits', function (t) {
       t.increments('id').primary() //auto incrementing IDs
       t.text('status');
-      t.text('dataset');
+      t.text('dateLength');
       t.timestamp('createdAt').defaultTo(knex.fn.now());
       t.timestamp('updatedAt').defaultTo(knex.fn.now());
 
@@ -70,9 +70,9 @@ exports.up = function(knex, Promise) {
 
 exports.down = function(knex, Promise) {
   return Promise.all([
-    knex.schema.dropTable('websites'),
-    knex.raw('DROP TABLE audits cascade'),
-    knex.raw('DROP TABLE if exists "auditLists" cascade'),
     knex.schema.dropTableIfExists('auditListItems'),
+    knex.raw('DROP TABLE if exists "auditLists" cascade'),
+    knex.raw('DROP TABLE audits cascade'),
+    knex.schema.dropTable('websites'),
   ])
 };
