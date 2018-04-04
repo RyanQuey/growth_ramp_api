@@ -151,7 +151,7 @@ module.exports.AUDIT_TESTS = {
       ],
       forLists: ["pageSpeed-slowPages"],
     }],
-    lists: {
+    auditLists: {
       slowPages: {}
     },
   },
@@ -177,7 +177,7 @@ module.exports.AUDIT_TESTS = {
         forLists: ["headlineStrength-weakHeadlines"],
       },
     ],
-    lists: {
+    auditLists: {
       weakHeadlines: {},
     },
   },
@@ -189,7 +189,7 @@ module.exports.AUDIT_TESTS = {
       metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
       forLists: ["browserCompatibility-badBounceRate", "browserCompatibility-badSessionDuration"],
     }],
-    lists: {
+    auditLists: {
       badBounceRate: {},
       badSessionDuration: {},
     },
@@ -202,7 +202,7 @@ module.exports.AUDIT_TESTS = {
       metrics: [{expression: "ga:users"}, {expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}],
       forLists: ["deviceCompatibility-badBounceRate", "deviceCompatibility-badSessionDuration"],
     }],
-    lists: {
+    auditLists: {
       badBounceRate: {},
       badSessionDuration: {},
     },
@@ -217,7 +217,7 @@ module.exports.AUDIT_TESTS = {
       metrics: [{expression: "ga:bounceRate"}, {expression: "ga:avgSessionDuration"}, {expression: "ga:sessions"}],
       forLists: ["userInteraction-badBounceRate", "userInteraction-badSessionDuration"],
     }],
-    lists: {
+    auditLists: {
       badBounceRate: {},
       badSessionDuration: {},
     },
@@ -257,7 +257,7 @@ module.exports.AUDIT_TESTS = {
         forLists: [], //TODO
       },
     ],
-    lists: {
+    auditLists: {
 //TODO
     },
   },
@@ -274,7 +274,7 @@ module.exports.AUDIT_TESTS = {
         forLists: ["searchPositionToImprove-searchPositionToImprove"],
       },
     ],
-    lists: {
+    auditLists: {
       searchPositionToImprove: {},
     },
   },
@@ -325,7 +325,7 @@ module.exports.AUDIT_TESTS = {
         forLists: ["missingPages-brokenInternal"],
       },
     ],
-    lists: {
+    auditLists: {
       brokenExternal: {},
       brokenInternal: {},
     },
@@ -333,8 +333,8 @@ module.exports.AUDIT_TESTS = {
 }
 
 module.exports.TEST_GROUPS = {
-  all: ["pageSpeed", "headlineStrength", "browserCompatibility", "deviceCompatibility", "userInteractionGoals", "userInteraction", "pageValue", "pageValueGoals", "searchPositionToImprove", "missingPages"],
-  nonGoals: ["pageSpeed", "headlineStrength", "browserCompatibility", "deviceCompatibility", "userInteraction", "pageValue", "searchPositionToImprove", "missingPages"],
+  all: ["pageSpeed", "headlineStrength", "browserCompatibility", "deviceCompatibility", "userInteractionGoals", "userInteraction", "pageValueGoals", "searchPositionToImprove", "missingPages"], // , "pageValue" needs to be added soon
+  nonGoals: ["pageSpeed", "headlineStrength", "browserCompatibility", "deviceCompatibility", "userInteraction", "searchPositionToImprove", "missingPages"], // , "pageValue" needs to be added soon
   goals: ["userInteractionGoals", "pageValueGoals"],
 }
 

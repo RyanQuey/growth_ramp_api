@@ -20,7 +20,22 @@ module.exports = {
   },
 
   getAnalytics: (req, res) => {
-    Analytics.getAnalytics(req.user, req.allParams())
+    let params = req.allParams()
+    // check if any params have json as a value, since receiving params as string
+    for (let key of Object.keys(params)) {
+      let value = params[key]
+
+      console.log("value:", value);
+      try {
+        let jsonObj = JSON.parse(value)
+        params[key] = jsonObj
+      } catch (err) {
+        continue
+      }
+    }
+
+console.log("actually sending", params);
+    Analytics.getAnalytics(req.user, params)
     .then((results) => {
       return res.ok(results)
     })

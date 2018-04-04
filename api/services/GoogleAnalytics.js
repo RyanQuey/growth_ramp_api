@@ -79,7 +79,7 @@ const GoogleAnalytics = {
         currentAnalyticsAccount = analyticsAccounts.find((a) => a.id === analyticsAccountId)
 
         //webProperties (ie, a mobile app, or website) are nested within the account,
-        // and profiles (aka views, a given set of data [with particular filters] for its webProperty) nested within that
+        // and profiles (aka views, a given set of data [with particular params] for its webProperty) nested within that
         return resolve(currentAnalyticsAccount)
       })
       .catch((err) => {console.error(err);})
@@ -102,15 +102,15 @@ const GoogleAnalytics = {
 
       let {func, defaultMetrics, defaultDimensions, defaultDimensionFilters} = GoogleAnalytics._getDefaultsFromDataset(options.dataset)
       let reportOrder, reportRequests = []
-      for (let filters of reportSets) {
-        //get default metrics and dimensions for a dataset type and then apply the asked for filters on top of it
-        filters = Object.assign({
+      for (let params of reportSets) {
+        //get default metrics and dimensions for a dataset type and then apply the asked for params on top of it
+        params = Object.assign({
           metrics: defaultMetrics,
           dimensions: defaultDimensions,
           dimensionFilterClauses: defaultDimensionFilters,
-        }, filters)
+        }, params)
         //mostly "func" will be generateStandardReportRequest
-        let requestData = generateGARequest[func](filters)
+        let requestData = generateGARequest[func](params)
         reportOrder = requestData.reportOrder //often undefined
 
 //console.log("request data", requestData.reportRequests);
@@ -303,7 +303,7 @@ const GoogleAnalytics = {
     return report
   },
 
-  // takes a dataset and returns some default func and filters
+  // takes a dataset and returns some default func and params
   // dataset should be in format:
   // table-{rowsBy}-{columnsBy}
   // OR
@@ -355,7 +355,7 @@ const GoogleAnalytics = {
       //currently only for the line chart, which shows data change over time
       func = "generateHistogramReportRequest"
     } else if (displayType === "contentAudit") {
-      //currently only for the line chart, which shows data change over time
+      //currently only this one
       func = "generateStandardReportRequest"
     }
 
