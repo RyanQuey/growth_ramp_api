@@ -15,6 +15,11 @@ module.exports = {
     gscSiteUrl: { type: 'string' },
     gscPermissionLevel: { type: 'string' }, //might not use anywhere...
     gaSiteUrl: { type: 'string' },
+    // minimums for different metrics (each gets own key). If an issue is below this, doesn't get displayed. Overrides the defaults (which we will set)
+    weeklyMinimums: { type: 'json', defaultsTo: {} },
+    monthlyMinimums: { type: 'json', defaultsTo: {} },
+    quarterlyMinimums: { type: 'json', defaultsTo: {} },
+    yearlyMinimums: { type: 'json', defaultsTo: {} },
 
     //associations
     userId: { model: 'users', required: true },
