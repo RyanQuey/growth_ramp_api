@@ -11,6 +11,7 @@ module.exports = {
     name: {type: "string", required: true },
     autoCreatedAt: true,
     autoUpdatedAt: true,
+    hideFixedAuditItems: { type: 'boolean', defaultsTo: false },
 
     //associations
     ownerId: { model: 'users', type: "integer", required: true },
