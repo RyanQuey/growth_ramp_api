@@ -5,7 +5,11 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+const blueprints = require('../blueprints');
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
 
   auditContent: (req, res) => {
     Audits.auditContent(req.user, req.allParams())

@@ -5,7 +5,11 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+const blueprints = require('../blueprints');
 module.exports = {
+  find: (req, res) => {
+    return blueprints.find(req, res);
+  },
 	reactivateOrCreate: (req, res) => {
     // these are the params that, if any of them are different, need to create a unique record. Otherwise, just update
 
