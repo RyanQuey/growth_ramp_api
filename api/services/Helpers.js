@@ -352,4 +352,23 @@ export default {
     return utmString
   },
 
+  // for get requests especially, where params are passed through query strings, converts those strings to json
+  getJSONParams: (params) => {
+    // check if any params have json as a value, since receiving params as string
+    // NOTE mutates also
+    for (let key of Object.keys(params)) {
+      let value = params[key]
+
+      console.log("value:", value);
+      try {
+        let jsonObj = JSON.parse(value)
+        params[key] = jsonObj
+      } catch (err) {
+        continue
+      }
+    }
+
+    return params
+  },
+
 }

@@ -27,6 +27,7 @@ const GoogleAnalytics = {
       const oauthClient = Google._setup(providerAccount)
       const params = {
         auth: oauthClient,
+        quotaUser: providerAccount.userId, //can also throttle by ip address, but that's harder to maintain
       } //can use other params to paginate
       analyticsClient.management.accountSummaries.list(params, (err, response) => {
         if (err) {
@@ -50,6 +51,7 @@ const GoogleAnalytics = {
 
       const params = {
         auth: oauthClient,
+        quotaUser: providerAccount.userId,
         accountId,
         profileId,
         webPropertyId,
@@ -87,7 +89,8 @@ const GoogleAnalytics = {
   },
 
 
-  //
+  // this is the GA wrapper for ALL GA requests
+  // keep lightweight and reusable
   // report sets should not have more than 5 in the array
   getReport: (providerAccount, reportSets, options = {}) => {
     return new Promise((resolve, reject) => {
@@ -127,9 +130,10 @@ const GoogleAnalytics = {
 
       const params = {
         auth: oauthClient,
+        quotaUser: providerAccount.userId,
         resource: {  // see for how this works: https://github.com/google/google-api-nodejs-client/issues/561
           reportRequests,
-        }
+        },
       }
 
       analyticsReportingClient.reports.batchGet(params, (err, response) => {

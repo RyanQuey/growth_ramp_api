@@ -18,7 +18,7 @@ module.exports = class SendNotifications extends Job {
   run () {
     //sails.log.debug(moment().toString(), 'Check for new notifications!');
     if (this.running) {
-      sails.log.debug('already running...');
+      sails.log.debug('send notifications already running...');
       return;
     }
 

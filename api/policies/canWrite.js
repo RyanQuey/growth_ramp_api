@@ -30,7 +30,6 @@ console.log("matching record", record);
   }
 
   if (req.user) {
-    console.log("Query: ", req.query);
     //convert id params into integers
     //these are record's attributes, not the user's...unless user is the record, then it's both
     let id = parseInt(req.param("id"))
