@@ -4,15 +4,16 @@ const parsingHelpers = {
   prettyPrintValue: (rawValue, valueType) => {
     let value
 
+    // returns 15 for 15%
     if (valueType === "PERCENT") {
       //round to 100ths
       value = parseFloat(rawValue) ? Math.round(rawValue * 100) / 100 : rawValue
       value = String(value) + "%"
 
-    // what GSC does. Returns .15 for 15%
+    // what GSC does. Returns .1514 for 15.14%. We will return as string "15.14%"
     } else if (valueType === "DECIMALED_PERCENT") {
       //round to 100ths
-      value = parseFloat(rawValue) ? Math.round(rawValue * 100) : rawValue
+      value = parseFloat(rawValue) ? Math.round(rawValue * 100 * 100) / 100 : rawValue
       value = String(value) + "%"
     } else if (valueType === "FLOAT") {
       //round to 100ths

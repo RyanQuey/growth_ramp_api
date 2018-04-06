@@ -2,7 +2,7 @@ var Job = require('./job');
 var moment = require('moment');
 var ALLOWED_EMAILS = require('../api/constants').ALLOWED_EMAILS
 
-//sends any unsent notifications
+//sends any unsent delayed posts
 module.exports = class PublishDelayedPosts extends Job {
   constructor (options) {
     super();
@@ -15,7 +15,7 @@ module.exports = class PublishDelayedPosts extends Job {
   run () {
     //sails.log.debug(moment().toString(), 'Check for new notifications!');
     if (this.running) {
-      sails.log.debug('already running...');
+      sails.log.debug('publishing delayed posts already running...');
       return;
     }
 
@@ -23,7 +23,7 @@ module.exports = class PublishDelayedPosts extends Job {
     const now = moment().format()
 
     const campaignsToPublish = {}
-    const usersWithFailedPublishes = []
+    let usersWithFailedPublishes, approvedUserIds
     let postsToPublish
 
     Posts.find({
@@ -67,41 +67,11 @@ module.exports = class PublishDelayedPosts extends Job {
         return []
       }
 
-      //copies regular posting flow
-      const promises = users.map((user) => {
-        return new Promise((resolve2, reject2) => {
-          AccountSubscriptions.checkStripeStatus(user.id)
-          .then((sub) => {
-            if (!ALLOWED_EMAILS.includes(user.email) && (!sub || ["past_due", "canceled", "unpaid", null].includes(sub.subscriptionStatus))) {
-              usersWithFailedPublishes.push({
-                user: user,
-                error: {message: "Payment is required before user can publish", code: "delinquent-payment"},
-                failedPosts: postsToPublish.filter((p) => p.userId === user.id)
-              })
-
-              return resolve2({userId: user.id, status: "rejected"} )
-            } else {
-              return resolve2({userId: user.id, status: "accepted"})
-            }
-
-          })
-          .catch((err) => {
-            sails.log.debug("Failure checking stripe while posting delayed post for ", user.email);
-            sails.log.debug(err);
-
-            return resolve2({userId: user.id, status: "rejected"} )
-          })
-
-        })
-
-      })
-
-      return Promise.all(promises)
+      return AccountSubscriptions.checkMultipleAccountStatuses(users)
     })
-    .then((results) => {
-      results = results || []
-      const approvedUserIds = results.filter((r) => r.status === "accepted").map(r => r.userId)
-      //console.log('approved user IDs', approvedUserIds);
+    .then((result) => {
+      usersWithFailedPublishes = result.unpaidUsers
+      approvedUserIds = result.approvedUserIds
 
       const campaignIds = Object.keys(campaignsToPublish)
 

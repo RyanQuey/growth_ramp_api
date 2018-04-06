@@ -26,6 +26,9 @@ const GoogleSearchConsole = {
       const oauthClient = Google._setup(providerAccount)
       const params = {
         auth: oauthClient,
+        params: {
+          quotaUser: providerAccount.userId, //can also throttle by ip address, but that's harder to maintain
+        },
       } //can use other params to paginate
 
       searchConsoleClient.sites.list(params, (err, response) => {
@@ -91,6 +94,7 @@ const GoogleSearchConsole = {
 
       const params = {
         auth: oauthClient,
+        quotaUser: providerAccount.userId, //can also throttle by ip address, but that's harder to maintain. TODO test if this is working...it's possible it's not, GSC doesn't break when there's unknown params
         siteUrl: encodeURIComponent(filters.gscSiteUrl),
         resource: query, //all Google payloads go on this resource thing
       }
@@ -110,6 +114,11 @@ const GoogleSearchConsole = {
         return resolve(ret)
       })
     })
+  },
+
+  // not used in audit, which has its own way of doing this same thing (TODO combine that code with this
+  getReportForTotals: (params) => {
+    //TODO for analytics dashboard SEO/Keywords Data
   },
 
   //get into consistent format with GA data and other api if we add it

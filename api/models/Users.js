@@ -26,7 +26,7 @@ module.exports = {
     apiTokenExpires: {  type: 'string' },
     emailConfirmed: { type: 'boolean', defaultsTo: false },
     emailConfirmedAt: { type: "datetime", defaultsTo: null },
-    hideFixedAuditItems: { type: 'boolean', defaultsTo: false },
+    hideCompletedAuditItems: { type: 'boolean', defaultsTo: false },
 
     //associations
     providerAccounts: {
