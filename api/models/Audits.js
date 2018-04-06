@@ -11,8 +11,6 @@ const {AUDIT_TESTS, TEST_GROUPS} = require('../analyticsConstants')
 const momentTZ = require('moment-timezone')
 
 module.exports = {
-  tableName: "audits",
-
   attributes: {
     status: { type: 'string', defaultsTo: "ACTIVE" },
     dateLength: { type: 'string' }, //year, month, quarter
@@ -32,30 +30,29 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  //TODO will have to set quotaUser param with each request to avoid the 10 api calls / ip / sec.
   //params:
   //  {
-  //      endDate:
-  //      startDate:
+  //      dateLength:
   //      gaWebPropertyId:
   //      gaSiteUrl:
   //      gscSiteUrl:
   //      gaProfileId,
-  //      ga
+  //      testGroup,
+  //      googleAccountId,
   //  }
   auditContent: (user, params, options) => {
     return new Promise((resolve, reject) => {
       let auditRecord
 
-      params.endDate = momentTZ.tz("America/Los Angeles").format("YYYY-MM-DD")
+      params.endDate = momentTZ.tz("America/Los_Angeles").format("YYYY-MM-DD")
 
       if (params.dateLength === "month") {
-        params.startDate = momentTZ.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+        params.startDate = momentTZ.tz("America/Los_Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
       } else if (params.dateLength === "year") {
-        params.startDate = momentTZ.tz("America/Los Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+        params.startDate = momentTZ.tz("America/Los_Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
 
       } else if (params.dateLength === "quarter") {
-        params.startDate = momentTZ.tz("America/Los Angeles").subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+        params.startDate = momentTZ.tz("America/Los_Angeles").subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
       }
 
       // set some defaults for the audits
@@ -94,7 +91,7 @@ module.exports = {
       .then((acct) => {
         account = acct
         if (!account) {
-          throw new Error("Google account not for user ", user.id)
+          throw new Error("Google account not for user ", user.id, "google account id", params.googleAccountId)
         }
 
         // 3) for each test use the data and return results

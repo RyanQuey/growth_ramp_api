@@ -11,8 +11,8 @@ module.exports = {
   attributes: {
     status: { type: 'string', defaultsTo: "ACTIVE" },
     listKey: { type: 'string' }, //should be same as its auditList's listKey. Save in both though for now for easier queries (indexing might be better in long run though)
-    fixed: { type: 'boolean', defaultsTo: false },
-    fixedAt: { type: 'datetime' },
+    completed: { type: 'boolean', defaultsTo: false },
+    completedAt: { type: 'datetime' },
     metrics: { type: 'json' },
     dimension: { type: 'string' }, //the primary dimension. This is the x-axis on graph
 

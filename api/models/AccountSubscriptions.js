@@ -360,6 +360,51 @@ console.log("params", stripeParams);
 
   },
 
+  // mostly used in background jobs. Checks multiple users' statuses, if paid or needs payment.
+  // takes array of user records (ie same format as Users.find())
+  checkMultipleAccountStatuses: (users) => {
+    return new Promise((resolve, reject) => {
+      //copies regular posting flow
+      let unpaidUsers = []
+      const promises = users.map((user) => {
+        return new Promise((resolve2, reject2) => {
+          AccountSubscriptions.checkStripeStatus(user.id)
+          .then((sub) => {
+            if (!ALLOWED_EMAILS.includes(user.email) && (!sub || ["past_due", "canceled", "unpaid", null].includes(sub.subscriptionStatus))) {
+              unpaidUsers.push({
+                user: user,
+                error: {message: "Payment is required before user can publish", code: "delinquent-payment"},
+                failedPosts: postsToPublish.filter((p) => p.userId === user.id)
+              })
+
+              return resolve2({userId: user.id, status: "rejected"} )
+            } else {
+              return resolve2({userId: user.id, status: "accepted"})
+            }
+          })
+          .catch((err) => {
+            sails.log.error("Error checking stripe while posting delayed post for ", user.email);
+            sails.log.error(err);
+
+            return resolve2({userId: user.id, status: "rejected"} )
+          })
+        })
+      })
+
+      return Promise.all(promises)
+      .then((results) => {
+        results = results || []
+        const approvedUserIds = results.filter((r) => r.status === "accepted").map(r => r.userId)
+        return resolve({approvedUserIds, unpaidUsers})
+      })
+      .catch((err) => {
+        console.error("error checking acct status for multiple users", err);
+        return reject(err)
+      })
+    })
+  },
+
+
   //when receive stripe subscription from their api, this func handles it
   _syncAPIWithStripeSub: (stripeSubscription, accountSubscription, options = {}) => {
     return new Promise((resolve, reject) => {
@@ -495,6 +540,6 @@ console.log("params", stripeParams);
     }
 
     return stripeParams
-  }
+  },
 };
 
