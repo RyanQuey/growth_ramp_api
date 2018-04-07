@@ -97,7 +97,6 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
         // success!
         matchingUser = _.find(users, (user) => user.id === result.audit.userId)
         matchingWebsite = _.find(websites, (website) => website.id === result.audit.websiteId)
-console.log("sending site ", matchingWebsite, websites, result.audit.websiteId);
         // just sending one per website no matter what for now, even if same user gets more than one email
         successPromises.push(Notifier.newAuditNotification({user: matchingUser, email: matchingUser.email, website: matchingWebsite}))
 
