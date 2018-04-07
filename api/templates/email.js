@@ -76,6 +76,16 @@ module.exports = {
     });
   },
 
+  newAuditNotification: function (info) {
+    info.template = 'new-audit-notification';
+    return new Promise((resolve, reject) => {
+      resolve({
+        body: layouts['html-layout'](info),
+        subject: "New Audit from Growth Ramp"
+      });
+    });
+  },
+
   resetPassword: function (info) {
     info.template = 'reset-password';
     return new Promise((resolve, reject) => {
