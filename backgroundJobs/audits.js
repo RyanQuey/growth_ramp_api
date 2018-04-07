@@ -68,25 +68,60 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
       return Promise.all(promises2)
     })
     .then((allResults) => {
-      //TODO map out results, if any were failed because of authorization, send email/do something to let them know
-      //console.log("Finished publishing delayed posts:");
-      //console.log(allResults);
+      // handle successes/ errors
+      this.handleResults({allResults, users, websites: websitesToAudit, usersWithFailedAudits})
 
-      // run this after posts are done, so doesn't interrupt them in any way, and keeps code cleaner
-      if (usersWithFailedAudits && usersWithFailedAudits.length ) {
-        //console.log("now WANT TO START sending notifications for failed publishes...but sadly not configured yet. Will raise ERROR so logs see it :)");
-        //sails.log.debug("DIdn't publish for these users because not paid:",usersWithFailedAudits.map((data) => Helpers.safeDataPath(data, "user.email", "unknown user") ));
-      }
-console.log("all results", allResults.length);
-      return
-    })
-    .then(() => {
       this.running = false;
       return true;
     })
     .catch((err) => {
+      //NOTE audits that fail don't go here, just resolve anyway
       sails.log.error("Error auditing websites: ", err);
       this.running = false;
+    })
+  }
+
+  // gets all results
+  // each result is the return value of the Audits.auditContent()
+  handleResults ({allResults, users, websites, usersWithFailedAudits}) {
+    const successPromises = []
+    let failurePromises
+
+    for (let result of allResults) {
+      let matchingUser, matchingWebsite
+      if (result.err) {
+        matchingUser = _.find(users, (user) => user.id === result.failedAuditParams.userId)
+        usersWithFailedAudits.push(matchingUser)
+
+      } else {
+        // success!
+        matchingUser = _.find(users, (user) => user.id === result.audit.userId)
+        matchingWebsite = _.find(websites, (website) => website.id === result.audit.websiteId)
+console.log("sending site ", matchingWebsite, websites, result.audit.websiteId);
+        // just sending one per website no matter what for now, even if same user gets more than one email
+        successPromises.push(Notifier.newAuditNotification({user: matchingUser, email: matchingUser.email, website: matchingWebsite}))
+
+      }
+    }
+
+    // TODO warn users about failed ones??? OR at least just make an error message so we can fix it, and then try to message later or something...
+    failurePromises = usersWithFailedAudits
+
+
+    const promises = successPromises.concat(failurePromises)
+
+    return Promise.all(promises)
+  }
+
+  handleSuccess (success) {
+    return new Promise((resolve, reject) => {
+
+    })
+  }
+
+  handleFailure (failure) {
+    return new Promise((resolve, reject) => {
+
     })
   }
 }
