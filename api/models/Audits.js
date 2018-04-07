@@ -81,9 +81,8 @@ module.exports = {
         Audits._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscParams)
       }
       const reportRequestsFinal = _.cloneDeep(reportRequestsData)
-//console.log("total ga report sets", reportRequestsData.gaReports);
 
-      let gaReportCount, allReports, account, websiteGoals
+      let gaReportCount, allReports, account
 
       ProviderAccounts.findOne({
         userId: user.id,
@@ -144,7 +143,7 @@ module.exports = {
         const promises2 = []
         for (let testKey of testKeys) {
           // test the data to see what passes/fails for their site for each test we do
-          testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults, websiteGoals)
+          testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults)
 
           // persist each test's lists
           testResults[testKey].auditLists.forEach((list) => {
@@ -157,7 +156,7 @@ module.exports = {
       .then((auditLists) => {
         // auditLists is an array of lists, with populated auditListItems
         auditRecord.auditLists = auditLists
-        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests: reportRequestsFinal, websiteGoals})
+        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests: reportRequestsFinal})
 
         return resolve(ret)
       })
@@ -168,7 +167,12 @@ module.exports = {
 
         auditRecord && Audits.update({id: auditRecord.id}, {status: "ARCHIVED"})
 
-        return resolve({allReports, err: err.toString(), reportRequests: reportRequestsFinal, websiteGoals})
+        // just return anyway, but with all the metadata
+        return resolve({allReports, err: err.toString(), reportRequests: reportRequestsFinal, failedAuditParams: auditRecord || {
+          userId: user.id,
+          websiteId: params.websiteId,
+          dateLength: params.dateLength,
+        }})
       })
     })
   },

@@ -114,5 +114,25 @@ module.exports = {
       console.log(err);
     })
   },
+  newAuditNotification: function (info) {
+		templates.newAuditNotification(info)
+		.then((template) => {
+			let emailNotification = {
+				method: 'email',
+				subject: template.email.subject,
+				body: template.email.body,
+				addresses: [ info.email ],
+        from,
+			};
+
+			sails.log.debug(emailNotification);
+			return Notifications.create(emailNotification)
+    })
+    .then((notif) => {
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+  },
 
 }

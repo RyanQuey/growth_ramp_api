@@ -83,6 +83,27 @@ module.exports = {
     });
   },
 
+  newAuditNotification: function (info) {
+    let toReturn = {
+      //sms: {},
+      email: {}
+    };
+
+    return new Promise((resolve, reject) => {
+      email.newAuditNotification(info)
+      .then((mail) => {
+        return inlineCss(mail);
+      })
+      .then((stuff) => {
+        toReturn.email = stuff;
+        resolve(toReturn);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+    });
+  },
+
   invoiceCreated: function (info) {
     let toReturn = {
       //sms: {},
