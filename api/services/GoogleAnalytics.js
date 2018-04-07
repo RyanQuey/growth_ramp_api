@@ -112,6 +112,7 @@ const GoogleAnalytics = {
           dimensions: defaultDimensions,
           dimensionFilterClauses: defaultDimensionFilters,
         }, params)
+        params = Helpers.getJSONParams(params)
         //mostly "func" will be generateStandardReportRequest
         let requestData = generateGARequest[func](params)
         reportOrder = requestData.reportOrder //often undefined
@@ -135,7 +136,7 @@ const GoogleAnalytics = {
           reportRequests,
         },
       }
-
+console.log("params", params.resource.reportRequests[0]);
       analyticsReportingClient.reports.batchGet(params, (err, response) => {
         if (err) {
           return reject(err)
