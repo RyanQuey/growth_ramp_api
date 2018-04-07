@@ -363,11 +363,14 @@ export default {
       try {
         let jsonObj = JSON.parse(value)
         params[key] = jsonObj
+        console.log("mutated value:", jsonObj, typeof jsonObj);
+
       } catch (err) {
         continue
       }
     }
 
+    // return mutated params too
     return params
   },
 
