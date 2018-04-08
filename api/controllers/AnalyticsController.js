@@ -41,7 +41,10 @@ module.exports = {
     })
     .then((account) => {
       // they're picking by profile, which is specific to a web property, so only showing goals for tht web propertY
-      return GoogleAnalytics.getGoals(account, {webPropertyId: params.gaWebPropertyId})//, profileId: filters.profileId, webPropertyId: filters.websiteId})
+      return GoogleAnalytics.getGoals(account, {
+        webPropertyId: params.gaWebPropertyId,
+        accountId: params.externalGaAccountId,
+      })//, profileId: filters.profileId, webPropertyId: filters.websiteId})
     })
     .then((goalData) => {
       return res.ok(goalData)
