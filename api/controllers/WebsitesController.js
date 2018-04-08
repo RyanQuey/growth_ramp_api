@@ -24,7 +24,7 @@ module.exports = {
 
       } else {
         // check if they're abusing their payment plan...
-        const reasonablePeriod = moment().subtract(2, "weeks")
+        const reasonablePeriod = moment().subtract(1, "month")
         if (moment(website.updatedAt).isBefore(reasonablePeriod)) {
           // is legit enough, let's let it slide, Just reactivate site
           //
