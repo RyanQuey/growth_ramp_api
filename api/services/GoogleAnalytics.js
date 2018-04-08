@@ -112,12 +112,11 @@ const GoogleAnalytics = {
           dimensions: defaultDimensions,
           dimensionFilterClauses: defaultDimensionFilters,
         }, params)
-        params = Helpers.getJSONParams(params)
+
         //mostly "func" will be generateStandardReportRequest
         let requestData = generateGARequest[func](params)
         reportOrder = requestData.reportOrder //often undefined
 
-//console.log("request data", requestData.reportRequests);
         reportRequests = reportRequests.concat(requestData.reportRequests)
       }
 

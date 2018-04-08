@@ -359,11 +359,9 @@ export default {
     for (let key of Object.keys(params)) {
       let value = params[key]
 
-      console.log("value:", value);
       try {
         let jsonObj = JSON.parse(value)
         params[key] = jsonObj
-        console.log("mutated value:", jsonObj, typeof jsonObj);
 
       } catch (err) {
         continue
