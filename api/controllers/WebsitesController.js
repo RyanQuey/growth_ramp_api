@@ -27,8 +27,7 @@ module.exports = {
         const reasonablePeriod = moment().subtract(1, "month")
         if (moment(website.updatedAt).isBefore(reasonablePeriod)) {
           // is legit enough, let's let it slide, Just reactivate site
-          //
-          return Websites.update(params)
+          return Websites.update({id: website.id}, params)
         } else {
           // they're going back and forth too often
           // just preventing abuse
@@ -36,12 +35,10 @@ module.exports = {
         }
       }
     })
-
     .then((result) => {
       if (Array.isArray(result)) {
         result = result[0]
       }
-
       // currently only allowing one
       Websites.update({id: {"!": result.id}}, {status: "ARCHIVED"})
 
