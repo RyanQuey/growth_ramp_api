@@ -17,7 +17,26 @@ module.exports = {
     params.status = "ACTIVE"
     const uniqParams = _.pick(params, ["gaProfileId", "gaSiteUrl", "gaWebPropertyId", "googleAccountId", "gscSiteUrl", "userId"])
 
-    Websites.updateOrCreate(uniqParams, params)
+    Websites.findOne(uniqParams)
+    .then((website) => {
+      if (!website) {
+        return Websites.create(params)
+
+      } else {
+        // check if they're abusing their payment plan...
+        const reasonablePeriod = moment().subtract(2, "weeks")
+        if (moment(website.updatedAt).isBefore(reasonablePeriod)) {
+          // is legit enough, let's let it slide, Just reactivate site
+          //
+          return Websites.update(params)
+        } else {
+          // they're going back and forth too often
+          // just preventing abuse
+          throw new Error("too-much-back-and-forth")
+        }
+      }
+    })
+
     .then((result) => {
       if (Array.isArray(result)) {
         result = result[0]
