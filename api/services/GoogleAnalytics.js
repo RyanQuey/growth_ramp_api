@@ -56,6 +56,7 @@ const GoogleAnalytics = {
         profileId,
         webPropertyId,
       } //can use other params to paginate
+console.log("goal params", params)
       analyticsClient.management.goals.list(params, (err, response) => {
         if (err) {
           return reject(err)
