@@ -33,11 +33,12 @@ module.exports = function canRead (req, res, next) {
 
       // if there's a where clause set, it will override all other params. So, just joining other params to he where one in this case
       // pass in query/params into the where clause (where from all params was already merged in)
-      let otherParams = _.omit(req.allParams(), ["where", "populate"])
-      otherParams = Helpers.getJSONParams(otherParams)
+      let otherParams = Helpers.getJSONParams(req.allParams())
+      let filteredOtherParams = _.omit(otherParams, ["where", "populate"])
 
-      whereParams = Object.assign({}, whereParams, otherParams)
+      whereParams = Object.assign({}, whereParams, filteredOtherParams)
       req.query.where = JSON.stringify(whereParams)
+      req.query = otherParams
     }
 
     next()

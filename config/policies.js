@@ -156,6 +156,7 @@ module.exports.policies = {
     */
   WebsitesController: {
     find: ['userTokenAuth', 'canRead'],
+    update: ['userTokenAuth', 'canWrite'],
     reactivateOrCreate: ['userTokenAuth', 'canWrite'],
   },
 
