@@ -54,6 +54,48 @@ module.exports.models = {
 
   attributes: {
     id: { type: 'integer', autoIncrement: true, primaryKey: true },
+  },
+
+  //currently will convert any model attribute that is json to convert integer strings (eg "2") and boolean strings ("true") to integers (2) and booleans (true)
+  //params should be obj with params to create/update db (so keys are model attributes)
+  //it's beacuse form-data converts json to string
+  convertJSONData: function (params) {
+    Object.keys(params).map((attribute) => {
+      if (["array", "json"].includes(this.attributes[attribute].type)) {
+        let value = params[attribute]
+        params[attribute] = _recursiveFixJson(value)
+      }
+    })
+
+    // return value doesn't matter; just mutate
+  },
+};
+
+// return value does matter for this. Have to mutate the original params obj, but not the values of the obj
+function _recursiveFixJson (thing) {
+  let translatedThing
+  if (typeof thing === "object") {
+    if (Array.isArray(thing)) {
+      translatedThing = thing.map(_recursiveFixJson)
+    } else {
+      translatedThing = {}
+      for (let key of Object.keys(thing) ) {
+        value = thing[key]
+        translatedThing[key] = _recursiveFixJson(value)
+      }
+    }
+
+  } else if (typeof thing === "string") {
+    try {
+      // if eg "1" or "true" becomes 1 or true
+console.log("NOW TRANSLATING!!");
+      translatedThing = JSON.parse(value)
+
+    } catch (err) {
+      // if different string, doesn't worK
+      translatedThing = thing
+    }
   }
 
-};
+  return translatedThing
+}
