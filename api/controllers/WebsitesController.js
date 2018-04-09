@@ -17,11 +17,11 @@ module.exports = {
     params.status = "ACTIVE"
 
     Websites.find({
-      status: "ACTIVE",
       userId: req.user.id,
     })
     .then((websites) => {
-      const canCreate = Websites.canAddWebsite({user: req.user, websites})
+      const activeWebsites = websites.filter((site) => site.status === "ACTIVE")
+      const canCreate = Websites.canAddWebsite({user: req.user, websites: activeWebsites})
       if (!canCreate) {
         throw {code: "too-many-websites-for-account"}
       }
@@ -36,7 +36,7 @@ module.exports = {
       } else {
         // check if they're abusing their payment plan...
         const reasonablePeriod = moment().subtract(1, "month")
-        if (moment(matchingWebsite.updatedAt).isBefore(reasonablePeriod)) {
+        if (User.isSuper(req.user) || moment(matchingWebsite.updatedAt).isBefore(reasonablePeriod)) {
           // is legit enough, let's let it slide, Just reactivate site
           return Websites.update({id: matchingWebsite.id}, params)
         } else {
