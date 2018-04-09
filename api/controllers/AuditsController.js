@@ -12,7 +12,22 @@ module.exports = {
   },
 
   auditContent: (req, res) => {
-    Audits.auditContent(req.user, req.allParams())
+    const params = req.allParams()
+    Websites.findOne({status: "ACTIVE", id: params.websiteId})
+    .populate("audits", {
+      status: "ACTIVE",
+      dateLength: "month",
+    })
+    .then((website) => {
+      // if has any monthly audits in the last month, don't run for this site
+      const canAudit = Audits.canAuditSite({user, website, audits: website.audits})
+      if (canAudit) {
+        return Audits.auditContent(req.user, req.allParams())
+
+      } else {
+        throw {code: "already-audited"}
+      }
+    })
     .then((results) => {
       return res.ok(results)
     })

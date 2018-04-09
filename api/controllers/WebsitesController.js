@@ -15,19 +15,30 @@ module.exports = {
 
     const params = Object.assign({}, req.body)
     params.status = "ACTIVE"
-    const uniqParams = _.pick(params, ["gaProfileId", "gaSiteUrl", "gaWebPropertyId", "googleAccountId", "gscSiteUrl", "userId"])
 
-    Websites.findOne(uniqParams)
-    .then((website) => {
-      if (!website) {
+    Websites.find({
+      status: "ACTIVE",
+      userId: req.user.id,
+    })
+    .then((websites) => {
+      const canCreate = Websites.canAddWebsite({user: req.user, websites})
+      if (!canCreate) {
+        throw {code: "too-many-websites-for-account"}
+      }
+
+      // what needs to be unique for each website record
+      const uniqParams = ["gaProfileId", "gaSiteUrl", "gaWebPropertyId", "googleAccountId", "gscSiteUrl", "userId"]
+
+      const matchingWebsite = _.find(websites, (site) => _.isEqual(_.pick(params, uniqParams), _.pick(site, uniqParams)))
+      if (!matchingWebsite) {
         return Websites.create(params)
 
       } else {
         // check if they're abusing their payment plan...
         const reasonablePeriod = moment().subtract(1, "month")
-        if (moment(website.updatedAt).isBefore(reasonablePeriod)) {
+        if (moment(matchingWebsite.updatedAt).isBefore(reasonablePeriod)) {
           // is legit enough, let's let it slide, Just reactivate site
-          return Websites.update({id: website.id}, params)
+          return Websites.update({id: matchingWebsite.id}, params)
         } else {
           // they're going back and forth too often
           // just preventing abuse
@@ -39,8 +50,6 @@ module.exports = {
       if (Array.isArray(result)) {
         result = result[0]
       }
-      // currently only allowing one
-      Websites.update({id: {"!": result.id}}, {status: "ARCHIVED"})
 
       return res.ok(result)
     })
