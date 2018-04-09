@@ -39,5 +39,12 @@ module.exports = {
   },
   autoCreatedAt: true,
   autoUpdatedAt: true,
+
+  //websites should be all active websites for this user
+  canAddWebsite: function ({user, websites}) {
+    return User.isSuper(user) || (
+      websites.length === 0
+    )
+  },
 };
 

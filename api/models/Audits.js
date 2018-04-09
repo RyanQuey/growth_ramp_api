@@ -30,6 +30,15 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
+  canAudit: ({user, website, audits}) => {
+    const recentAudits = audits.filter((audit) => oneMonthAgo.isBefore(audit.createdAt))
+
+    //website needs at least one audit but no recent audits
+    //TODO eventually don't want to rely on createdAt, in case we have to retroactively create an audit for a previous week or something, and so can't change createdAt, and yeah.
+    // not sure how the system will work yet though, with each list having different start and end dates? so will look into later
+    //Want at least one audit, so they don't accidentally click the Audit Site button right after this starts to run adn they get two or something
+    return audits.length > 0 && recentAudits.length === 0
+  },
   //params:
   //  {
   //      dateLength:
