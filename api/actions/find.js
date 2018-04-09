@@ -190,7 +190,6 @@ module.exports = function findRecords (req, res) {
     }
   } else {
     let doIt = () => {
-  console.log("criteria:", criteria);
       var query = Model.find()
       .where( criteria )
       .limit( actionUtil.parseLimit(req) )

@@ -26,7 +26,7 @@ module.exports = {
     apiTokenExpires: {  type: 'string' },
     emailConfirmed: { type: 'boolean', defaultsTo: false },
     emailConfirmedAt: { type: "datetime", defaultsTo: null },
-    hideCompletedAuditItems: { type: 'boolean', defaultsTo: false },
+    settings: { type: 'json', defaultsTo: {} },
 
     //associations
     providerAccounts: {
@@ -100,7 +100,7 @@ module.exports = {
   autoUpdatedAt: true,
 
   //makes sure not to persist plain password
-  transform: (values) => {
+  transform: function (values) {
     if (values.password) {
       let orig = values.password;
       let salt = bcrypt.genSaltSync(10);
@@ -108,7 +108,8 @@ module.exports = {
       values.password = hash;
     }
 
-    return values;
+    //NOTE cannot change be redefining values; must mutate
+    this.convertJSONData(values)
   },
 
   beforeValidate: function (values, cb) {
@@ -121,8 +122,7 @@ module.exports = {
       }
     }*/
 
-
-    values = Users.transform(values);
+    Users.transform(values);
     cb();
   },
 
