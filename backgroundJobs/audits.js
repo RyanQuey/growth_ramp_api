@@ -19,7 +19,6 @@ module.exports = class RoutineAudits extends Job {
     }
 
     this.running = true;
-    const oneMonthAgo = moment().subtract(1, "month")
 
     let websitesToAudit, users, usersWithFailedAudits, approvedUserIds
     let uniqueUserIds = []
@@ -32,7 +31,7 @@ module.exports = class RoutineAudits extends Job {
     .then((results) => {
       // if has any monthly audits in the last month, don't run for this site
       websitesToAudit = results.filter((site) => {
-        Audits.canAuditSite({user, website: site, audits: site.audits})
+        Audits.canAuditSite({website: site, audits: site.audits})
       })
 console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
 
@@ -99,7 +98,10 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
         matchingUser = _.find(users, (user) => user.id === result.audit.userId)
         matchingWebsite = _.find(websites, (website) => website.id === result.audit.websiteId)
         // just sending one per website no matter what for now, even if same user gets more than one email
-        successPromises.push(Notifier.newAuditNotification({user: matchingUser, email: matchingUser.email, website: matchingWebsite}))
+
+        if (!Helpers.safeDataPath(matchingUser, "settings.doNotReceiveEmails")) {
+          successPromises.push(Notifier.newAuditNotification({user: matchingUser, email: matchingUser.email, website: matchingWebsite}))
+        }
 
       }
     }
