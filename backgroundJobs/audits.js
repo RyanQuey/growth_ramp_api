@@ -19,7 +19,7 @@ module.exports = class RoutineAudits extends Job {
     }
 
     this.running = true;
-    const oneMonthAgo = moment().subtract(1, "month").format()
+    const oneMonthAgo = moment().subtract(1, "month")
 
     let websitesToAudit, users, usersWithFailedAudits, approvedUserIds
     let uniqueUserIds = []
@@ -28,11 +28,12 @@ module.exports = class RoutineAudits extends Job {
     .populate("audits", {
       status: "ACTIVE",
       dateLength: "month",
-      createdAt: {">": oneMonthAgo},
     })
     .then((results) => {
       // if has any monthly audits in the last month, don't run for this site
-      websitesToAudit = results.filter((site) => !site.audits.length)
+      websitesToAudit = results.filter((site) => {
+        Audits.canAuditSite({user, website: site, audits: site.audits})
+      })
 console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
 
       for (let site of websitesToAudit) {
