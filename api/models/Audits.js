@@ -30,7 +30,8 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  canAudit: ({user, website, audits}) => {
+  canAudit: ({website, audits}) => {
+    const oneMonthAgo = moment().subtract(1, "month")
     const recentAudits = audits.filter((audit) => oneMonthAgo.isBefore(audit.createdAt))
 
     //website needs at least one audit but no recent audits
