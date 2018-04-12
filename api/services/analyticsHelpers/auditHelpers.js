@@ -2,10 +2,15 @@
 const {AUDIT_TESTS} = require('../../analyticsConstants')
 const {nonPrettyValue} = require('./parsingHelpers')
 
+//TODO would be nice to DRY this up eventually, once it becomes clear what exactly we will do with these
+//Something that would take array of metric filters and return pages that make it through those filters, and takes what reports it would need etc and just spit it all out
+//might take a few different funcs for different types of audits
+//will become more important as we make more audits
+//can base off of what we do with the custom lists
 const auditHelpers = {
   auditTestFunctions: {
     pageSpeed: (gaResults = [], gscResults = []) => {
-      const relevantReports = findRelevantReports("pageSpeed", gaResults, gscResults)
+      const relevantReports = findRelevantReports({key: "pageSpeed", gaResults, gscResults})
       const [relevantGaReport] = relevantReports.slowPages.ga // this test only has one
       const avgPageLoadTimeIndex = getMetricIndex("ga:avgPageLoadTime", relevantGaReport)
       const pageViewsIndex = getMetricIndex("ga:pageviews", relevantGaReport)
@@ -52,7 +57,7 @@ const auditHelpers = {
     },
   */
     headlineStrength: (gaResults = [], gscResults = []) => {
-      const relevantReports = findRelevantReports("headlineStrength", gaResults, gscResults)
+      const relevantReports = findRelevantReports({key: "headlineStrength", gaResults, gscResults})
       const [pageSEOData, siteTotalsData] = relevantReports.weakHeadlines.gsc // this test only has one TODO more sturdy way of getting these two reports
 
       const impressionsIndex = getMetricIndex("impressions", pageSEOData)
@@ -93,7 +98,7 @@ const auditHelpers = {
     },
 
     browserCompatibility:  (gaResults = [], gscResults = []) => {
-      const relevantReports = findRelevantReports("browserCompatibility", gaResults, gscResults)
+      const relevantReports = findRelevantReports({key: "browserCompatibility", gaResults, gscResults})
       const [relevantGaReport] = relevantReports.badBounceRate.ga // this test only has one report for both auditLists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
@@ -161,7 +166,7 @@ const auditHelpers = {
     },
 
     deviceCompatibility:  (gaResults = [], gscResults = []) => {
-      const relevantReports = findRelevantReports("deviceCompatibility", gaResults, gscResults)
+      const relevantReports = findRelevantReports({key: "deviceCompatibility", gaResults, gscResults})
       const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both auditLists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
@@ -228,7 +233,7 @@ const auditHelpers = {
 
 
     userInteraction:  (gaResults = [], gscResults = [], goals) => {
-      const relevantReports = findRelevantReports("userInteraction", gaResults, gscResults)
+      const relevantReports = findRelevantReports({key: "userInteraction", gaResults, gscResults})
       const [relevantGaReport] = relevantReports.badBounceRate.ga //  this test only has one report for both auditLists, so for now can reuse TODO make more sturdy method
       const bounceRateIndex = getMetricIndex("ga:bounceRate", relevantGaReport)
       const avgSessionDurationIndex = getMetricIndex("ga:avgSessionDuration", relevantGaReport)
@@ -297,7 +302,7 @@ const auditHelpers = {
     pageValue:  (gaResults = [], gscResults = [], goals) => {},
 
     searchPositionToImprove:  (gaResults = [], gscResults = []) => {
-      const relevantReports = findRelevantReports("searchPositionToImprove", gaResults, gscResults)
+      const relevantReports = findRelevantReports({key: "searchPositionToImprove", gaResults, gscResults})
       console.log("relevant reports", relevantReports);
       const [pageSEOData, siteTotalsData] = relevantReports.searchPositionToImprove.gsc
 
@@ -338,7 +343,7 @@ const auditHelpers = {
     },
     missingPages:  (gaResults = [], gscResults = []) => {
       //return everything
-      const {brokenExternal, brokenInternal} = findRelevantReports("missingPages", gaResults, gscResults)
+      const {brokenExternal, brokenInternal} = findRelevantReports({key: "missingPages", gaResults, gscResults})
       const [brokenExternalLinks] = brokenExternal.ga
       const [brokenInternalLinks] = brokenInternal.ga
 
@@ -383,30 +388,135 @@ const auditHelpers = {
 
       return ret
     },
-  }
+
+    // for use with custom lists TODO extract out logic to reuse with other tests
+    // first need to make applicable to gsc too though
+    customLists:  (gaResults = [], gscResults = [], customList) => {
+      const relevantReports = findRelevantReports({customList, gaResults, gscResults, isCustomList: true})
+      const [relevantGaReport] = relevantReports.ga // only ga for now
+
+      const dataSummary = getGADataSummary("all", relevantGaReport)
+
+      const matchingRows = []
+
+      const metricFilters = customList.metricFilters.map((f) => Object.assign(f, {index: getMetricIndex(f.metricName, relevantGaReport)}))
+
+        /* metrics: {
+            "ga:avgSessionDuration": avgSessionDuration,
+            "ga:bounceRate": bounceRate,
+            "ga:sessions": sessions,
+          },
+        */
+      let metrics = {}
+      relevantGaReport.rows.forEach((row) => {
+        // if some metric filters makes it fail, skip
+        if (metricFilters.some((filter) => {
+          const metricValue = row.metrics[0].values[filter.index]
+          let valueType = relevantGaReport.columnHeader.metrics[filter.index].type
+
+          let rawValue = nonPrettyValue(metricValue, valueType)
+
+          metrics[filter.metricName] = metricValue //in case it passes
+
+          if (filter.operator === "GREATER_THAN") {
+            return rawValue > filter.comparisonValue
+          } else if (customList.operator === "LESS_THAN") {
+            return rawValue < filter.comparisonValue
+          } else if (customList.operator === "EQUAL") {
+            return rawValue == filter.comparisonValue
+          }
+        })) {
+          return //this is skipping
+
+        } else {
+          // passed test!
+          matchingRows.push({
+            dimension: row.dimensions[0],
+            metrics
+          })
+        }
+      })
+
+      const ret = {
+        auditLists: [
+          {
+            listKey: CustomLists.getCustomListKey(customList),
+            auditListItems: matchingRows,
+            summaryData: dataSummary,
+          }
+        ]
+      }
+
+      return ret
+    },
+  },
+
+  // takes audit start date and dateLength and dynamically gets endDate
+  getEndDateFromStartDate: (startDate, dateLength) => {
+    let endDate
+    // there are previous audits, audit
+    if (dateLength === "month") {
+      endDate = moment(startDate).subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+    } else if (dateLength === "year") {
+      endDate = moment(startDate).subtract(1, "year").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+    } else if (dateLength === "quarter") {
+      endDate = moment(startDate).subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+    }
+
+    return endDate
+  },
+
+  // takes audit end date and dateLength and dynamically gets startDate
+  getStartDateFromEndDate: (endDate, dateLength) => {
+    let startDate
+    // there are previous audits, audit
+    if (dateLength === "month") {
+      startDate = moment(endDate).subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+    } else if (dateLength === "year") {
+      startDate = moment(endDate).subtract(1, "year").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+    } else if (dateLength === "quarter") {
+      startDate = moment(endDate).subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+    }
+
+    return startDate
+  },
+
 }
 
 /////////////////////////////////////////////////////
 //Helpers for auditHelpers
 // maps the reports requested for this test to the returned result from ga or gsc
-function findRelevantReports(key, gaResults, gscResults) {
-  console.log("keuy to find", key);
-  const test = AUDIT_TESTS[key]
-  const testLists = Object.keys(test.auditLists)
+function findRelevantReports({key, gaResults, gscResults, isCustomList, customList}) {
   const ret = {}
-  for (let list of testLists) {
-    console.log("list is: ", list);
-      console.log("searching for reports with: ", `${test.key}-${list}`);
-    // GA
-    ret[list] = {}
-    ret[list].ga = gaResults.filter((gaReport) =>
-      gaReport.requestMetadata.forLists.includes(`${test.key}-${list}`)
+  if (isCustomList) {
+    let fullKey = `${customList.testKey}-${CustomLists.getCustomListKey(customList)}`
+    ret.ga = gaResults.filter((gaReport) =>
+      gaReport.requestMetadata.forLists.includes(fullKey)
     )
 
     // GSC
-    ret[list].gsc = gscResults.filter((gscReport) =>
-      gscReport.requestMetadata.forLists.includes(`${test.key}-${list}`)
+    ret.gsc = gscResults.filter((gscReport) =>
+      gscReport.requestMetadata.forLists.includes(fullKey)
     )
+
+  } else {
+    console.log("keuy to find", key);
+    const test = AUDIT_TESTS[key]
+    const testLists = Object.keys(test.auditLists)
+    for (let list of testLists) {
+      let fullKey = `${test.key}-${list}`
+      console.log("searching for reports with: ", fullKey);
+      // GA
+      ret[list] = {}
+      ret[list].ga = gaResults.filter((gaReport) =>
+        gaReport.requestMetadata.forLists.includes(fullKey)
+      )
+
+      // GSC
+      ret[list].gsc = gscResults.filter((gscReport) =>
+        gscReport.requestMetadata.forLists.includes(fullKey)
+      )
+    }
   }
 
   return ret

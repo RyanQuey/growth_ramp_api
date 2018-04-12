@@ -24,15 +24,16 @@ module.exports = class RoutineAudits extends Job {
     let uniqueUserIds = []
 
     Websites.find({status: "ACTIVE"})
+    .populate("customLists", {
+      status: "ACTIVE",
+    })
     .populate("audits", {
       status: "ACTIVE",
       dateLength: "month",
     })
     .then((results) => {
       // if has any monthly audits in the last month, don't run for this site
-      websitesToAudit = results.filter((site) => {
-        Audits.canAuditSite({website: site, audits: site.audits})
-      })
+      websitesToAudit = results.filter((site) => Audits.canAuditSite({website: site, audits: site.audits}))
 console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
 
       for (let site of websitesToAudit) {
@@ -54,15 +55,14 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
       //console.log("approved campaigns: ", approvedCampaignIds);
       const promises2 = approvedWebsitesToAudit.map((website) => {
         const websiteUser = _.find(users, (user) => user.id === website.userId)
-        const params = Object.assign({
+        const params = {
           dateLength: "month",
           testGroup: "nonGoals",
-          websiteId: website.id,
-        },
-          _.pick(website, ["gaWebPropertyId", "gaSiteUrl", "gscSiteUrl", "gaProfileId", "googleAccountId"])
-        )
+          website: website,
+          user: websiteUser
+        }
 
-        return Audits.auditContent(websiteUser, params)
+        return Audits.auditContent(params)
       })
 
       return Promise.all(promises2)

@@ -40,48 +40,49 @@ module.exports = {
     //Want at least one audit, so they don't accidentally click the Audit Site button right after this starts to run adn they get two or something
     return audits.length > 0 && recentAudits.length === 0
   },
-  //params:
-  //  {
-  //      dateLength:
-  //      gaWebPropertyId:
-  //      gaSiteUrl:
-  //      gscSiteUrl:
-  //      gaProfileId,
-  //      testGroup,
-  //      googleAccountId,
-  //      websiteId,
-  //  }
-  auditContent: (user, params, options) => {
+
+  // params: see below for keys that params should have
+  // website should have audits and customLists populated on it
+  // by the time this func gets called, should already be validated that this should run (authenticated etc)
+  auditContent: (params, options = {}) => {
     return new Promise((resolve, reject) => {
       let auditRecord
+      const {user, website, dateLength, testGroup, endDate = null} = params //endDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
+      const {gaWebPropertyId, gaSiteUrl, gscSiteUrl, gaProfileId, googleAccountId, audits, customLists} = website
 
-      params.endDate = momentTZ.tz("America/Los_Angeles").format("YYYY-MM-DD")
+      // if endDate is specified, use that (NOTE currently not doing). Otherwise:
+      if (!params.endDate) {
+        if (false && website.audits && website.audits.length) {
+          // TODO if previous audits, default startDate to day after last audit was ran. (just in case audit doesn't get ran on right day or something, doesn't leave a gap) But will want to probably do dynamically by each list? So will not end up setting all list start and end dates here, but will set each list individually based on the last audit's list with that same listKey. Wait until discuss with Jason, see use cases etc before goig either way
 
-      if (params.dateLength === "month") {
-        params.startDate = momentTZ.tz("America/Los_Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
-      } else if (params.dateLength === "year") {
-        params.startDate = momentTZ.tz("America/Los_Angeles").subtract(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+          params.startDate = "?"
+          params.endDate = auditHelpers.getEndDateFromStartDate(params.startDate, dateLength)
 
-      } else if (params.dateLength === "quarter") {
-        params.startDate = momentTZ.tz("America/Los_Angeles").subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+        } else {
+          // else default to yesterday
+          params.endDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format("YYYY-MM-DD")
+          params.startDate = auditHelpers.getStartDateFromEndDate(params.endDate, dateLength)
+        }
       }
+
 
       // set some defaults for the audits
       const gaParams = Object.assign({
         pageSize: 10000, //max 10,000
-        viewId: params.gaProfileId,
-      }, params)
+        viewId: gaProfileId,
+        testGroup,
+      }, website)
+      const gscParams = Object.assign({testGroup,}, website)
 
-      const gscParams = Object.assign({}, params)
-
-      const testKeys = TEST_GROUPS[params.testGroup]
+      const testKeys = TEST_GROUPS[testGroup]
 
       // 1) get all dimensions + metric sets we have. Try to combine into one call if two auditTests share a dimension (will have the same date, at least as of now)
       const allTestKeys = Object.keys(AUDIT_TESTS)
-      const reportRequestsData = {
+      const reportRequestsData = { // these will be built out by reports needed for each test
         gaReports: [],
         gscReports: [],
       }
+
       for (let key of testKeys) {
         let testData = AUDIT_TESTS[key]
         let {gaReports = [], gscReports = []} = testData // each test could have multiple reports it requires; prepare all of them
@@ -90,18 +91,28 @@ module.exports = {
         Audits._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, gaParams)
         Audits._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscParams)
       }
+
+      // for each customList see what reports it needs
+      for (let customList of customLists) {
+        // gaReports and gscReports of same format as the AUDIT_TESTS constant returned
+        const {gaReports, gscReports} = CustomLists.getAPIReportsFromCustomLists(customList)
+
+        Audits._buildAuditReportRequests("ga", gaReports, reportRequestsData.gaReports, gaParams)
+        Audits._buildAuditReportRequests("gsc", gscReports, reportRequestsData.gscReports, gscParams)
+      }
+
       const reportRequestsFinal = _.cloneDeep(reportRequestsData)
 
       let gaReportCount, allReports, account
 
       ProviderAccounts.findOne({
         userId: user.id,
-        id: params.googleAccountId,
+        id: googleAccountId,
       })
       .then((acct) => {
         account = acct
         if (!account) {
-          throw new Error("Google account not for user ", user.id, "google account id", params.googleAccountId)
+          throw new Error("Google account not for user ", user.id, "google account id", googleAccountId)
         }
 
         // 3) for each test use the data and return results
@@ -130,8 +141,8 @@ module.exports = {
 
         promises.push(Audits.create({
           userId: user.id,
-          websiteId: params.websiteId,
-          dateLength: params.dateLength,
+          websiteId: website.id,
+          dateLength: dateLength,
         }))
 
         return Promise.all(promises)
@@ -153,11 +164,30 @@ module.exports = {
         const promises2 = []
         for (let testKey of testKeys) {
           // test the data to see what passes/fails for their site for each test we do
-          testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults)
+          testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults, customLists)
 
           // persist each test's lists
           testResults[testKey].auditLists.forEach((list) => {
             promises2.push(AuditLists.persistList({testKey, list, auditParams: params, auditRecord, user}))
+          })
+        }
+
+        // persist results from custom lists as well
+        testResults.customLists = {}
+        for (let customList of customLists) {
+          const customListKey = CustomLists.getCustomListKey(customList)
+          testResults.customLists[customListKey] = auditHelpers.auditTestFunctions.customLists(gaResults, gscResults, customList)
+
+          // persist each test's lists
+console.log("results from custom list", testResults.customLists[customListKey]);
+          testResults.customLists[customListKey].auditLists.forEach((list) => {
+            promises2.push(AuditLists.persistList({
+              testKey: customList.testKey,
+              list,
+              auditParams: params,
+              auditRecord,
+              user,
+            }))
           })
         }
 
@@ -175,12 +205,13 @@ module.exports = {
 //        debugging, so return all reports
         console.error(err);
 
+        console.log("audit failed, so archiving that audit");
         auditRecord && Audits.update({id: auditRecord.id}, {status: "ARCHIVED"})
 
         // just return anyway, but with all the metadata
         return resolve({allReports, err: err.toString(), reportRequests: reportRequestsFinal, failedAuditParams: auditRecord || {
           userId: user.id,
-          websiteId: params.websiteId,
+          websiteId: params.website.id,
           dateLength: params.dateLength,
         }})
       })
@@ -192,13 +223,14 @@ module.exports = {
   _buildAuditReportRequests: (api, auditTestReports, currentReportSets, otherFilters = {}) => {
 
     for (let report of auditTestReports) {
+      // see if there's a report that we can reuse
       let matchingReport = _.find(currentReportSets, (set) =>
         _.isEqual(set.dimensions, report.dimensions) &&
         // if ga, has to be same dimension filters and order bys too
         (
           api !== "ga" || (
             _.isEqual(set.dimensionFilterClauses, report.dimensionFilterClauses) &&
-            (!set.orderBys || !report.orderBys || _.isEqual(set.orderBys, report.orderBys))
+            (!set.orderBys || !report.orderBys || _.isEqual(set.orderBys, report.orderBys)) //TODO in future can just do all orderBys in the frontend, which would solve need for sending any orderBys, so can combine more requests if need be
           )
         ) &&
 

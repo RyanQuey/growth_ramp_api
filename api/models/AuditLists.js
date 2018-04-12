@@ -40,7 +40,7 @@ module.exports = {
       summaryData: list.summaryData,
       userId: user.id,
       auditId: auditRecord.id,
-      websiteId: auditParams.websiteId,
+      websiteId: auditParams.website.id,
     })
     .then((newList) => {
       auditList = newList
@@ -55,7 +55,7 @@ module.exports = {
           userId: user.id,
           auditId: auditRecord.id,
           auditListId: auditList.id,
-          websiteId: auditParams.websiteId,
+          websiteId: auditParams.website.id,
         }))
       }
 

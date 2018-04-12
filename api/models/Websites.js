@@ -36,6 +36,10 @@ module.exports = {
       collection: 'auditListItems',
       via: 'websiteId'
     },
+    customLists: {
+      collection: 'customLists',
+      via: 'websiteId'
+    }
   },
   autoCreatedAt: true,
   autoUpdatedAt: true,
