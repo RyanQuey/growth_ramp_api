@@ -31,13 +31,15 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  canAuditSite: ({website, audits}) => {
-    const oneMonthAgo = moment().subtract(1, "month")
-    const recentAudits = audits.filter((audit) => oneMonthAgo.isBefore(audit.createdAt))
+  canAuditSite: ({website, audits}, options = {}) => {
+    // this assumes only monthly audits.
+    // subtract an extra day since base date is one day before the present, so want one month before that.
+    const oneMonthAgoAndOne = moment().subtract(1, "month").subtract(1, "day")
+    const recentAudits = audits.filter((audit) => oneMonthAgoAndOne.isBefore(audit.baseDate))
 
     //website needs at least one audit but no recent audits
     //Want at least one audit, so they don't accidentally click the Audit Site button right after this starts to run adn they get two or something
-    return audits.length > 0 && recentAudits.length === 0
+    return (!options.inBackgroundJob || audits.length > 0) && recentAudits.length === 0
   },
 
   // params: see below for keys that params should have
@@ -55,7 +57,8 @@ module.exports = {
           // if previous audits, default startDate to day after last audit was ran.
 
           const lastAudit = auditHelpers.getLatestAudit(audits)
-          params.startDate = lastAudit.baseDate ? moment(lastAudit.baseDate).add(1, "day").format("YYYY-MM-DD") : moment(lastAudit.createdAt).format("YYYY-MM-DD") //TODO once this gets ran a couple times, can remove the createdAt time fallback; just should matter for test env
+          const lastAuditEndDate = lastAudit.baseDate || lastAudit.createdAt.add(1, "month") //since if has no baseDate, is only for one month, since that's all we did at that time. //TODO once this gets ran a couple times, can remove the createdAt time fallback; just should matter for test env
+          params.startDate =  moment(lastAuditEndDate).add(1, "day").format("YYYY-MM-DD")
           params.baseDate = auditHelpers.getEndDateFromStartDate(params.startDate, dateLength)
 
         } else {
@@ -63,6 +66,10 @@ module.exports = {
           params.baseDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format("YYYY-MM-DD")
           params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
         }
+      }
+
+      if (moment(params.baseDate).isAfter(moment())) {
+        throw new Error("Audit base date (ie end date) must be before the present")
       }
 
       // set some defaults for the audits
@@ -73,7 +80,11 @@ module.exports = {
         startDate: params.startDate,
         endDate: params.baseDate,
       }, website)
-      const gscParams = Object.assign({testGroup,}, website)
+      const gscParams = Object.assign({
+        testGroup,
+        startDate: params.startDate,
+        endDate: params.baseDate,
+      }, website)
 
       const testKeys = TEST_GROUPS[testGroup]
 
@@ -145,6 +156,7 @@ module.exports = {
           websiteId: website.id,
           dateLength: dateLength,
           baseDate: params.baseDate,
+          status: "PENDING",
         }))
 
         return Promise.all(promises)
@@ -206,6 +218,12 @@ console.log("results from custom list", testResults.customLists[customListKey]);
       .then((auditLists) => {
         // auditLists is an array of lists, with populated auditListItems
         auditRecord.auditLists = auditLists
+
+        // mark audits as ready. If they don't get here, they'll be stuck as pending and never see the light of day. Hopefully will end up "ARCHIVED" though, TODO maybe want to run a job every once in a while that turns all pending to archived, but just do it if createdAt is day before or earlier
+        return Audits.update({id: auditRecord.id}, {status: "ACTIVE"})
+      })
+      .then(() => {
+        auditRecord.status = "ACTIVE"
         const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests: reportRequestsFinal})
 
         return resolve(ret)
