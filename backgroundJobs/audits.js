@@ -33,7 +33,7 @@ module.exports = class RoutineAudits extends Job {
     })
     .then((results) => {
       // if has any monthly audits in the last month, don't run for this site
-      websitesToAudit = results.filter((site) => Audits.canAuditSite({website: site, audits: site.audits}))
+      websitesToAudit = results.filter((site) => Audits.canAuditSite({website: site, audits: site.audits}, {inBackgroundJob: true}))
 console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
 
       for (let site of websitesToAudit) {
@@ -70,7 +70,7 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
     .then((allResults) => {
       // handle successes/ errors
       this.handleResults({allResults, users, websites: websitesToAudit, usersWithFailedAudits})
-
+console.log({allResults, users, websites: websitesToAudit, usersWithFailedAudits});
       this.running = false;
       return true;
     })
@@ -108,7 +108,6 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
 
     // TODO warn users about failed ones??? OR at least just make an error message so we can fix it, and then try to message later or something...
     failurePromises = usersWithFailedAudits
-
 
     const promises = successPromises.concat(failurePromises)
 
