@@ -481,6 +481,31 @@ const auditHelpers = {
     return startDate
   },
 
+  // latest audit by baseDate
+  getLatestAudit: (auditsArr, options = {}) => {
+    if (options.filterFunc) {
+      auditsArr = auditsArr.filter(options.filterFunc)
+    }
+
+    // default to the last one
+    let latestAudit = auditsArr[auditsArr.length -1]
+
+    for (let audit of auditsArr) {
+      // note: For audits made in test env that don't have baseDate, this will always return false for records made before we added the baseDate.
+      if (moment(audit.baseDate).isAfter(latestAudit.baseDate)) {
+        latestAudit = audit
+      }
+    }
+
+    return latestAudit
+  },
+
+  // mostly for passing in another audit's baseDate
+  getLatestAuditBefore: (auditsArr, {endDate, websiteId}) => {
+    const filterFunc = (audit) => (audit.websiteId === websiteId && moment(audit.baseDate).isBefore(endDate))
+    let latestAudit = analyticsHelpers.getLatestAudit(auditsArr, {filterFunc})
+    return latestAudit
+  },
 }
 
 /////////////////////////////////////////////////////

@@ -48,7 +48,7 @@ module.exports = {
       testKey,
       listKey: list.listKey,
       startDate: auditParams.startDate,
-      endDate: auditParams.endDate,
+      endDate: auditParams.baseDate, // eventually each list might have a life of its own, with dynamic start and end times, but for now just based on the baseDate and that's it
       summaryData: list.summaryData,
       userId: user.id,
       auditId: auditRecord.id,
