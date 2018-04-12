@@ -15,11 +15,23 @@ module.exports = {
     startDate: { type: 'date' },
     endDate: { type: 'date' },
     summaryData: { type: 'json' },
+    isCustomList: { type: 'boolean' },
+
+    // if custom list, these will have values, to make sure we don't lose track in case they update their customList or something. Otherwise won't
+    name: { type: 'string', defaultsTo: ""},
+    description: { type: 'string', defaultsTo: ""},
+    metricFilters: { type: 'array'},
+    // same format as metricFilters, but what we will send to GA for what they will filter by. (like the pageviews for the slow pages test)
+    // filters out what is considered invalid data
+    validityMetricFilters: { type: 'array'},
+    dimensions: { type: 'array'}, //same format as the constants we have in AUDIT_TESTS. Most often just one item
+    orderBys: { type: 'array' },//what we send to GA to order the stuff by initially
 
     //associations
     userId: { model: 'users', required: true },
     auditId: { model: 'audits', required: true },
     websiteId: { model: 'websites', required: true },
+    customListId: { model: 'customLists'}, //NOTE the params on teh custom list might not be equal to the params here, hence why persisted here in first place
     auditListItems: {
       collection: 'auditListItems',
       via: 'auditListId'
@@ -29,10 +41,10 @@ module.exports = {
   autoUpdatedAt: true,
 
   // takes a single list from a test and persists the list and all its auditListItems
-  persistList: ({testKey, list, auditParams, auditRecord, user}) => {
+  persistList: ({testKey, list, auditParams, auditRecord, user, isCustomList = false, customList}) => {
     let auditList
 
-    return AuditLists.create({
+    const listParams = {
       testKey,
       listKey: list.listKey,
       startDate: auditParams.startDate,
@@ -41,7 +53,15 @@ module.exports = {
       userId: user.id,
       auditId: auditRecord.id,
       websiteId: auditParams.website.id,
-    })
+      isCustomList,
+    }
+
+    if (isCustomList) {
+      const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
+      Object.assign(listParams, {name, metricFilters, validityMetricFilters, dimensions, orderBys, customListId: customList.id})
+    }
+
+    return AuditLists.create(listParams)
     .then((newList) => {
       auditList = newList
 

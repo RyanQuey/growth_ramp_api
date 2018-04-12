@@ -187,6 +187,8 @@ console.log("results from custom list", testResults.customLists[customListKey]);
               auditParams: params,
               auditRecord,
               user,
+              isCustomList: true,
+              customList,
             }))
           })
         }
