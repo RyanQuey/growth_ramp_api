@@ -13,6 +13,7 @@ const momentTZ = require('moment-timezone')
 module.exports = {
   attributes: {
     status: { type: 'string', defaultsTo: "ACTIVE" },
+    baseDate: { type: 'date', required: true }, // lists will probably have a life of their own regarding when they start and end. But audits need a base date (typically the same as the lists' end date), in case they were created at a date different from when they were supposed to have been ran theoretically. Ie can audit retroactively. Should be one day before the audit was ran though if everything always worked perfectly
     dateLength: { type: 'string' }, //year, month, quarter
 
     //associations
@@ -35,8 +36,6 @@ module.exports = {
     const recentAudits = audits.filter((audit) => oneMonthAgo.isBefore(audit.createdAt))
 
     //website needs at least one audit but no recent audits
-    //TODO eventually don't want to rely on createdAt, in case we have to retroactively create an audit for a previous week or something, and so can't change createdAt, and yeah.
-    // not sure how the system will work yet though, with each list having different start and end dates? so will look into later
     //Want at least one audit, so they don't accidentally click the Audit Site button right after this starts to run adn they get two or something
     return audits.length > 0 && recentAudits.length === 0
   },
@@ -47,30 +46,32 @@ module.exports = {
   auditContent: (params, options = {}) => {
     return new Promise((resolve, reject) => {
       let auditRecord
-      const {user, website, dateLength, testGroup, endDate = null} = params //endDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
+      const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
       const {gaWebPropertyId, gaSiteUrl, gscSiteUrl, gaProfileId, googleAccountId, audits, customLists} = website
 
-      // if endDate is specified, use that (NOTE currently not doing). Otherwise:
-      if (!params.endDate) {
-        if (false && website.audits && website.audits.length) {
-          // TODO if previous audits, default startDate to day after last audit was ran. (just in case audit doesn't get ran on right day or something, doesn't leave a gap) But will want to probably do dynamically by each list? So will not end up setting all list start and end dates here, but will set each list individually based on the last audit's list with that same listKey. Wait until discuss with Jason, see use cases etc before goig either way
+      // if baseDate is specified, use that (NOTE currently not doing). Otherwise:
+      if (!params.baseDate) {
+        if (website.audits && website.audits.length) {
+          // if previous audits, default startDate to day after last audit was ran.
 
-          params.startDate = "?"
-          params.endDate = auditHelpers.getEndDateFromStartDate(params.startDate, dateLength)
+          const lastAudit = auditHelpers.getLatestAudit(audits)
+          params.startDate = lastAudit.baseDate ? moment(lastAudit.baseDate).add(1, "day").format("YYYY-MM-DD") : moment(lastAudit.createdAt).format("YYYY-MM-DD") //TODO once this gets ran a couple times, can remove the createdAt time fallback; just should matter for test env
+          params.baseDate = auditHelpers.getEndDateFromStartDate(params.startDate, dateLength)
 
         } else {
           // else default to yesterday
-          params.endDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format("YYYY-MM-DD")
-          params.startDate = auditHelpers.getStartDateFromEndDate(params.endDate, dateLength)
+          params.baseDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format("YYYY-MM-DD")
+          params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
         }
       }
-
 
       // set some defaults for the audits
       const gaParams = Object.assign({
         pageSize: 10000, //max 10,000
         viewId: gaProfileId,
         testGroup,
+        startDate: params.startDate,
+        endDate: params.baseDate,
       }, website)
       const gscParams = Object.assign({testGroup,}, website)
 
@@ -143,6 +144,7 @@ module.exports = {
           userId: user.id,
           websiteId: website.id,
           dateLength: dateLength,
+          baseDate: params.baseDate,
         }))
 
         return Promise.all(promises)
@@ -168,7 +170,13 @@ module.exports = {
 
           // persist each test's lists
           testResults[testKey].auditLists.forEach((list) => {
-            promises2.push(AuditLists.persistList({testKey, list, auditParams: params, auditRecord, user}))
+            promises2.push(AuditLists.persistList({
+              testKey,
+              list,
+              auditParams: params,
+              auditRecord,
+              user
+            }))
           })
         }
 
