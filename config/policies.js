@@ -76,6 +76,11 @@ module.exports.policies = {
   ChannelsController: {
     create: ['userTokenAuth', 'canWrite'],
   },
+  CustomListsController: {
+    create: ['userTokenAuth', 'canWrite'],
+    update: ['userTokenAuth', 'canWrite'],
+    find: ['userTokenAuth', 'canRead'],
+  },
   NotificationsController: {
     //they need user id for this to work
     contactUs: ['userTokenAuth', 'canWrite'],
