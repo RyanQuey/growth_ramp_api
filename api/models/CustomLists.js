@@ -10,6 +10,7 @@ module.exports = {
   attributes: {
     status: { type: 'string', defaultsTo: "ACTIVE" },
     name: { type: 'string', defaultsTo: ""},
+    description: { type: 'string', defaultsTo: ""},
     testKey: { type: 'string', required: true},
     // is what we will do manually after getting results (so we can get totals)
     // array of objs, based rougly off of what GA's api takes

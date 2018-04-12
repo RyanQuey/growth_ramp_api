@@ -419,11 +419,11 @@ const auditHelpers = {
           metrics[filter.metricName] = metricValue //in case it passes
 
           if (filter.operator === "GREATER_THAN") {
-            return rawValue > filter.comparisonValue
+            return rawValue <= filter.comparisonValue
           } else if (customList.operator === "LESS_THAN") {
-            return rawValue < filter.comparisonValue
+            return rawValue >= filter.comparisonValue
           } else if (customList.operator === "EQUAL") {
-            return rawValue == filter.comparisonValue
+            return rawValue != filter.comparisonValue
           }
         })) {
           return //this is skipping
