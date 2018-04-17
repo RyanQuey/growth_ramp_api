@@ -71,6 +71,7 @@ module.exports = class PublishDelayedPosts extends Job {
     })
     .then((result) => {
       usersWithFailedPublishes = result.unpaidUsers
+      //could map the postsToPublish to their respective user here
       approvedUserIds = result.approvedUserIds
 
       const campaignIds = Object.keys(campaignsToPublish)

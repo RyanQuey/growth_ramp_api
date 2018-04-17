@@ -374,7 +374,6 @@ console.log("params", stripeParams);
               unpaidUsers.push({
                 user: user,
                 error: {message: "Payment is required before user can publish", code: "delinquent-payment"},
-                failedPosts: postsToPublish.filter((p) => p.userId === user.id)
               })
 
               return resolve2({userId: user.id, status: "rejected"} )
