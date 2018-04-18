@@ -320,6 +320,6 @@ module.exports = {
   },
 
   isSuper: function (user) {
-    return user && user.email === "jdquey@gmail.com"
+    return user && ["jdquey@gmail.com", "rlquey2@gmail.com"].includes(user.email)
   }
 };
