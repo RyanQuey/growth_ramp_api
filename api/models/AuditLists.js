@@ -101,7 +101,7 @@ console.log("persisted new list")
 
 
   // after refreshing audit updates list with new results
-  // note that oldList is a db record, refreshedlist is not
+  // note that oldList is a db record, refreshedlist is not TODO call it refreshedListData to distinguish.
   updateListFromRefresh: ({oldList, refreshedList, auditRecord, isCustomList = false, customList}) => {
 
     const unmatchedItems = [...oldList.auditListItems]
@@ -111,15 +111,21 @@ console.log("persisted new list")
       // update list with current customlist params (in case they changed)
       const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
       let listKey = CustomLists.getCustomListKey(customList)
-
+console.log("************",listKey)
       promises.push(AuditLists.update({id: oldList.id}, {
         name,
         metricFilters,
         validityMetricFilters,
         dimensions,
         orderBys,
-        customListId: customList.id,
         listKey,
+        summaryData: refreshedList.summaryData,
+      }))
+
+    } else {
+      // if not custom list just update the summary data (totals, max and min for the test
+      promises.push(AuditLists.update({id: oldList.id}, {
+        summaryData: refreshedList.summaryData,
       }))
     }
 

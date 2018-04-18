@@ -247,13 +247,14 @@ console.log("custom list", customList)
           let matchIndex = _.findIndex(unmatchedLists, (listRecord) => listRecord.customListId === customList.id)
           let oldList = matchIndex === -1 ? null : unmatchedLists.splice(matchIndex, 1)[0]
 
-console.log("custom list old list", oldList)
           if (oldList) {
             // update matching list with new results.
             promises.push(AuditLists.updateListFromRefresh({
               oldList,
               refreshedList,
               auditRecord,
+              isCustomList: true,
+              customList,
             }))
 
           } else {
@@ -268,7 +269,6 @@ console.log("custom list old list", oldList)
           }
         }
 
-console.log("unmatchedLists", unmatchedLists)
         for (let list of unmatchedLists) {
           //TODO archive cascading these lists and their items
           promises.push(AuditLists.archiveCascading(list.id, "audit-refresh"))
