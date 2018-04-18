@@ -15,6 +15,7 @@ module.exports = {
     completedAt: { type: 'datetime' },
     metrics: { type: 'json' },
     dimension: { type: 'string' }, //the primary dimension. This is the x-axis on graph
+    archiveReason: { type: 'string' },
 
     //associations
     userId: { model: 'users', required: true },
