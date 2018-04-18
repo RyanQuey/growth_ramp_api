@@ -16,6 +16,7 @@ module.exports = {
     endDate: { type: 'date' },
     summaryData: { type: 'json' },
     isCustomList: { type: 'boolean' },
+    archiveReason: { type: 'string' },
 
     // if custom list, these will have values, to make sure we don't lose track in case they update their customList or something. Otherwise won't
     name: { type: 'string', defaultsTo: ""},

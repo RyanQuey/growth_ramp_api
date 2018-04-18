@@ -27,9 +27,10 @@ module.exports = {
       const canAudit = Audits.canAuditSite({user, website, audits: website.audits, params})
       if (canAudit) {
         Object.assign(params, {user, website})
-        return Audits.auditContent(params)
+        return Audits.createNewAudit(params)
 
       } else {
+        //TODO add other error codes to be mroe precise and accurate...
         throw {code: "already-audited"}
       }
     })
