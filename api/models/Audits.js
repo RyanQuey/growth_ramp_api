@@ -99,7 +99,7 @@ console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => momen
       const gscParams = Object.assign({
         testGroup,
         startDate: params.startDate,
-        endDate: params.baseDate,
+        endDate: moment(params.baseDate).format("YYYY-MM-DD"),
       }, website)
 
       const testKeys = TEST_GROUPS[testGroup]
