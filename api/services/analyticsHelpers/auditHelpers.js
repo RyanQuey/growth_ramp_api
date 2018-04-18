@@ -308,10 +308,10 @@ const auditHelpers = {
 
       const positionIndex = getMetricIndex("position", pageSEOData)
 
-      const siteTotals = siteTotalsData.rows[0]
+      const siteTotals = siteTotalsData.rows[0] // will be undefined if there's no rows (which happens if GSC wasn't turned on during this time range
       const dataSummary = getGSCDataSummary(siteTotalsData)
 
-      const siteAvgPosition = parseFloat(siteTotals.position)
+      const siteAvgPosition = siteTotals ? parseFloat(siteTotals.position) : 0
 
       const canImprovePositionRows = pageSEOData.rows.reduce((acc, row) => {
         const position = parseFloat(row.metrics[0].values[positionIndex])
@@ -573,7 +573,7 @@ function getGADataSummary (metricNames, report) {
 function getGSCDataSummary (report) {
   const totals = {}
   report.columnHeader.metrics.forEach((metric, index) => {
-    totals[metric.name] = report.rows[0].metrics[0].values[index]
+    totals[metric.name] = Helpers.safeDataPath(report, `rows.0.metrics.0.values.${index}`, 0) //report.rows[0].metrics[0].values[index]
   })
 
   return {totals}
