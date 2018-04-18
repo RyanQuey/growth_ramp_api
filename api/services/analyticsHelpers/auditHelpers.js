@@ -395,7 +395,10 @@ const auditHelpers = {
       const relevantReports = findRelevantReports({customList, gaResults, gscResults, isCustomList: true})
       const [relevantGaReport] = relevantReports.ga // only ga for now
 
+console.log("\ncustom list data summary*****************)");
       const dataSummary = getGADataSummary("all", relevantGaReport)
+console.log(dataSummary);
+console.log("\nEND OF custom list data summary*****************)");
 
       const matchingRows = []
 
