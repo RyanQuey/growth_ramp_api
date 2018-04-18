@@ -77,9 +77,15 @@ module.exports.routes = {
 
   ////////////////////////////////////////////////////////////////
   //audits
+
   'post /audits/auditContent': {
     controller: 'AuditsController',
     action: 'auditContent'
+  },
+
+  'post /audits/:auditId/refreshAudit': {
+    controller: 'AuditsController',
+    action: 'refreshAudit'
   },
 
   ////////////////////////////////////////////////////////////////
