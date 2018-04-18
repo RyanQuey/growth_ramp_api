@@ -54,7 +54,8 @@ module.exports.policies = {
   AuditsController: {
     find: ['userTokenAuth', 'canRead'],
     auditContent: ['userTokenAuth', 'canWrite'],
-    refreshAudit: ['userTokenAuth', 'canWrite'],
+    refreshAudit: ['userTokenAuth'],
+    refreshWebsiteAudits: ['userTokenAuth'],
   },
   AuditListsController: {
     find: ['userTokenAuth', 'canRead'],

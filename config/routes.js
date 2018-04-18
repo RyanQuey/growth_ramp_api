@@ -88,6 +88,11 @@ module.exports.routes = {
     action: 'refreshAudit'
   },
 
+  'post /audits/refreshWebsiteAudits': {
+    controller: 'AuditsController',
+    action: 'refreshWebsiteAudits'
+  },
+
   ////////////////////////////////////////////////////////////////
   //campaigns
   //

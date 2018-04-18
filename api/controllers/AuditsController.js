@@ -48,16 +48,30 @@ module.exports = {
     const {auditId} = req.allParams()
     const user = req.user
 
-    Audit.refreshAudit({user, auditId})
+    Audits.refreshAudit({user, auditId})
     .then((results) => {
       return res.ok(results)
     })
     .catch((err) => {
       //Google returns err.errors
-      console.error("Error auditing content for user", req.user.id);
+      console.error("Error refreshing audit for user", req.user.id);
       return res.negotiate(err.errors || err)
     })
   },
 
+  refreshWebsiteAudits: (req, res) => {
+    const {websiteId} = req.allParams()
+    const user = req.user
+
+    Audits.refreshWebsiteAudits({user, websiteId})
+    .then((results) => {
+      return res.ok(results)
+    })
+    .catch((err) => {
+      //Google returns err.errors
+      console.error("Error refreshing website audits for user", req.user.id);
+      return res.negotiate(err.errors || err)
+    })
+  },
 };
 
