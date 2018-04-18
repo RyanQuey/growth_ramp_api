@@ -240,12 +240,14 @@ console.log("results from custom list", testResults.customLists[customListKey]);
 
         // persist results from custom lists as well
         for (let customList of customLists) {
+console.log("custom list", customList)
           // persist each test's lists
           const customListKey = CustomLists.getCustomListKey(customList)
           const [refreshedList] = testResults.customLists[customListKey].auditLists // custom lists only ever return one
           let matchIndex = _.findIndex(unmatchedLists, (listRecord) => listRecord.customListId === customList.id)
           let oldList = matchIndex === -1 ? null : unmatchedLists.splice(matchIndex, 1)[0]
 
+console.log("custom list old list", oldList)
           if (oldList) {
             // update matching list with new results.
             promises.push(AuditLists.updateListFromRefresh({
@@ -266,9 +268,10 @@ console.log("results from custom list", testResults.customLists[customListKey]);
           }
         }
 
+console.log("unmatchedLists", unmatchedLists)
         for (let list of unmatchedLists) {
           //TODO archive cascading these lists and their items
-          AuditLists.archiveCascading(list.id, "audit-refresh")
+          promises.push(AuditLists.archiveCascading(list.id, "audit-refresh"))
         }
 
         return Promise.all(promises)

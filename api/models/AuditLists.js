@@ -62,21 +62,15 @@ module.exports = {
     }
 
     if (isCustomList) {
+      if (!customList) {throw new Error("customList is required for custom lists!!")}
       const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
-      Object.assign(listParams, {name, metricFilters, validityMetricFilters, dimensions, orderBys, customListId: customList.id})
+      Object.assign(listParams, {name, metricFilters, validityMetricFilters, dimensions, orderBys, customListId: customList.id, listKey: CustomLists.getCustomListKey(customList)})
     }
 
     return AuditLists.create(listParams)
     .then((newList) => {
       auditList = newList
 
-console.log("creating new list with", {
-                testKey,
-                list,
-                auditRecord,
-              isCustomList,
-              customList,
-              })
       const promises = []
       for (let item of list.auditListItems) {
         promises.push(AuditListItems.create({
@@ -116,6 +110,7 @@ console.log("persisted new list")
     if (isCustomList) {
       // update list with current customlist params (in case they changed)
       const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
+      let listKey = CustomLists.getCustomListKey(customList)
 
       promises.push(AuditLists.update({id: oldList.id}, {
         name,
@@ -123,15 +118,11 @@ console.log("persisted new list")
         validityMetricFilters,
         dimensions,
         orderBys,
-        customListId: customList.id
+        customListId: customList.id,
+        listKey,
       }))
     }
 
-console.log("updating list with", {
-                oldList,
-                refreshedList,
-                auditRecord,
-              })
     for (let item of refreshedList.auditListItems) {
       let matchIndex = _.findIndex(unmatchedItems, (itemRecord) => itemRecord.dimension === item.dimension)
       let oldItem = matchIndex === -1 ? null : unmatchedItems.splice(matchIndex, 1)
@@ -187,8 +178,9 @@ console.log("updating list with", {
       return
     }
 
-    AuditLists.update({id: listId}, {status: "ARCHIVED", archiveReason})
-    AuditListItems.update({listId}, {status: "ARCHIVED", archiveReason})
+    return Promise.all([
+      AuditLists.update({id: listId}, {status: "ARCHIVED", archiveReason}),     AuditListItems.update({auditListId: listId}, {status: "ARCHIVED", archiveReason})
+    ])
   }
 };
 
