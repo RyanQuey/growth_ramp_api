@@ -62,7 +62,7 @@ console.log("bg job auditing websites:", websitesToAudit.map((w) => w.id));
           user: websiteUser
         }
 
-        return Audits.auditContent(params)
+        return Audits.createNewAudit(params)
       })
 
       return Promise.all(promises2)

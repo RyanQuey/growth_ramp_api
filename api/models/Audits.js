@@ -37,8 +37,6 @@ module.exports = {
     const oneMonthAgoAndOne = moment().subtract(1, "month").subtract(1, "day")
     const recentAudits = audits.filter((audit) => oneMonthAgoAndOne.isBefore(audit.baseDate))
 
-console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => moment(audit.baseDate).isSame(params.baseDate, "day")));
-
     //website needs at least one audit but no recent audits
     //Want at least one audit, so they don't accidentally click the Audit Site button right after this starts to run adn they get two or something
     return (
@@ -53,12 +51,13 @@ console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => momen
     )
   },
 
+  // used whether creating new audit or refreshing audit.
+  // Gets all the audit data and test results
   // params: see below for keys that params should have
   // website should have audits and customLists populated on it
   // by the time this func gets called, should already be validated that this should run (authenticated etc)
-  auditContent: (params, options = {}) => {
+  _getAuditData: (params, options = {}) => {
     return new Promise((resolve, reject) => {
-      let auditRecord
       const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
       const {gaWebPropertyId, gaSiteUrl, gscSiteUrl, gaProfileId, googleAccountId, audits, customLists} = website
 
@@ -74,7 +73,7 @@ console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => momen
 
         } else {
           // else default to yesterday
-          params.baseDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format() // will
+          params.baseDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format() // this is the form that baseDate gets persisted on the audit. But will be sent as YYYY-MM-DD when sent as endDate to google
           params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
         }
 
@@ -167,19 +166,10 @@ console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => momen
           gscReportCount ++
         })
 
-        promises.push(Audits.create({
-          userId: user.id,
-          websiteId: website.id,
-          dateLength: dateLength,
-          baseDate: params.baseDate,
-          status: "PENDING",
-        }))
-
         return Promise.all(promises)
       })
       .then((result) => {
         // 4) with ga and gsc results, send through tests to see what passed
-        auditRecord = result.pop()
 
         // an array of ga reports and gsc reports
         const gaResultSets = result.splice(0, gaReportCount)
@@ -191,14 +181,65 @@ console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => momen
         console.log("---------------------");
         console.log("now going over tests");
         const testResults = {}
-        const promises2 = []
         for (let testKey of testKeys) {
           // test the data to see what passes/fails for their site for each test we do
           testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults, customLists)
 
+        }
+
+        // retrieve results for custom lists as well
+        testResults.customLists = {}
+        for (let customList of customLists) {
+          const customListKey = CustomLists.getCustomListKey(customList)
+          testResults.customLists[customListKey] = auditHelpers.auditTestFunctions.customLists(gaResults, gscResults, customList)
+
+        }
+
+        return resolve({
+          allReports,
+          reportRequests: reportRequestsFinal,
+          testResults
+        })
+      })
+      .catch((err) => {
+        return reject(err)
+      })
+    })
+  },
+
+  //for creating brand new audits, with all their lists and items
+  //Params should be same params to pass into #getAuditData
+  //auditContent: (params, options = {}) => {
+  createNewAudit: (params, options = {}) => {
+    return new Promise((resolve, reject) => {
+      const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
+      const {audits, customLists} = website
+      let auditRecord, allReports, reportRequests, testResults
+
+      // params received in createNewAudit should be same as that passed into the _getAuditData
+      Audits._getAuditData(params, options)
+      .then((result) => {
+        allReports = result.allReports
+        reportRequests = result.reportRequests
+        testResults = result.testResults
+
+        return Audits.create({
+          userId: user.id,
+          websiteId: website.id,
+          dateLength: dateLength,
+          baseDate: params.baseDate,
+          status: "PENDING",
+        })
+      })
+      .then((audit) => {
+        auditRecord = audit
+        const promises = []
+
+        const testKeys = TEST_GROUPS[testGroup]
+        for (let testKey of testKeys) {
           // persist each test's lists
           testResults[testKey].auditLists.forEach((list) => {
-            promises2.push(AuditLists.persistList({
+            promises.push(AuditLists.persistList({
               testKey,
               list,
               auditParams: params,
@@ -209,15 +250,11 @@ console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => momen
         }
 
         // persist results from custom lists as well
-        testResults.customLists = {}
         for (let customList of customLists) {
-          const customListKey = CustomLists.getCustomListKey(customList)
-          testResults.customLists[customListKey] = auditHelpers.auditTestFunctions.customLists(gaResults, gscResults, customList)
-
           // persist each test's lists
 console.log("results from custom list", testResults.customLists[customListKey]);
           testResults.customLists[customListKey].auditLists.forEach((list) => {
-            promises2.push(AuditLists.persistList({
+            promises.push(AuditLists.persistList({
               testKey: customList.testKey,
               list,
               auditParams: params,
@@ -229,7 +266,7 @@ console.log("results from custom list", testResults.customLists[customListKey]);
           })
         }
 
-        return Promise.all(promises2)
+        return Promise.all(promises)
       })
       .then((auditLists) => {
         // auditLists is an array of lists, with populated auditListItems
@@ -240,7 +277,7 @@ console.log("results from custom list", testResults.customLists[customListKey]);
       })
       .then(() => {
         auditRecord.status = "ACTIVE"
-        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests: reportRequestsFinal})
+        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests})
 
         return resolve(ret)
       })
@@ -250,10 +287,10 @@ console.log("results from custom list", testResults.customLists[customListKey]);
         console.error(err);
 
         console.log("audit failed, so archiving that audit");
-        auditRecord && Audits.update({id: auditRecord.id}, {status: "ARCHIVED"})
+        auditRecord && Audits._archiveCascading(auditRecord.id, "failed-audit")
 
         // just return anyway, but with all the metadata
-        return resolve({allReports, err: err.toString(), reportRequests: reportRequestsFinal, failedAuditParams: auditRecord || {
+        return resolve({allReports, err: err.toString(), reportRequests, failedAuditParams: auditRecord || {
           userId: user.id,
           websiteId: params.website.id,
           dateLength: params.dateLength,
@@ -298,5 +335,18 @@ console.log("results from custom list", testResults.customLists[customListKey]);
       }
     }
   },
+
+  // archive the audit and all its lists and items that might have been made
+  // don't need to return anything at this point
+  _archiveCascading: (auditId, archiveReason = "") => {
+    if (!auditId) {
+      console.error("auditId is required to cascade archive");
+      return
+    }
+
+    Audits.update({id: auditId}, {status: "ARCHIVED"})
+    AuditLists.update({auditId}, {status: "ARCHIVED", archiveReason})
+    AuditListItems.update({auditId}, {status: "ARCHIVED", archiveReason})
+  }
 };
 
