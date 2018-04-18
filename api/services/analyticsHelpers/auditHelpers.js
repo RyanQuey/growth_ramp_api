@@ -37,7 +37,7 @@ const auditHelpers = {
       const slowPageDataSummary = getGADataSummary(["ga:pageviews", "ga:avgPageLoadTime"], relevantGaReport)
 
       const ret = {
-        auditLists: [
+        auditLists: [ //TODO rename auditLists here and auditListItems within the params a couple lines down so we don't think these are actual records in the future. Do something like "lists" and "listITems"
           {
             listKey: "slowPages",
             auditListItems: slowPageRows,
@@ -460,7 +460,7 @@ const auditHelpers = {
     } else if (dateLength === "year") {
       endDate = moment(startDate).add(1, "year").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
     } else if (dateLength === "quarter") {
-      endDate = moment(startDate).add(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+      startDate = moment(endDate).subtract(1, "quarter").format("YYYY-MM-DD") //NOTE: date is calculated in PST time. quarter actually works!!
     }
 
     return endDate
@@ -475,7 +475,7 @@ const auditHelpers = {
     } else if (dateLength === "year") {
       startDate = moment(endDate).subtract(1, "year").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
     } else if (dateLength === "quarter") {
-      startDate = moment(endDate).subtract(3, "months").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+      startDate = moment(endDate).subtract(1, "quarter").format("YYYY-MM-DD") //NOTE: date is calculated in PST time. quarter actually works!!
     }
 
     return startDate

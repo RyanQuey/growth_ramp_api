@@ -5,6 +5,10 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+const momentTZ = require('moment-timezone')
+const auditHelpers = require('../services/analyticsHelpers/auditHelpers')
+const _ = require('lodash')
+
 module.exports = {
   tableName: "auditLists",
 
@@ -16,7 +20,7 @@ module.exports = {
     endDate: { type: 'date' },
     summaryData: { type: 'json' },
     isCustomList: { type: 'boolean' },
-    archiveReason: { type: 'string' },
+    archiveReason: { type: 'string' }, //
 
     // if custom list, these will have values, to make sure we don't lose track in case they update their customList or something. Otherwise won't
     name: { type: 'string', defaultsTo: ""},
@@ -42,18 +46,18 @@ module.exports = {
   autoUpdatedAt: true,
 
   // takes a single list from a test and persists the list and all its auditListItems
-  persistList: ({testKey, list, auditParams, auditRecord, user, isCustomList = false, customList}) => {
+  persistList: ({testKey, list, auditRecord, isCustomList = false, customList}) => {
     let auditList
 
     const listParams = {
       testKey,
       listKey: list.listKey,
-      startDate: auditParams.startDate,
-      endDate: auditParams.baseDate, // eventually each list might have a life of its own, with dynamic start and end times, but for now just based on the baseDate and that's it
+      startDate: auditHelpers.getStartDateFromEndDate(auditRecord.baseDate, auditRecord.dateLength),
+      endDate: auditRecord.baseDate, // eventually each list might have a life of its own, with dynamic start and end times, but for now just based on the baseDate and that's it
       summaryData: list.summaryData,
-      userId: user.id,
+      userId: auditRecord.userId,
       auditId: auditRecord.id,
-      websiteId: auditParams.website.id,
+      websiteId: auditRecord.websiteId,
       isCustomList,
     }
 
@@ -66,6 +70,13 @@ module.exports = {
     .then((newList) => {
       auditList = newList
 
+console.log("creating new list with", {
+                testKey,
+                list,
+                auditRecord,
+              isCustomList,
+              customList,
+              })
       const promises = []
       for (let item of list.auditListItems) {
         promises.push(AuditListItems.create({
@@ -73,10 +84,10 @@ module.exports = {
           listKey: list.listKey,
           dimension: item.dimension,
           metrics: item.metrics,
-          userId: user.id,
+          userId: auditRecord.userId,
           auditId: auditRecord.id,
           auditListId: auditList.id,
-          websiteId: auditParams.website.id,
+          websiteId: auditRecord.websiteId,
         }))
       }
 
@@ -84,6 +95,7 @@ module.exports = {
     })
     .then((auditListItems) => {
       auditList.auditListItems = auditListItems
+console.log("persisted new list")
 
       return auditList
     })
@@ -92,5 +104,91 @@ module.exports = {
       throw err
     })
   },
+
+
+  // after refreshing audit updates list with new results
+  // note that oldList is a db record, refreshedlist is not
+  updateListFromRefresh: ({oldList, refreshedList, auditRecord, isCustomList = false, customList}) => {
+
+    const unmatchedItems = [...oldList.auditListItems]
+    const promises = []
+
+    if (isCustomList) {
+      // update list with current customlist params (in case they changed)
+      const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
+
+      promises.push(AuditLists.update({id: oldList.id}, {
+        name,
+        metricFilters,
+        validityMetricFilters,
+        dimensions,
+        orderBys,
+        customListId: customList.id
+      }))
+    }
+
+console.log("updating list with", {
+                oldList,
+                refreshedList,
+                auditRecord,
+              })
+    for (let item of refreshedList.auditListItems) {
+      let matchIndex = _.findIndex(unmatchedItems, (itemRecord) => itemRecord.dimension === item.dimension)
+      let oldItem = matchIndex === -1 ? null : unmatchedItems.splice(matchIndex, 1)
+      if (oldItem) {
+        if (oldItem.metrics != item.metrics) {
+          // update item with new metrics if there's any difference (will often be same, unless the test changed or there was a bug in our code hehe)
+          // make sure to not just archiev all the old ones and create new ones for convenience's sake, would remove all record of if finished or not or anything else we persist in future
+          promises.push(AuditListItems.update({id: oldItem.id}, {
+            metrics: item.metrics,
+          }))
+        }
+
+      } else {
+        // create new item for this list
+        promises.push(AuditListItems.create({
+          testKey: oldList.testKey,
+          listKey: oldList.listKey,
+          dimension: item.dimension,
+          metrics: item.metrics,
+          userId: auditRecord.userId,
+          auditId: auditRecord.id,
+          auditListId: oldList.id,
+          websiteId: auditRecord.websiteId,
+        }))
+      }
+    }
+
+    for (let item of unmatchedItems) {
+      // aren't in list anymore, so eliminate
+      promises.push(AuditListItems.update({
+        status: "ARCHIVED",
+        archiveReason: "audit-refresh",
+      }))
+    }
+
+    return Promise.all(promises)
+    .then(() => {
+      // all kinds of returned items here, Could extract, but just messy.  don't bother
+      console.log("finished updating this list")
+      return
+    })
+    .catch((err) => {
+      console.error("Error: failure to update list");
+      throw err
+    })
+  },
+
+  // archive the list and all its  items that might have been made
+  // don't need to return anything at this point
+  archiveCascading: (listId, archiveReason = "") => {
+    if (!listId) {
+      console.error("listId is required to cascade archive");
+      return
+    }
+
+    AuditLists.update({id: listId}, {status: "ARCHIVED", archiveReason})
+    AuditListItems.update({listId}, {status: "ARCHIVED", archiveReason})
+  }
 };
 

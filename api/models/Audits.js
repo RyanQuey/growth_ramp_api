@@ -9,10 +9,11 @@ const queryHelpers = require('../services/analyticsHelpers/queryHelpers')
 const auditHelpers = require('../services/analyticsHelpers/auditHelpers')
 const {AUDIT_TESTS, TEST_GROUPS} = require('../analyticsConstants')
 const momentTZ = require('moment-timezone')
+const _ = require('lodash')
 
 module.exports = {
   attributes: {
-    status: { type: 'string', defaultsTo: "ACTIVE" },
+    status: { type: 'string', defaultsTo: "ACTIVE" }, //can be PENDING if in middle of audit, or
     baseDate: { type: 'date', required: true }, // lists will probably have a life of their own regarding when they start and end. But audits need a base date (typically the same as the lists' end date), in case they were created at a date different from when they were supposed to have been ran theoretically. Ie can audit retroactively. Should be one day before the audit was ran though if everything always worked perfectly
     dateLength: { type: 'string' }, //year, month, quarter
 
@@ -51,16 +52,17 @@ module.exports = {
     )
   },
 
-  // used whether creating new audit or refreshing audit.
-  // Gets all the audit data and test results
-  // params: see below for keys that params should have
-  // website should have audits and customLists populated on it
-  // by the time this func gets called, should already be validated that this should run (authenticated etc)
-  _getAuditData: (params, options = {}) => {
+  //for creating brand new audits, with all their lists and items
+  //Params should be same params to pass into #getAuditData
+  //auditContent: (params, options = {}) => {
+  createNewAudit: (params, options = {}) => {
     return new Promise((resolve, reject) => {
+      //not really using testGroup at this point, ha
       const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
-      const {gaWebPropertyId, gaSiteUrl, gscSiteUrl, gaProfileId, googleAccountId, audits, customLists} = website
+      const {audits, customLists} = website
+      let auditRecord, allReports, reportRequests, testResults
 
+      // get the params.baseDate and params.startDate
       // if baseDate is specified, use that (NOTE currently not doing). Otherwise:
       if (!params.baseDate) {
         if (website.audits && website.audits.length) {
@@ -82,6 +84,235 @@ module.exports = {
 
         params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
       }
+
+      Audits._getAuditData(params, options)
+      .then((result) => {
+        allReports = result.allReports
+        reportRequests = result.reportRequests
+        testResults = result.testResults
+
+        return Audits.create({
+          userId: user.id,
+          websiteId: website.id,
+          dateLength: dateLength,
+          baseDate: params.baseDate,
+          status: "PENDING",
+        })
+      })
+      .then((audit) => {
+        auditRecord = audit
+        const promises = []
+
+        const testKeys = TEST_GROUPS[testGroup]
+        for (let testKey of testKeys) {
+          // persist each test's lists
+          testResults[testKey].auditLists.forEach((list) => {
+            promises.push(AuditLists.persistList({
+              testKey,
+              list,
+              auditRecord,
+            }))
+          })
+        }
+
+        // persist results from custom lists as well
+        for (let customList of customLists) {
+          // persist each test's lists
+          const customListKey = CustomLists.getCustomListKey(customList)
+console.log("results from custom list", testResults.customLists[customListKey]);
+          testResults.customLists[customListKey].auditLists.forEach((list) => {
+            promises.push(AuditLists.persistList({
+              testKey: customList.testKey,
+              list,
+              auditRecord,
+              isCustomList: true,
+              customList,
+            }))
+          })
+        }
+
+        return Promise.all(promises)
+      })
+      .then((auditLists) => {
+        // auditLists is an array of lists, with populated auditListItems
+        auditRecord.auditLists = auditLists
+
+        // mark audits as ready. If they don't get here, they'll be stuck as pending and never see the light of day. Hopefully will end up "ARCHIVED" though, TODO maybe want to run a job every once in a while that turns all pending to archived, but just do it if createdAt is day before or earlier
+        return Audits.update({id: auditRecord.id}, {status: "ACTIVE"})
+      })
+      .then(() => {
+        auditRecord.status = "ACTIVE"
+        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests})
+
+        return resolve(ret)
+      })
+      .catch((err) => {
+//        return reject(err)
+//        debugging, so return all reports
+        console.error(err);
+
+        console.log("audit failed, so archiving that audit");
+        auditRecord && Audits.archiveCascading(auditRecord.id, "failed-audit")
+
+        // just return anyway, but with all the metadata
+        return resolve({allReports, err: err.toString(), reportRequests, failedAuditParams: auditRecord || {
+          userId: user.id,
+          websiteId: params.website.id,
+          dateLength: params.dateLength,
+        }})
+      })
+    })
+  },
+
+  // for an existing audit, takes the CURRENT settings (not the settings when it was first ran) and runs the audit again.
+  // For list items that are found again, leave the original alone
+  // for new list items add them
+  // for list items that are no longer there, archive them and mark "archiveCause" as "audit-refresh"
+  // no options yet
+  // TODO not tested, but the basic code is built out how I want it, so it's ready for WHEN we need it
+  refreshAudit: ({user, auditId}, options = {}) => {
+    return new Promise((resolve, reject) => {
+      let website, auditLists, auditListItems, auditRecord, customLists
+      let allReports, reportRequests, testResults
+
+      Promise.all([
+        Audits.findOne(auditId),
+        AuditLists.find({auditId, status: "ACTIVE"}).populate("auditListItems", {status: "ACTIVE"}),
+      ])
+      .then(([r1, r2]) => {
+        auditRecord = r1
+        auditLists = r2
+        if (!auditRecord) {
+          throw {message: "Audit Record not found", status: 404}
+        }
+
+        return Websites.findOne({id: auditRecord.websiteId, status: "ACTIVE"}).populate("customLists", {status: "ACTIVE"})
+      })
+      .then((result) => {
+        website = result
+        customLists = website.customLists
+
+        if (!auditRecord || !website) {
+          throw {message: "Website not found", status: 404}
+        }
+
+        let {dateLength, baseDate} = auditRecord
+
+        let params = {website, user, testGroup: "nonGoals", dateLength, baseDate} //TODO might get rid of test group option eventually, and just run all everytime
+        params.startDate = auditHelpers.getStartDateFromEndDate(baseDate, dateLength)
+
+        return Audits._getAuditData(params, options)
+      })
+      .then((result) => {
+        allReports = result.allReports
+        reportRequests = result.reportRequests
+        testResults = result.testResults
+
+        //TODO update audit, lists, and items
+        const unmatchedLists = [...auditLists]
+        const promises = []
+
+        const testKeys = TEST_GROUPS["nonGoals"] // for now, this is only one that works. TODO
+        for (let testKey of testKeys) {
+          // check each test's lists for a match and handle accordingly
+          for (let refreshedList of testResults[testKey].auditLists) {
+            let matchIndex = _.findIndex(unmatchedLists, (listRecord) => listRecord.listKey === refreshedList.listKey)
+            let oldList = matchIndex === -1 ? null : unmatchedLists.splice(matchIndex, 1)[0]
+            if (oldList) {
+              // update matching list with new results.
+              promises.push(AuditLists.updateListFromRefresh({
+                oldList,
+                refreshedList,
+                auditRecord,
+              }))
+
+            } else {
+              // create a new list with all of its items
+
+              promises.push(AuditLists.persistList({
+                testKey,
+                list: refreshedList,
+                auditRecord,
+              }))
+            }
+          }
+        }
+
+        // persist results from custom lists as well
+        for (let customList of customLists) {
+          // persist each test's lists
+          const customListKey = CustomLists.getCustomListKey(customList)
+          const [refreshedList] = testResults.customLists[customListKey].auditLists // custom lists only ever return one
+          let matchIndex = _.findIndex(unmatchedLists, (listRecord) => listRecord.customListId === customList.id)
+          let oldList = matchIndex === -1 ? null : unmatchedLists.splice(matchIndex, 1)[0]
+
+          if (oldList) {
+            // update matching list with new results.
+            promises.push(AuditLists.updateListFromRefresh({
+              oldList,
+              refreshedList,
+              auditRecord,
+            }))
+
+          } else {
+            // create a new list with all of its items
+            promises.push(AuditLists.persistList({
+              testKey: customList.testKey,
+              list: refreshedList,
+              auditRecord,
+              isCustomList: true,
+              customList,
+            }))
+          }
+        }
+
+        for (let list of unmatchedLists) {
+          //TODO archive cascading these lists and their items
+          AuditLists.archiveCascading(list.id, "audit-refresh")
+        }
+
+        return Promise.all(promises)
+      })
+      .then((results) => {
+        console.log("back from persisting lists")
+        // all kinds of results. Very jumbled and messy. easiest thing is to just find all again
+
+        return AuditLists.find({auditId: auditRecord.id, status: "ACTIVE"}).populate("auditListItems", {status: "ACTIVE"})
+      })
+      .then((refreshedLists) => {
+        auditRecord.auditLists = refreshedLists
+        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests})
+
+        console.log("\nFINISHED\n")
+        return resolve(ret)
+      })
+      .catch((err) => {
+//        return reject(err)
+//        debugging, so return all reports
+//        not archiving this time though! Will mean often a mixed result, with some old and some new...
+//        TODO consider keeping old records in memory so could restore at end if there's an error
+        console.error(err);
+        // just return anyway, but with all the metadata
+        return reject({allReports, err: err.toString(), reportRequests, failedAuditParams: auditRecord || {
+          userId: user.id,
+          websiteId: params.website.id,
+          dateLength: params.dateLength,
+        }})
+      })
+    })
+  },
+
+
+  // used whether creating new audit or refreshing audit.
+  // Gets all the audit data and test results
+  // params: see below for keys that params should have
+  // website should have audits and customLists populated on it
+  // by the time this func gets called, should already be validated that this should run (authenticated etc)
+  // no options yet
+  _getAuditData: (params, options = {}) => {
+    return new Promise((resolve, reject) => {
+      const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
+      const {gaWebPropertyId, gaSiteUrl, gscSiteUrl, gaProfileId, googleAccountId, customLists} = website
 
       if (moment(params.baseDate).isAfter(moment())) {
         throw new Error("Audit base date (ie end date) must be before the present")
@@ -184,7 +415,6 @@ module.exports = {
         for (let testKey of testKeys) {
           // test the data to see what passes/fails for their site for each test we do
           testResults[testKey] = auditHelpers.auditTestFunctions[testKey](gaResults, gscResults, customLists)
-
         }
 
         // retrieve results for custom lists as well
@@ -192,7 +422,6 @@ module.exports = {
         for (let customList of customLists) {
           const customListKey = CustomLists.getCustomListKey(customList)
           testResults.customLists[customListKey] = auditHelpers.auditTestFunctions.customLists(gaResults, gscResults, customList)
-
         }
 
         return resolve({
@@ -203,98 +432,6 @@ module.exports = {
       })
       .catch((err) => {
         return reject(err)
-      })
-    })
-  },
-
-  //for creating brand new audits, with all their lists and items
-  //Params should be same params to pass into #getAuditData
-  //auditContent: (params, options = {}) => {
-  createNewAudit: (params, options = {}) => {
-    return new Promise((resolve, reject) => {
-      const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
-      const {audits, customLists} = website
-      let auditRecord, allReports, reportRequests, testResults
-
-      // params received in createNewAudit should be same as that passed into the _getAuditData
-      Audits._getAuditData(params, options)
-      .then((result) => {
-        allReports = result.allReports
-        reportRequests = result.reportRequests
-        testResults = result.testResults
-
-        return Audits.create({
-          userId: user.id,
-          websiteId: website.id,
-          dateLength: dateLength,
-          baseDate: params.baseDate,
-          status: "PENDING",
-        })
-      })
-      .then((audit) => {
-        auditRecord = audit
-        const promises = []
-
-        const testKeys = TEST_GROUPS[testGroup]
-        for (let testKey of testKeys) {
-          // persist each test's lists
-          testResults[testKey].auditLists.forEach((list) => {
-            promises.push(AuditLists.persistList({
-              testKey,
-              list,
-              auditParams: params,
-              auditRecord,
-              user
-            }))
-          })
-        }
-
-        // persist results from custom lists as well
-        for (let customList of customLists) {
-          // persist each test's lists
-console.log("results from custom list", testResults.customLists[customListKey]);
-          testResults.customLists[customListKey].auditLists.forEach((list) => {
-            promises.push(AuditLists.persistList({
-              testKey: customList.testKey,
-              list,
-              auditParams: params,
-              auditRecord,
-              user,
-              isCustomList: true,
-              customList,
-            }))
-          })
-        }
-
-        return Promise.all(promises)
-      })
-      .then((auditLists) => {
-        // auditLists is an array of lists, with populated auditListItems
-        auditRecord.auditLists = auditLists
-
-        // mark audits as ready. If they don't get here, they'll be stuck as pending and never see the light of day. Hopefully will end up "ARCHIVED" though, TODO maybe want to run a job every once in a while that turns all pending to archived, but just do it if createdAt is day before or earlier
-        return Audits.update({id: auditRecord.id}, {status: "ACTIVE"})
-      })
-      .then(() => {
-        auditRecord.status = "ACTIVE"
-        const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests})
-
-        return resolve(ret)
-      })
-      .catch((err) => {
-//        return reject(err)
-//        debugging, so return all reports
-        console.error(err);
-
-        console.log("audit failed, so archiving that audit");
-        auditRecord && Audits._archiveCascading(auditRecord.id, "failed-audit")
-
-        // just return anyway, but with all the metadata
-        return resolve({allReports, err: err.toString(), reportRequests, failedAuditParams: auditRecord || {
-          userId: user.id,
-          websiteId: params.website.id,
-          dateLength: params.dateLength,
-        }})
       })
     })
   },
@@ -338,7 +475,7 @@ console.log("results from custom list", testResults.customLists[customListKey]);
 
   // archive the audit and all its lists and items that might have been made
   // don't need to return anything at this point
-  _archiveCascading: (auditId, archiveReason = "") => {
+  archiveCascading: (auditId, archiveReason = "") => {
     if (!auditId) {
       console.error("auditId is required to cascade archive");
       return
