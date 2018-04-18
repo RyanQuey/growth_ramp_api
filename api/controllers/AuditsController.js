@@ -44,5 +44,20 @@ module.exports = {
     })
   },
 
+  refreshAudit: (req, res) => {
+    const {auditId} = req.allParams()
+    const user = req.user
+
+    Audit.refreshAudit({user, auditId})
+    .then((results) => {
+      return res.ok(results)
+    })
+    .catch((err) => {
+      //Google returns err.errors
+      console.error("Error auditing content for user", req.user.id);
+      return res.negotiate(err.errors || err)
+    })
+  },
+
 };
 
