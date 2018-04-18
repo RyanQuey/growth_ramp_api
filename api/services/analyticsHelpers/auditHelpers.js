@@ -456,7 +456,7 @@ const auditHelpers = {
     let endDate
     // there are previous audits, audit
     if (dateLength === "month") {
-      endDate = moment(startDate).add(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
+      endDate = moment(startDate).add(1, "month").format("YYYY-MM-DD") //NOTE: date is calculated in PST time for GA. Also, if used for basedate, basedate will be persisted with time as well, due to db column being a date type
     } else if (dateLength === "year") {
       endDate = moment(startDate).add(1, "year").format("YYYY-MM-DD") //NOTE: date is calculated in PST time
     } else if (dateLength === "quarter") {

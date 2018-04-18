@@ -24,7 +24,7 @@ module.exports = {
     })
     .then((website) => {
       // if has any monthly audits in the last month, don't run for this site
-      const canAudit = Audits.canAuditSite({user, website, audits: website.audits})
+      const canAudit = Audits.canAuditSite({user, website, audits: website.audits, params})
       if (canAudit) {
         Object.assign(params, {user, website})
         return Audits.auditContent(params)

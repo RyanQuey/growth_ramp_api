@@ -46,7 +46,7 @@ module.exports = {
 
   //websites should be all active websites for this user
   canAddWebsite: function ({user, websites}) {
-    return User.isSuper(user) || (
+    return Users.isSuper(user) || (
       websites.length === 0
     )
   },

@@ -31,15 +31,26 @@ module.exports = {
   autoCreatedAt: true,
   autoUpdatedAt: true,
 
-  canAuditSite: ({website, audits}, options = {}) => {
+  canAuditSite: ({website, audits, params = {}, user}, options = {}) => {
     // this assumes only monthly audits.
     // subtract an extra day since base date is one day before the present, so want one month before that.
     const oneMonthAgoAndOne = moment().subtract(1, "month").subtract(1, "day")
     const recentAudits = audits.filter((audit) => oneMonthAgoAndOne.isBefore(audit.baseDate))
 
+console.log(Users.isSuper(user), params.baseDate, _.some(!audits, audit => moment(audit.baseDate).isSame(params.baseDate, "day")));
+
     //website needs at least one audit but no recent audits
     //Want at least one audit, so they don't accidentally click the Audit Site button right after this starts to run adn they get two or something
-    return (!options.inBackgroundJob || audits.length > 0) && recentAudits.length === 0
+    return (
+      (!options.inBackgroundJob || audits.length > 0) &&
+      recentAudits.length === 0
+    ) || (
+      // if super, allowing them to pass in params as long as there isn't already one with that same baseDate (assuming that if no basedate matches, that's good enough)
+      !options.inBackgroundJob &&
+      Users.isSuper(user) &&
+      params.baseDate &&
+      !_.some(audits, audit => moment(audit.baseDate).isSame(params.baseDate, "day"))
+    )
   },
 
   // params: see below for keys that params should have
@@ -63,9 +74,14 @@ module.exports = {
 
         } else {
           // else default to yesterday
-          params.baseDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format("YYYY-MM-DD")
+          params.baseDate = momentTZ.tz("America/Los_Angeles").subtract(1, "day").format() // will
           params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
         }
+
+      } else {
+        // base date sent in http req
+
+        params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
       }
 
       if (moment(params.baseDate).isAfter(moment())) {
@@ -78,7 +94,7 @@ module.exports = {
         viewId: gaProfileId,
         testGroup,
         startDate: params.startDate,
-        endDate: params.baseDate,
+        endDate: moment(params.baseDate).format("YYYY-MM-DD"),
       }, website)
       const gscParams = Object.assign({
         testGroup,
