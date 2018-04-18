@@ -89,7 +89,6 @@ module.exports = {
     })
     .then((auditListItems) => {
       auditList.auditListItems = auditListItems
-console.log("persisted new list")
 
       return auditList
     })
@@ -103,76 +102,88 @@ console.log("persisted new list")
   // after refreshing audit updates list with new results
   // note that oldList is a db record, refreshedlist is not TODO call it refreshedListData to distinguish.
   updateListFromRefresh: ({oldList, refreshedList, auditRecord, isCustomList = false, customList}) => {
+    return new Promise((resolve, reject) => {
+      const promises = []
+      //TODO beware, if these updates/creates have bad syntax (eg, for me, update didn't have criteria, only values to update), doesn't return that promise, and just stalls indefinitely
+      try {
+        const unmatchedItems = [...oldList.auditListItems]
 
-    const unmatchedItems = [...oldList.auditListItems]
-    const promises = []
+        //////////////////////
+        //update list
+        if (isCustomList) {
+          // update list with current customlist params (in case they changed)
+          const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
+          let listKey = CustomLists.getCustomListKey(customList)
+          promises.push(AuditLists.update({id: oldList.id}, {
+            name,
+            metricFilters,
+            validityMetricFilters,
+            dimensions,
+            orderBys,
+            listKey,
+            summaryData: refreshedList.summaryData,
+          }))
 
-    if (isCustomList) {
-      // update list with current customlist params (in case they changed)
-      const {name, metricFilters, validityMetricFilters, dimensions, orderBys} = customList
-      let listKey = CustomLists.getCustomListKey(customList)
-console.log("************",listKey)
-      promises.push(AuditLists.update({id: oldList.id}, {
-        name,
-        metricFilters,
-        validityMetricFilters,
-        dimensions,
-        orderBys,
-        listKey,
-        summaryData: refreshedList.summaryData,
-      }))
-
-    } else {
-      // if not custom list just update the summary data (totals, max and min for the test
-      promises.push(AuditLists.update({id: oldList.id}, {
-        summaryData: refreshedList.summaryData,
-      }))
-    }
-
-    for (let item of refreshedList.auditListItems) {
-      let matchIndex = _.findIndex(unmatchedItems, (itemRecord) => itemRecord.dimension === item.dimension)
-      let oldItem = matchIndex === -1 ? null : unmatchedItems.splice(matchIndex, 1)
-      if (oldItem) {
-        if (oldItem.metrics != item.metrics) {
-          // update item with new metrics if there's any difference (will often be same, unless the test changed or there was a bug in our code hehe)
-          // make sure to not just archiev all the old ones and create new ones for convenience's sake, would remove all record of if finished or not or anything else we persist in future
-          promises.push(AuditListItems.update({id: oldItem.id}, {
-            metrics: item.metrics,
+        } else {
+          // if not custom list just update the summary data (totals, max and min for the test
+          promises.push(AuditLists.update({id: oldList.id}, {
+            summaryData: refreshedList.summaryData,
           }))
         }
 
-      } else {
-        // create new item for this list
-        promises.push(AuditListItems.create({
-          testKey: oldList.testKey,
-          listKey: oldList.listKey,
-          dimension: item.dimension,
-          metrics: item.metrics,
-          userId: auditRecord.userId,
-          auditId: auditRecord.id,
-          auditListId: oldList.id,
-          websiteId: auditRecord.websiteId,
-        }))
+        //////////////////////
+        //update items that need it
+        for (let item of refreshedList.auditListItems) {
+          let matchIndex = _.findIndex(unmatchedItems, (itemRecord) => itemRecord.dimension === item.dimension)
+          let oldItem = matchIndex === -1 ? null : unmatchedItems.splice(matchIndex, 1)
+          if (oldItem) {
+            if (oldItem.metrics != item.metrics) {
+              // update item with new metrics if there's any difference (will often be same, unless the test changed or there was a bug in our code hehe)
+              // make sure to not just archiev all the old ones and create new ones for convenience's sake, would remove all record of if finished or not or anything else we persist in future
+              promises.push(AuditListItems.update({id: oldItem.id}, {
+                metrics: item.metrics,
+              }))
+            }
+
+          } else {
+            // create new item for this list
+            promises.push(AuditListItems.create({
+              testKey: oldList.testKey,
+              listKey: oldList.listKey,
+              dimension: item.dimension,
+              metrics: item.metrics,
+              userId: auditRecord.userId,
+              auditId: auditRecord.id,
+              auditListId: oldList.id,
+              websiteId: auditRecord.websiteId,
+            }))
+          }
+        }
+
+        for (let item of unmatchedItems) {
+          // aren't in list anymore, so eliminate
+          promises.push(AuditListItems.update({id: item.id}, {
+            status: "ARCHIVED",
+            archiveReason: "audit-refresh",
+          }))
+        }
+
+      } catch (err) {
+        console.error("Error: failure to refresh audit lists", err);
+        return reject(err)
       }
-    }
 
-    for (let item of unmatchedItems) {
-      // aren't in list anymore, so eliminate
-      promises.push(AuditListItems.update({
-        status: "ARCHIVED",
-        archiveReason: "audit-refresh",
-      }))
-    }
-
-    return Promise.all(promises)
-    .then(() => {
-      // all kinds of returned items here, Could extract, but just messy.  don't bother
-      console.log("finished updating this list")
-      return
-    })
-    .catch((err) => {
-      console.error("Error: failure to update list");
-      throw err
+      console.log("returning promises", promises.length, isCustomList);
+      Promise.all(promises)
+      .then(() => {
+        console.log("resolving one. Is custom list?", isCustomList);
+        // all kinds of returned items here, Could extract, but just messy.  don't bother
+        return resolve("success!")
+      })
+      .catch((err) => {
+        console.error("Error: failure to refresh audit list");
+        return reject(err)
+      })
     })
   },
 
@@ -180,12 +191,12 @@ console.log("************",listKey)
   // don't need to return anything at this point
   archiveCascading: (listId, archiveReason = "") => {
     if (!listId) {
-      console.error("listId is required to cascade archive");
-      return
+      throw new Error("listId is required to cascade archive");
     }
 
     return Promise.all([
-      AuditLists.update({id: listId}, {status: "ARCHIVED", archiveReason}),     AuditListItems.update({auditListId: listId}, {status: "ARCHIVED", archiveReason})
+      AuditLists.update({id: listId}, {status: "ARCHIVED", archiveReason}),
+      AuditListItems.update({auditListId: listId}, {status: "ARCHIVED", archiveReason})
     ])
   }
 };

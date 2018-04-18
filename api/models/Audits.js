@@ -190,25 +190,24 @@ console.log("results from custom list", testResults.customLists[customListKey]);
       })
       .then((result) => {
         website = result
-        customLists = website.customLists
-
-        if (!auditRecord || !website) {
+        if (!website) {
           throw {message: "Website not found", status: 404}
         }
+
+        customLists = website.customLists
+
 
         let {dateLength, baseDate} = auditRecord
 
         let params = {website, user, testGroup: "nonGoals", dateLength, baseDate} //TODO might get rid of test group option eventually, and just run all everytime
         params.startDate = auditHelpers.getStartDateFromEndDate(baseDate, dateLength)
-
         return Audits._getAuditData(params, options)
       })
       .then((result) => {
         allReports = result.allReports
         reportRequests = result.reportRequests
         testResults = result.testResults
-
-        //TODO update audit, lists, and items
+        // update audit, lists, and items
         const unmatchedLists = [...auditLists]
         const promises = []
 
@@ -219,6 +218,7 @@ console.log("results from custom list", testResults.customLists[customListKey]);
             let matchIndex = _.findIndex(unmatchedLists, (listRecord) => listRecord.listKey === refreshedList.listKey)
             let oldList = matchIndex === -1 ? null : unmatchedLists.splice(matchIndex, 1)[0]
             if (oldList) {
+              console.log("updating list from refresh");
               // update matching list with new results.
               promises.push(AuditLists.updateListFromRefresh({
                 oldList,
@@ -229,6 +229,7 @@ console.log("results from custom list", testResults.customLists[customListKey]);
             } else {
               // create a new list with all of its items
 
+              console.log("persisting new list");
               promises.push(AuditLists.persistList({
                 testKey,
                 list: refreshedList,
@@ -240,7 +241,6 @@ console.log("results from custom list", testResults.customLists[customListKey]);
 
         // persist results from custom lists as well
         for (let customList of customLists) {
-console.log("custom list", customList)
           // persist each test's lists
           const customListKey = CustomLists.getCustomListKey(customList)
           const [refreshedList] = testResults.customLists[customListKey].auditLists // custom lists only ever return one
@@ -248,6 +248,7 @@ console.log("custom list", customList)
           let oldList = matchIndex === -1 ? null : unmatchedLists.splice(matchIndex, 1)[0]
 
           if (oldList) {
+              console.log("updating list from refresh custom list");
             // update matching list with new results.
             promises.push(AuditLists.updateListFromRefresh({
               oldList,
@@ -258,6 +259,7 @@ console.log("custom list", customList)
             }))
 
           } else {
+              console.log("persisting new list");
             // create a new list with all of its items
             promises.push(AuditLists.persistList({
               testKey: customList.testKey,
@@ -270,32 +272,30 @@ console.log("custom list", customList)
         }
 
         for (let list of unmatchedLists) {
+          console.log("archiving");
           //TODO archive cascading these lists and their items
           promises.push(AuditLists.archiveCascading(list.id, "audit-refresh"))
         }
-
         return Promise.all(promises)
       })
       .then((results) => {
-        console.log("back from persisting lists")
         // all kinds of results. Very jumbled and messy. easiest thing is to just find all again
-
+console.log("returned all promises");
         return AuditLists.find({auditId: auditRecord.id, status: "ACTIVE"}).populate("auditListItems", {status: "ACTIVE"})
       })
       .then((refreshedLists) => {
         auditRecord.auditLists = refreshedLists
         const ret = Object.assign({}, {audit: auditRecord, allReports, reportRequests})
 
-        console.log("\nFINISHED\n")
+        console.log("\nFINISHED REFRESHING AUDIT\n")
         return resolve(ret)
       })
       .catch((err) => {
-//        return reject(err)
-//        debugging, so return all reports
+//        debugging, so return all reports and other data
 //        not archiving this time though! Will mean often a mixed result, with some old and some new...
 //        TODO consider keeping old records in memory so could restore at end if there's an error
         console.error(err);
-        // just return anyway, but with all the metadata
+        // just rejecting now, but to debug might want to resolve anyway, but with all the metadata
         return reject({allReports, err: err.toString(), reportRequests, failedAuditParams: auditRecord || {
           userId: user.id,
           websiteId: params.website.id,
@@ -305,6 +305,46 @@ console.log("custom list", customList)
     })
   },
 
+  // for all audits for a given website
+  // note that it cannot be ran on an archived website, due to validation in the Audits.refreshAudit func, but we could change that easily if we wanted to (just don't limit search of website to status: ACTIVE)
+  refreshWebsiteAudits: ({user, websiteId}) => {
+    return new Promise((resolve, reject) => {
+      Audits.find({userId: user.id, status: "ACTIVE", websiteId})
+      .then((siteAudits) => {
+        // to avoid hitting quota limit, refresh one at a time and space by a second (to avoid hitting user per second limits)
+        const auditsToRefresh = [...siteAudits]
+        const allResults = []
+
+        const doIt = (audit) => {
+          console.log("now doing it should run; ", auditsToRefresh.length, "audits still left to go");
+          console.log("refreshing audit id#", audit.id);
+          return Audits.refreshAudit({user, auditId: audit.id})
+          .then((result) => {
+            allResults.push(result)
+
+            if (auditsToRefresh.length) {
+              setTimeout(doIt.bind(null, auditsToRefresh.pop()), 1000)
+            } else {
+              console.log("\nFINISHED REFRESHING ALL SITE AUDITS");
+              return resolve(allResults)
+            }
+
+            console.log("audits still left", auditsToRefresh.length);
+          })
+          .catch((err) => {
+            throw err
+          })
+        }
+
+        doIt(auditsToRefresh.pop())
+      })
+      .catch((err) => {
+        return reject(err)
+      })
+    })
+  },
+
+  //TODO create a func that will fix all audits for a website, including if any has wrong baseDate, to line up all those things as well
 
   // used whether creating new audit or refreshing audit.
   // Gets all the audit data and test results
@@ -382,7 +422,6 @@ console.log("custom list", customList)
         gaReportCount = 0
         while(reportRequestsData.gaReports.length && gaReportCount < 20) {
           let setOf5 = reportRequestsData.gaReports.splice(0, 5)
-          //console.log("set of 5", setOf5);
           promises.push(GoogleAnalytics.getReport(account, setOf5, {
             dataset: "contentAudit",
             multipleReports: true,
@@ -477,16 +516,20 @@ console.log("custom list", customList)
   },
 
   // archive the audit and all its lists and items that might have been made
-  // don't need to return anything at this point
+  // don't need to return anything at this point, but doing so anyway at lesat for now
   archiveCascading: (auditId, archiveReason = "") => {
+
     if (!auditId) {
       console.error("auditId is required to cascade archive");
       return
     }
 
-    Audits.update({id: auditId}, {status: "ARCHIVED"})
-    AuditLists.update({auditId}, {status: "ARCHIVED", archiveReason})
-    AuditListItems.update({auditId}, {status: "ARCHIVED", archiveReason})
+    return Promise.all([
+      Audits.update({id: auditId}, {status: "ARCHIVED"}),
+      AuditLists.update({auditId}, {status: "ARCHIVED", archiveReason}),
+      AuditListItems.update({auditId}, {status: "ARCHIVED", archiveReason})
+    ])
+
   }
 };
 

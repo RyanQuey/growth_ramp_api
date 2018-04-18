@@ -303,7 +303,6 @@ const auditHelpers = {
 
     searchPositionToImprove:  (gaResults = [], gscResults = []) => {
       const relevantReports = findRelevantReports({key: "searchPositionToImprove", gaResults, gscResults})
-      console.log("relevant reports", relevantReports);
       const [pageSEOData, siteTotalsData] = relevantReports.searchPositionToImprove.gsc
 
       const positionIndex = getMetricIndex("position", pageSEOData)
@@ -395,10 +394,7 @@ const auditHelpers = {
       const relevantReports = findRelevantReports({customList, gaResults, gscResults, isCustomList: true})
       const [relevantGaReport] = relevantReports.ga // only ga for now
 
-console.log("\ncustom list data summary*****************)");
       const dataSummary = getGADataSummary("all", relevantGaReport)
-console.log(dataSummary);
-console.log("\nEND OF custom list data summary*****************)");
 
       const matchingRows = []
 
@@ -528,12 +524,10 @@ function findRelevantReports({key, gaResults, gscResults, isCustomList, customLi
     )
 
   } else {
-    console.log("keuy to find", key);
     const test = AUDIT_TESTS[key]
     const testLists = Object.keys(test.auditLists)
     for (let list of testLists) {
       let fullKey = `${test.key}-${list}`
-      console.log("searching for reports with: ", fullKey);
       // GA
       ret[list] = {}
       ret[list].ga = gaResults.filter((gaReport) =>
