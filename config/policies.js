@@ -60,6 +60,7 @@ module.exports.policies = {
   AuditListsController: {
     find: ['userTokenAuth', 'canRead'],
     findOne: ['userTokenAuth', 'canRead'],
+    getPopulatedLists: ['userTokenAuth', 'canRead'],
   },
   AuditListItemsController: {
     update: ['userTokenAuth', 'canWrite'],
