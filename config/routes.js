@@ -94,6 +94,14 @@ module.exports.routes = {
   },
 
   ////////////////////////////////////////////////////////////////
+  //auditLists
+
+  'get /auditLists/getPopulatedLists': {
+    controller: 'AuditListsController',
+    action: 'getPopulatedLists'
+  },
+
+  ////////////////////////////////////////////////////////////////
   //campaigns
   //
 
