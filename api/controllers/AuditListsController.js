@@ -11,5 +11,18 @@ module.exports = {
     return blueprints.find(req, res);
   },
 
+  // because sails doesn't allow filtering in populated queries as best as I can tell
+  // gets the lists and the items for a given audit
+  getPopulatedLists: (req, res) => {
+    const params = Object.assign({}, req.allParams(), {status: "ACTIVE"})
+
+    AuditLists.find(params).populate("auditListItems", {status: "ACTIVE"})
+    .then((result) => {
+      return res.ok(result)
+    })
+    .catch(err => {
+      return res.badRequest(err)
+    })
+  },
 };
 
