@@ -21,6 +21,8 @@ module.exports = {
       return res.ok(result)
     })
     .catch(err => {
+      console.error(err)
+      console.log("failing params", params)
       return res.badRequest(err)
     })
   },
