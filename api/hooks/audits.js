@@ -5,6 +5,7 @@ module.exports = function runRoutineAudits(sails) {
     initialize: function (cb) {
       sails.on('hook:orm:loaded', function() {
         console.log("initializing background job: run routine audits");
+
         var publisher = new RunRoutineAudits()
         if (process.env.NODE_ENV === "production") {
           publisher.every('30 minutes').now().start();
