@@ -13,6 +13,7 @@ module.exports = function runRoutineAudits(sails) {
           publisher.every('5 minutes').now().start();
         }
 
+        console.log("doing cb for audits");
         cb();
       });
     }
