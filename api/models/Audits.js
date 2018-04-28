@@ -85,12 +85,24 @@ module.exports = {
         params.startDate = auditHelpers.getStartDateFromEndDate(params.baseDate, dateLength)
       }
 
+      // set the testKeys based on testGroup and whatever else
+      params.testKeys = TEST_GROUPS[testGroup]
+      // if they don't have GSC setup, skip those audits
+      if (!Websites.canAccessGSC(website)) {
+        params.testKeys = params.testKeys.filter((key) => {
+          return !AUDIT_TESTS[key].gscReports || AUDIT_TESTS[key].gscReports.length === 0
+        })
+      }
+
+      // Get data from diff analytics apis (GA, GSC), and run the tests for each list
+      // params should remain unchanged from here on out. (just to keep things clean, scalable...at least try)
       Audits._getAuditData(params, options)
       .then((result) => {
         allReports = result.allReports
         reportRequests = result.reportRequests
         testResults = result.testResults
 
+        // persist everything
         return Audits.create({
           userId: user.id,
           websiteId: website.id,
@@ -103,8 +115,7 @@ module.exports = {
         auditRecord = audit
         const promises = []
 
-        const testKeys = TEST_GROUPS[testGroup]
-        for (let testKey of testKeys) {
+        for (let testKey of params.testKeys) {
           // persist each test's lists
           testResults[testKey].auditLists.forEach((list) => {
             promises.push(AuditLists.persistList({
@@ -344,8 +355,6 @@ console.log("returned all promises");
     })
   },
 
-  //TODO create a func that will fix all audits for a website, including if any has wrong baseDate, to line up all those things as well
-
   // used whether creating new audit or refreshing audit.
   // Gets all the audit data and test results
   // params: see below for keys that params should have
@@ -354,7 +363,7 @@ console.log("returned all promises");
   // no options yet
   _getAuditData: (params, options = {}) => {
     return new Promise((resolve, reject) => {
-      const {user, website, dateLength, testGroup, baseDate = null} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
+      const {user, website, dateLength, testGroup, baseDate = null, testKeys} = params //baseDate is optional. Mostly will be set dynamically by process below. startDate, at least for now, will always be set by proces below
       const {gaWebPropertyId, gaSiteUrl, gscSiteUrl, gaProfileId, googleAccountId, customLists} = website
 
       if (moment(params.baseDate).isAfter(moment())) {
@@ -375,10 +384,7 @@ console.log("returned all promises");
         endDate: moment(params.baseDate).format("YYYY-MM-DD"),
       }, website)
 
-      const testKeys = TEST_GROUPS[testGroup]
-
       // 1) get all dimensions + metric sets we have. Try to combine into one call if two auditTests share a dimension (will have the same date, at least as of now)
-      const allTestKeys = Object.keys(AUDIT_TESTS)
       const reportRequestsData = { // these will be built out by reports needed for each test
         gaReports: [],
         gscReports: [],

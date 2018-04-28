@@ -50,5 +50,9 @@ module.exports = {
       websites.length === 0
     )
   },
+
+  canAccessGSC: (website) => {
+    return ["siteOwner", "siteRestrictedUser", "siteFullUser"].includes(website.gscPermissionLevel)
+  },
 };
 
