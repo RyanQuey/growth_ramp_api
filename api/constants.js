@@ -218,7 +218,6 @@ module.exports = {
 //currently, just allows them to continue use even when they have no plan. then when their time is over, when they login they'll be prompted to add data, and b/c backend knows it too, no more campaigns can get published
   ALLOWED_EMAILS: [
     "rlquey2@gmail.com",
-    "rlquey2+test@gmail.com",
     //"rlquey2+test2@gmail.com",
     "rlquey2+test3@gmail.com",
     "rlquey2+test4@gmail.com",

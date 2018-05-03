@@ -57,7 +57,7 @@ module.exports = {
         params.userId = user.id
         params.subscriptionFor = "USER"
 
-        params.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : "basic-monthly"
+        params.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : "standard-stripeApiV2"
 
         AccountSubscriptions.create(params)
         .then((accountSub) => {
@@ -479,6 +479,7 @@ console.log("params", stripeParams);
           stripeSubscriptionId: null,
           planItemId: null,
         }
+
       } else {
         params = {
           currentPeriodEnd: stripeSubscription.current_period_end && moment.unix(stripeSubscription.current_period_end).format() || null,// basically when next payment is due
@@ -491,7 +492,6 @@ console.log("params", stripeParams);
           stripeSubscriptionId: stripeSubscription.id,
           planItemId: Helpers.safeDataPath(stripeSubscription, "items.data.0.id")
         }
-
       }
 
     // assumes source is credit card
