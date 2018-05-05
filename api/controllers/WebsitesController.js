@@ -16,12 +16,18 @@ module.exports = {
     const params = Object.assign({}, req.body)
     params.status = "ACTIVE"
 
-    Websites.find({
-      userId: req.user.id,
+    let accountSubscription
+    return AccountSubscriptions.findOrInitializeSubscription(req.user)
+    .then((result) => {
+      accountSubscription = result
+      // don't allow changing quantity below their website count
+      return Websites.find({
+        userId: req.user.id,
+      })
     })
     .then((websites) => {
       const activeWebsites = websites.filter((site) => site.status === "ACTIVE")
-      const canCreate = Websites.canAddWebsite({user: req.user, websites: activeWebsites})
+      const canCreate = Websites.canAddWebsite({user: req.user, websites: activeWebsites, accountSubscription})
       if (!canCreate) {
         throw {code: "too-many-websites-for-account"}
       }

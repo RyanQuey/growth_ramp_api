@@ -45,9 +45,9 @@ module.exports = {
   autoUpdatedAt: true,
 
   //websites should be all active websites for this user
-  canAddWebsite: function ({user, websites}) {
-    return Users.isSuper(user) || (
-      websites.length === 0
+  canAddWebsite: function ({user, websites, accountSubscription}) {
+    return (
+      websites.length < accountSubscription.websiteQuantity
     )
   },
 
