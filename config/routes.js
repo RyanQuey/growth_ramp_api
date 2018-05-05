@@ -56,6 +56,11 @@ module.exports.routes = {
     action: 'reactivateStripeSubscription',
   },
 
+  'put /accountSubscriptions/updateSubscription/:userId': {
+    controller: 'AccountSubscriptionsController',
+    action: 'updateSubscription',
+  },
+
   ////////////////////////////////////////////////////////////////
   //analytics
   //

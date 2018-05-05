@@ -43,6 +43,7 @@ module.exports.policies = {
     initializeForStripe: ['userTokenAuth', 'canWrite'],
     checkStripeStatus: ['userTokenAuth', 'canRead'],
     cancelStripeSubscription: ['userTokenAuth', 'canWrite'],
+    updateSubscription: ['userTokenAuth', 'canWrite'],//NOTE don't allow users to just update their record directly, or else could mess us up! Isn't doing that right now I believe, but don't open up just the plain update action for example
     reactivateStripeSubscription: ['userTokenAuth', 'canWrite'],
     handleCreditCardUpdate: ['userTokenAuth', 'canWrite'],
   },

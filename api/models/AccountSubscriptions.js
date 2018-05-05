@@ -25,7 +25,8 @@ module.exports = {
     cancelAtPeriodEnd:  {type: "boolean"},//whether or not they are set to renew or are not paying anymore at date of nextPaymentDue
     cancelledAt:        {type: "datetime"},
     endedAt:            {type: "datetime"},
-    planItemId:      {type: "string"}, //used for updating stripe plan OR reactivating account
+    planItemId:         {type: "string"}, //used for updating stripe plan OR reactivating account
+    websiteQuantity:    { type: 'integer' },
 
     //associations
     //only one userId , as the owner of the subscription
@@ -159,21 +160,55 @@ module.exports = {
     })
   },
 
-  //haven't tested yet
-  //change their subscription plan
+  //change their subscription plan, then match our record to theirs
   //params arg should be ready to be passed directly to stripe
-  updateStripeSubscription: (accountSubscription, user, params = {}) => {
-    return new Promise((resolve, reject) => {
+  updateStripeSubscription: (accountSubscription, params = {}, user) => {
+    return new Promise(async (resolve, reject) => {
       // currently manually overriding requests for free plan that shouldn't be, for security reasons.
       accountSubscription.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : accountSubscription.paymentPlan || "basic-monthly"
 
       //in case we've updated our record and now need to update stripe, eg, if user has changed payment plan or added coupon, but we haven't updated stripe yet (MUST DO, SINCE EXTERNAL API!!!)
-      let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
-      //don't want to update customer
+      let stripeParams = AccountSubscriptions._translateForStripe(params, "subscription")
+      //don't want to update customer (don't know if we ever will)
       delete stripeParams.customer
 
-      Object.assign(stripeParams, params)
+      // if prepaid, just update our record (hopefully can stop doing this soon...). Don't have a stripe subscription to update....
+      if (ALLOWED_EMAILS.includes(user.email)) {
+        return resolve(AccountSubscriptions.update({id: accountSubscription.id}, params))
+      }
+
+      // can't update an item and quantity at same time. So just do one at a time
+      try {
+        //so far only (pretending to) update  items and quantity. But to do others, expand the arrays. I know items and quantity can't go together, but maybe others can?
+
+        let latestStripeSub
+        for (let stripeKeySet of [["items"], ["quantity", "coupon", "default_ource"]]) {
+          let hasUpdatesForSet = Object.keys(stripeParams).some(key => stripeKeySet.includes(key))
+          if (hasUpdatesForSet) {
+            latestStripeSub = await AccountSubscriptions._updateStripe({
+              accountSubscription,
+              stripeParams: _.pick(stripeParams, stripeKeySet)
+            })
+          }
+        }
+
+        // latestStripeSub will only be defined if at least one stripeKeySet had updates to run
+        return latestStripeSub ? resolve(AccountSubscriptions._syncAPIWithStripeSub(latestStripeSub, accountSubscription)) : "nothing was updated"
+      } catch (err) {
+        return reject(err)
+      }
+
 console.log("params", stripeParams);
+    })
+  },
+
+  // just takes stripe params, updates stripe, and returns stripe record
+  _updateStripe: ({accountSubscription, stripeParams}) => {
+    return new Promise((resolve, reject) => {
+
+console.log("stripe id:", accountSubscription.stripeSubscriptionId);
+console.log("stripe params for this update:", stripeParams);
+
       stripe.subscriptions.update(accountSubscription.stripeSubscriptionId,
         stripeParams
       , (err, stripeSubscription) => {
@@ -182,10 +217,9 @@ console.log("params", stripeParams);
           return reject(err)
         }
 
-        return resolve(AccountSubscriptions._syncAPIWithStripeSub(stripeSubscription, accountSubscription))
+        return resolve(stripeSubscription)
       })
     })
-
   },
 
   //refresh/sync data with stripe - particularly subscription
@@ -454,7 +488,7 @@ console.log("params", stripeParams);
     if (
       !options.noSubsForCustomer &&
       (!data || typeof data !== "object")
-    ) throw new Error("data received from stripe is not an object" , data)
+    ) throw new Error("data received from stripe is not an object:" , data)
 
     if (stripeResourceType === "customer") {
       const customer = data
@@ -478,6 +512,7 @@ console.log("params", stripeParams);
           paymentPlan: null, //often these should already be kthe same. But if not, stripe's records are the source of truth
           stripeSubscriptionId: null,
           planItemId: null,
+          websiteQuantity: null,
         }
 
       } else {
@@ -490,7 +525,8 @@ console.log("params", stripeParams);
           subscriptionStatus: stripeSubscription.status,
           paymentPlan: stripeSubscription.plan && stripeSubscription.plan.id || null, //often these should already be kthe same. But if not, stripe's records are the source of truth
           stripeSubscriptionId: stripeSubscription.id,
-          planItemId: Helpers.safeDataPath(stripeSubscription, "items.data.0.id")
+          planItemId: Helpers.safeDataPath(stripeSubscription, "items.data.0.id"),
+          websiteQuantity: stripeSubscription.quantity,
         }
       }
 
@@ -523,18 +559,24 @@ console.log("params", stripeParams);
 
     } else if (stripeResourceType === "subscription") {
       potentialParams = [
-        ["couponCode", "coupon"],
-        ["paymentPlan", `items.0.plan`], //should be string with planId. only doing this if creating NOT UPDATING
+        ["couponCode", "coupon"], //update coupon (haven't tried yet) TODO
+        ["paymentPlan", `items.0.plan`], //paymentPlan should be string with planId. only doing this if creating NOT IF UPDATING
         ["planItemId", `items.0.id`], //needs to be there for updating ppayment plan to work.
-        ["stripeCustomerId", "customer"], //esp imp for creating nwe stripe sub
+        ["stripeCustomerId", "customer"], //esp imp for creating nwe stripe sub (haven't tried yet) TODO
+        ["websiteQuantity", "quantity"], // sets number to buy. Currently we only have websites as the quantity, so this works
       ]
     }
 
     //all this so don't send a whole bunch of undefined params to stripe, if there's things we are not tryihg to update, they are left untouched. But, if things set to false or null, we can update that.
     for (let paramPair of potentialParams) {
-      let recordData = Helpers.safeDataPath(accountSubscription, paramPair[0], undefined)
-      if (![undefined, null].includes(recordData)) {
-        _.set(stripeParams, paramPair[1], recordData)
+      let recordKey = paramPair[0]
+      let stripeEquivalentKey = paramPair[1]
+      let recordValue = Helpers.safeDataPath(accountSubscription, recordKey, undefined)
+      //don't send anything that's undefined or null, but do send 0 or empty strings
+      if (![undefined, null].includes(recordValue)) {
+        console.log(recordKey, stripeEquivalentKey);
+        _.set(stripeParams, stripeEquivalentKey, recordValue)
+        console.log("now params are:", stripeParams);
       }
     }
 

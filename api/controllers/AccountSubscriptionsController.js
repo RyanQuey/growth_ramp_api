@@ -77,12 +77,13 @@ module.exports = {
     })
   },
 
-  //coupons, payment plan etc
+  //coupons, payment plan, websiteQuantity etc
   //keeps our record in sync with stripe
+  //(as opposed to regular update, which just updates our record and not stripe)
 	updateSubscription: (req, res) => {
     return AccountSubscriptions.findOrInitializeSubscription(req.user)
     .then((accountSubscription) => {
-      return AccountSubscriptions.updateSubscription(accountSubscription, req.body, req.user)
+      return AccountSubscriptions.updateStripeSubscription(accountSubscription, req.body, req.user)
     })
     .then((accountSubscription) => {
       return res.created(accountSubscription)
@@ -97,7 +98,6 @@ module.exports = {
   //handle and payment CC info, whether creating or updating customer, and whether updating or creating subscription
   //use this rather than other paths of updating stripe subscription to make sure it goes well (b/c handling source obj)
   handleCreditCardUpdate: (req, res) => {
-console.log("saw update");
     return AccountSubscriptions.findOrInitializeSubscription(req.user)
     .then((accountSubscription) => {
       const sourceObj = req.body
