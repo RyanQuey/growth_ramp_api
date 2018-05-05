@@ -81,8 +81,20 @@ module.exports = {
   //keeps our record in sync with stripe
   //(as opposed to regular update, which just updates our record and not stripe)
 	updateSubscription: (req, res) => {
+    let accountSubscription
     return AccountSubscriptions.findOrInitializeSubscription(req.user)
-    .then((accountSubscription) => {
+    .then((result) => {
+      accountSubscription = result
+      // don't allow changing quantity below their website count
+
+      return Websites.find({userId: req.user.id, status: "ACTIVE"})
+    })
+    .then((userWebsites) => {
+      if (req.body.websiteQuantity && req.body.websiteQuantity < userWebsites.length) {
+        //reject: make them disable websites 1st
+        throw {code: "more-active-websites-than-purchased", status: 400}
+      }
+
       return AccountSubscriptions.updateStripeSubscription(accountSubscription, req.body, req.user)
     })
     .then((accountSubscription) => {

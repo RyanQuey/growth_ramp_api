@@ -148,6 +148,7 @@ module.exports = {
       let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
       Object.assign(stripeParams, params)
       stripeParams.billing = "charge_automatically"
+      stripeParams.prorate = false
 
       stripe.subscriptions.create(stripeParams, (err, stripeSubscription) => {
         if (err) {
@@ -174,8 +175,15 @@ module.exports = {
 
       // if prepaid, just update our record (hopefully can stop doing this soon...). Don't have a stripe subscription to update....
       if (ALLOWED_EMAILS.includes(user.email)) {
-        return resolve(AccountSubscriptions.update({id: accountSubscription.id}, params))
+        AccountSubscriptions.update({id: accountSubscription.id}, params)
+        .then(([accountSubscription]) => {
+          return resolve(accountSubscription)
+        })
+        .catch((err) => {
+          return reject(err)
+        })
       }
+
 
       // can't update an item and quantity at same time. So just do one at a time
       try {
@@ -197,8 +205,6 @@ module.exports = {
       } catch (err) {
         return reject(err)
       }
-
-console.log("params", stripeParams);
     })
   },
 
