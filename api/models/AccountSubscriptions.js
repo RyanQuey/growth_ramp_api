@@ -58,7 +58,7 @@ module.exports = {
         params.userId = user.id
         params.subscriptionFor = "USER"
 
-        params.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : "standard-stripeApiV2"
+        params.paymentPlan = ALLOWED_EMAILS.includes(user.email) ? "free" : "standard-monthly"
 
         AccountSubscriptions.create(params)
         .then((accountSub) => {
@@ -148,7 +148,6 @@ module.exports = {
       let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
       Object.assign(stripeParams, params)
       stripeParams.billing = "charge_automatically"
-      stripeParams.prorate = false
 
       stripe.subscriptions.create(stripeParams, (err, stripeSubscription) => {
         if (err) {
