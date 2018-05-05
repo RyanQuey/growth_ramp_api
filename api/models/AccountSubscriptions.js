@@ -13,7 +13,7 @@ module.exports = {
   attributes: {
     status:            {type: "string", enum: ACCOUNT_SUBSCRIPTION_STATUSES, defaultsTo: ACCOUNT_SUBSCRIPTION_STATUSES[0], required: true},  //SHOULD ALWAYS BE ACTIVE, EVERY USER NEEDS ONE OF THESE . Let stripe keep track of when they cancelled etc. We'll just keep track of their current status. HOwever, when we add workgroups, maybe just leave this alone, and user logs into workgroup to post for the group. But maybe will also want company subscription to apply for a single user. In that case, maybe check both subscriptions? or just ignore the user's one or somethign?
     subscriptionFor:   {type: "string", enum: ["USER", "WORKGROUP"], defaultsTo: "USER"},
-    subscriptionStatus:   {type: "string"}, //using stripe's statuses
+    subscriptionStatus:   {type: "string"}, //using stripe's statuses. Null means no sub yet!
     stripeCustomerId:  {type: "string"},
     stripeSubscriptionId:  {type: "string"},
     paymentPlan:       {type: "string", enum: ["free", "standard-monthly"]}, //stripe's subscription plan ID for their plan
@@ -148,6 +148,7 @@ module.exports = {
       let stripeParams = AccountSubscriptions._translateForStripe(accountSubscription, "subscription")
       Object.assign(stripeParams, params)
       stripeParams.billing = "charge_automatically"
+      stripeParams.quantity = 1
 
       stripe.subscriptions.create(stripeParams, (err, stripeSubscription) => {
         if (err) {

@@ -47,7 +47,10 @@ module.exports = {
   //websites should be all active websites for this user
   canAddWebsite: function ({user, websites, accountSubscription}) {
     return (
-      websites.length < accountSubscription.websiteQuantity
+      //has an active paid account
+      !["past_due", "canceled", "unpaid", null].includes(accountSubscription.subscriptionStatus) &&
+      //they're below their limit
+      websites.length < (accountSubscription.websiteQuantity || 1)
     )
   },
 
