@@ -48,7 +48,8 @@ module.exports = {
   canAddWebsite: function ({user, websites, accountSubscription}) {
     return (
       //has an active paid account
-      !["past_due", "canceled", "unpaid", null].includes(accountSubscription.subscriptionStatus) &&
+      //UPDATE letting them create sites, not audits
+      //!["past_due", "canceled", "unpaid", null].includes(accountSubscription.subscriptionStatus) &&
       //they're below their limit
       websites.length < (accountSubscription.websiteQuantity || 1)
     )
