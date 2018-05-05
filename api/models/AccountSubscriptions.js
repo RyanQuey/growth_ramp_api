@@ -175,7 +175,7 @@ module.exports = {
 
       // if prepaid, just update our record (hopefully can stop doing this soon...). Don't have a stripe subscription to update....
       if (ALLOWED_EMAILS.includes(user.email)) {
-        AccountSubscriptions.update({id: accountSubscription.id}, params)
+        return AccountSubscriptions.update({id: accountSubscription.id}, params)
         .then(([accountSubscription]) => {
           return resolve(accountSubscription)
         })
