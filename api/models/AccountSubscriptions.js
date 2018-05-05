@@ -16,7 +16,7 @@ module.exports = {
     subscriptionStatus:   {type: "string"}, //using stripe's statuses
     stripeCustomerId:  {type: "string"},
     stripeSubscriptionId:  {type: "string"},
-    paymentPlan:       {type: "string"}, //stripe's subscription plan ID for their plan
+    paymentPlan:       {type: "string", enum: ["free", "standard-monthly"]}, //stripe's subscription plan ID for their plan
     currency:          {type: "string"}, //not sure if we'll use it, but international so maybe?
     defaultSourceId:     {type: "string"}, //their credit card's source id in stripe's db
     defaultSourceLastFour:    {type: "string"}, //their credit card's last 4
