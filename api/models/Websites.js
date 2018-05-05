@@ -47,10 +47,9 @@ module.exports = {
   //websites should be all active websites for this user
   canAddWebsite: function ({user, websites, accountSubscription}) {
     return (
-      //has an active paid account
-      //UPDATE letting them create sites, not audits
-      //!["past_due", "canceled", "unpaid", null].includes(accountSubscription.subscriptionStatus) &&
-      //they're below their limit
+      //has an active paid account //TODO might allow one site if not paid, but block audits, so can see the traffic dashboard
+      !["past_due", "canceled", "unpaid", null].includes(accountSubscription.subscriptionStatus) &&
+      //they're below their limit (so have room to add one more)
       websites.length < (accountSubscription.websiteQuantity || 1)
     )
   },
