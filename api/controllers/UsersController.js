@@ -162,7 +162,7 @@ module.exports = {
 			return res.ok();
     })
 		.catch((err) => {
-			sails.log.error(error);
+			sails.log.error(err);
 			return res.badRequest();
 		});
 	},
