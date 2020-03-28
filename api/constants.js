@@ -217,34 +217,7 @@ module.exports = {
 //TODO when change it here, must change it in frontend!!
 //currently, just allows them to continue use even when they have no plan. then when their time is over, when they login they'll be prompted to add data, and b/c backend knows it too, no more campaigns can get published
   ALLOWED_EMAILS: [
-    "***REMOVED***",
-    "***REMOVED***",
-    //"***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    //fb test users
-    "***REMOVED***",
-    "***REMOVED***",
-
-    "***REMOVED***",
-    //"***REMOVED***", ***REMOVED*** was added to replace him
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***", //this guy is only doing for 3 months so far
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
-    "***REMOVED***",
+    // ***REMOVED****
   ],
 
 }
