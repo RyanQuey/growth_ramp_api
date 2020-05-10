@@ -57,7 +57,7 @@ module.exports.connections = {
     database: HEROKU_DB.dbname   || ENV['CUSTOM_DB_NAME']  || 'growth_ramp_api',
     host:     HEROKU_DB.host     || ENV['CUSTOM_HOSTNAME'] || 'localhost',
     user:     HEROKU_DB.user     || ENV['CUSTOM_USERNAME'] || 'postgres',
-    password: HEROKU_DB.password || ENV['CUSTOM_PASSWORD'] || 'password',
+    password: HEROKU_DB.password || ENV['CUSTOM_PASSWORD'] || ENV['PG_PASSWORD'] || 'password',
     port:     HEROKU_DB.port     || ENV['CUSTOM_PORT']     || 5432,
     poolSize: 10,
     ssl: false
