@@ -1,6 +1,6 @@
 const FB = require('fb')
-const appId = process.env.CLIENT_FACEBOOK_ID || sails.config.env.CLIENT_FACEBOOK_ID
-const appSecret = process.env.CLIENT_FACEBOOK_SECRET || sails.config.env.CLIENT_FACEBOOK_SECRET
+const appId = process.env.CLIENT_FACEBOOK_ID || sails.config.env && sails.config.env.CLIENT_FACEBOOK_ID
+const appSecret = process.env.CLIENT_FACEBOOK_SECRET || sails.config.env && sails.config.env.CLIENT_FACEBOOK_SECRET
 
 //NOTE don't get accessToken from account record; that is encrypted still
 const _setup = (account, accessToken) => {
