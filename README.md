@@ -2,11 +2,15 @@
 
 A [Sails](http://sailsjs.org) application. See demo videos [here](https://www.youtube.com/playlist?list=PLGiO0wyxB_OnIQRe9CHlcafq34EdkGoD_).
 
+## App Functionality
+### Content Promotion Campaigns
+Users can use our tool to promote their blog post over several social networks, and several promotion channels. We also supported UTM link creation (which was then shortened using Google link shortener). Users could also build links and keep track of promotion for social networks and channels that we did not support.
 ![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/Growth-Ramp-Plans.png)
 
-![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/GR-website-overview-chart.png)
+### Content Auditing based off of Google Analytics
+Users can add a website, audit their website based off of Google analytics, and then view some of those analytics using the dashboard.
 
-![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/GR-audit-results-next-month.png)
+![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/GR-website-overview-chart.png)
 
 # Setup Development Environment
 
