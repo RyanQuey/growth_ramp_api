@@ -2,10 +2,15 @@
 
 A [Sails](http://sailsjs.org) application. See demo videos [here](https://www.youtube.com/playlist?list=PLGiO0wyxB_OnIQRe9CHlcafq34EdkGoD_).
 
+![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/Growth-Ramp-Plans.png)
+
+![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/GR-website-overview-chart.png)
+
+![image](https://github.com/RyanQuey/growth_ramp_api/raw/master/screenshots/GR-audit-results-next-month.png)
 
 # Setup Development Environment
 
-## Prerequisites: 
+## Prerequisites:
 Running on Node 8
 
 - If using nvm, use `nvm use`
@@ -22,7 +27,7 @@ Then fill them all in. Should use same api keys and stuff that we got when setti
 
 ## Make sure server has PG already setup and running
 - Running PG version 10
-- Enter PG: 
+- Enter PG:
     `sudo -i -u postgres`
     `psql`
 
@@ -40,7 +45,7 @@ Then fill them all in. Should use same api keys and stuff that we got when setti
 ## Setup DB
 - Install knex CLI: `npm install knex -g`
 - `npm start` if want to also start the local server (does not live reload)
-- To just run migrations do `knex migrate:latest`. 
+- To just run migrations do `knex migrate:latest`.
     Should return something like `Batch 1 run: 43 migrations`
 
 ## Install global Nodemon for development (unless just want to run without live reload, and so without `npm run dev`)
@@ -51,7 +56,7 @@ Then fill them all in. Should use same api keys and stuff that we got when setti
 
 ## Get Google Oauth consent
 - This app will need to have Google Analytics Reporting API enabled in Google cloud console
-- Make sure to also allow those tokens in the [Oauth consent screen page](https://console.developers.google.com/apis/credentials/consent/edit) 
+- Make sure to also allow those tokens in the [Oauth consent screen page](https://console.developers.google.com/apis/credentials/consent/edit)
 
 ## If you want to use Facebook, Twitter, and LinkedIn, need to apply for those developer accounts as well
 - Our Demo is not supporting any social media platform apart from Google, however.
